@@ -104,7 +104,7 @@ function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadI
               flex: 1,
             }}
           >
-            {data.fileName || "上传图片"}
+            {data.sourceFileName || "上传图片"}
           </span>
         </div>
 

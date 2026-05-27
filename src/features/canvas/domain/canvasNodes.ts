@@ -67,7 +67,10 @@ export interface GroupNodeData extends NodeDisplayData {
 }
 
 export interface TextAnnotationNodeData extends NodeDisplayData {
-  content: string;
+  text: string;
+  fontSize: number;
+  color: string;
+  backgroundColor?: string;
   [key: string]: unknown;
 }
 
