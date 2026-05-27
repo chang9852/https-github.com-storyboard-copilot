@@ -70,7 +70,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
 
   const [prompt, setPrompt] = useState(data.prompt || "");
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>(data.provider || "kie");
-  const [selectedModel, setSelectedModel] = useState(data.model || "nano-banana-pro");
+  const [selectedModel, setSelectedModel] = useState(data.model || "kie/nano-banana-pro");
   const [selectedAspectRatio, setSelectedAspectRatio] = useState(data.aspectRatio || "1:1");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");

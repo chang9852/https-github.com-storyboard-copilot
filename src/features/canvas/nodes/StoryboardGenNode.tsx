@@ -41,7 +41,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
   const edges = useEdges();
 
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>((data.aiProvider as ProviderId) || "kie");
-  const [selectedModel, setSelectedModel] = useState(data.aiModel || "nano-banana-pro");
+  const [selectedModel, setSelectedModel] = useState(data.aiModel || "kie/nano-banana-pro");
   const [selectedSize, setSelectedSize] = useState<"1K" | "2K" | "4K">("2K");
   const [selectedAspectRatio, setSelectedAspectRatio] = useState("auto");
   const [gridRows, setGridRows] = useState(2);
