@@ -1,13 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GridSplitRequest {
-    pub image_url: String,
-    pub columns: u32,
-    pub rows: u32,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct GridCell {
     pub index: u32,
     pub x: u32,
