@@ -151,7 +151,7 @@ jobs:
         with:
           name: macos-dmg
           path: artifacts/macos
-          if-no-files-found: warn
+        continue-on-error: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -165,3 +165,4 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: false
+        continue-on-error: true
