@@ -1,8 +1,8 @@
 import { memo, useCallback, useRef } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
-import type { UploadNodeData } from "../domain/canvasNodes";
+import type { UploadImageNodeData } from "../domain/canvasNodes";
 
-function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadNodeData }) {
+function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadImageNodeData }) {
   const { updateNodeData } = useReactFlow();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

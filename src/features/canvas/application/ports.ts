@@ -1,86 +1,104 @@
-import type { NodeTypeKey, CanvasNodeData } from "../domain/canvasNodes";
-import type { ProviderId, GenerateParams, GenerateResult } from "@/types/ai";
+import type { XYPosition } from '@xyflow/react';
 
-// ID Generator port
+import type {
+  CanvasEdge,
+  CanvasNode,
+  CanvasNodeData,
+  CanvasNodeType,
+  NodeToolType,
+  StoryboardFrameItem,
+} from '../domain/canvasNodes';
+import type { CanvasNodeDefinition } from '../domain/nodeRegistry';
+
 export interface IdGenerator {
-  generate(): string;
+  next: () => string;
 }
 
-// Node Catalog port - provides node definitions
 export interface NodeCatalog {
-  getNodeDefinition(type: NodeTypeKey): import("../domain/nodeRegistry").NodeDefinition | undefined;
-  getMenuNodeDefinitions(): import("../domain/nodeRegistry").NodeDefinition[];
-  nodeHasSourceHandle(type: NodeTypeKey): boolean;
-  nodeHasTargetHandle(type: NodeTypeKey): boolean;
+  getDefinition: (type: CanvasNodeType) => CanvasNodeDefinition;
+  getMenuDefinitions: () => CanvasNodeDefinition[];
 }
 
-// Node Factory port - creates nodes
 export interface NodeFactory {
-  createNode(
-    type: NodeTypeKey,
-    position: { x: number; y: number },
+  createNode: (
+    type: CanvasNodeType,
+    position: XYPosition,
     data?: Partial<CanvasNodeData>
-  ): {
-    id: string;
-    type: string;
-    position: { x: number; y: number };
-    data: CanvasNodeData;
+  ) => CanvasNode;
+}
+
+export interface GraphImageResolver {
+  collectInputImages: (nodeId: string, nodes: CanvasNode[], edges: CanvasEdge[]) => string[];
+}
+
+export interface GenerateImagePayload {
+  prompt: string;
+  model: string;
+  size: string;
+  aspectRatio: string;
+  referenceImages?: string[];
+  extraParams?: Record<string, unknown>;
+}
+
+export interface AiGateway {
+  setApiKey: (provider: string, apiKey: string) => Promise<void>;
+  generateImage: (payload: GenerateImagePayload) => Promise<string>;
+  submitGenerateImageJob: (payload: GenerateImagePayload) => Promise<string>;
+  getGenerateImageJob: (jobId: string) => Promise<{
+    job_id: string;
+    status: 'queued' | 'running' | 'succeeded' | 'failed' | 'not_found';
+    result?: string | null;
+    error?: string | null;
+  }>;
+}
+
+export interface ImageSplitGateway {
+  split: (
+    imageSource: string,
+    rows: number,
+    cols: number,
+    lineThickness: number
+  ) => Promise<string[]>;
+}
+
+export interface ToolProcessorResult {
+  outputImageUrl?: string;
+  storyboardFrames?: StoryboardFrameItem[];
+  rows?: number;
+  cols?: number;
+  frameAspectRatio?: string;
+}
+
+export interface ToolProcessor {
+  process: (
+    toolType: NodeToolType,
+    sourceImageUrl: string,
+    options: Record<string, unknown>
+  ) => Promise<ToolProcessorResult>;
+}
+
+export interface CanvasEventMap {
+  'tool-dialog/open': {
+    nodeId: string;
+    toolType: NodeToolType;
+  };
+  'tool-dialog/close': undefined;
+  'upload-node/reupload': {
+    nodeId: string;
+  };
+  'upload-node/paste-image': {
+    nodeId: string;
+    file: File;
   };
 }
 
-// AI Gateway port - interface for AI operations
-export interface AiGateway {
-  setApiKey(provider: ProviderId, apiKey: string): Promise<void>;
-  generateImage(params: GenerateParams): Promise<GenerateResult>;
-  submitGenerateImageJob(params: GenerateParams): Promise<{ taskId: string }>;
-  getGenerateImageJob(taskId: string): Promise<GenerateResult>;
-  listModels(): Promise<Array<{ id: string; name: string; provider: ProviderId }>>;
-}
-
-// Image Split Gateway port
-export interface ImageSplitGateway {
-  splitImage(
-    imageUrl: string,
-    rows: number,
-    cols: number
-  ): Promise<Array<{ index: number; imageUrl: string; width: number; height: number }>>;
-}
-
-// Graph Image Resolver - collects images from connected nodes
-export interface GraphImageResolver {
-  resolveInputImages(nodeId: string, nodes: any[], edges: any[]): string[];
-}
-
-// Tool Processor port
-export interface ToolProcessor {
-  crop(
-    imageUrl: string,
-    cropArea: { x: number; y: number; width: number; height: number }
-  ): Promise<string>;
-
-  annotate(
-    imageUrl: string,
-    annotations: Array<{
-      type: "text" | "arrow" | "rect";
-      x: number;
-      y: number;
-      width?: number;
-      height?: number;
-      text?: string;
-      color?: string;
-    }>
-  ): Promise<string>;
-
-  splitStoryboard(
-    imageUrl: string,
-    rows: number,
-    cols: number
-  ): Promise<string[]>;
-}
-
-// Canvas Event Bus port
 export interface CanvasEventBus {
-  emit(event: string, data?: unknown): void;
-  on(event: string, handler: (data?: unknown) => void): () => void;
-  off(event: string, handler: (data?: unknown) => void): void;
+  publish: <TType extends keyof CanvasEventMap>(
+    type: TType,
+    payload: CanvasEventMap[TType]
+  ) => void;
+  subscribe: <TType extends keyof CanvasEventMap>(
+    type: TType,
+    handler: (payload: CanvasEventMap[TType]) => void
+  ) => () => void;
 }

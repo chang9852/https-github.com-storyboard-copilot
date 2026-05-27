@@ -1,31 +1,26 @@
-import type { NodeTypeKey, CanvasNodeData } from "../domain/canvasNodes";
+import type { CanvasNodeType, CanvasNodeData, CanvasNode } from "../domain/canvasNodes";
 import { getNodeDefinition } from "../domain/nodeRegistry";
 import type { IdGenerator } from "./ports";
+import type { XYPosition } from "@xyflow/react";
 
 export interface CreateNodeParams {
-  type: NodeTypeKey;
-  position: { x: number; y: number };
+  type: CanvasNodeType;
+  position: XYPosition;
   data?: Partial<CanvasNodeData>;
 }
 
 export function createNode(
   idGenerator: IdGenerator,
   params: CreateNodeParams
-): {
-  id: string;
-  type: string;
-  position: { x: number; y: number };
-  data: CanvasNodeData;
-} {
+): CanvasNode {
   const definition = getNodeDefinition(params.type);
   if (!definition) {
     throw new Error(`Unknown node type: ${params.type}`);
   }
 
-  const id = idGenerator.generate();
+  const id = idGenerator.next();
   const defaultData = definition.createDefaultData();
 
-  // Merge provided data with default data
   const data = {
     ...defaultData,
     ...params.data,

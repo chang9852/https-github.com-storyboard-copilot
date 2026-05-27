@@ -144,7 +144,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
           id: newNodeId,
           type: "exportImage",
           position: {
-            x: (data.size?.width || 380) + 50,
+            x: 380 + 50,
             y: 0,
           },
           data: {

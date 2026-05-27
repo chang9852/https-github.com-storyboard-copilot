@@ -1,46 +1,55 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AiGateway } from "../application/ports";
-import type { ProviderId, GenerateParams, GenerateResult } from "@/types/ai";
+import type { AiGateway, GenerateImagePayload } from "../application/ports";
 
 export class TauriAiGateway implements AiGateway {
-  async setApiKey(provider: ProviderId, apiKey: string): Promise<void> {
+  async setApiKey(provider: string, apiKey: string): Promise<void> {
     await invoke("set_api_key", { provider, apiKey });
   }
 
-  async generateImage(params: GenerateParams): Promise<GenerateResult> {
-    const result = await invoke<GenerateResult>("generate_image", {
-      provider: params.provider,
-      model: params.model,
-      prompt: params.prompt,
-      negativePrompt: params.negativePrompt,
-      width: params.width,
-      height: params.height,
-      numImages: params.numImages || 1,
+  async generateImage(payload: GenerateImagePayload): Promise<string> {
+    const result = await invoke<string>("generate_image", {
+      request: {
+        prompt: payload.prompt,
+        model: payload.model,
+        size: payload.size,
+        aspect_ratio: payload.aspectRatio,
+        reference_images: payload.referenceImages,
+        extra_params: payload.extraParams,
+      },
     });
     return result;
   }
 
-  async submitGenerateImageJob(params: GenerateParams): Promise<{ taskId: string }> {
-    const result = await invoke<{ task_id: string }>("submit_generate_image_job", {
-      provider: params.provider,
-      model: params.model,
-      prompt: params.prompt,
-      negativePrompt: params.negativePrompt,
-      width: params.width,
-      height: params.height,
-      numImages: params.numImages || 1,
+  async submitGenerateImageJob(payload: GenerateImagePayload): Promise<string> {
+    const result = await invoke<string>("submit_generate_image_job", {
+      request: {
+        prompt: payload.prompt,
+        model: payload.model,
+        size: payload.size,
+        aspect_ratio: payload.aspectRatio,
+        reference_images: payload.referenceImages,
+        extra_params: payload.extraParams,
+      },
     });
-    return { taskId: result.task_id };
-  }
-
-  async getGenerateImageJob(taskId: string): Promise<GenerateResult> {
-    const result = await invoke<GenerateResult>("get_generate_image_job", { taskId });
     return result;
   }
 
-  async listModels(): Promise<Array<{ id: string; name: string; provider: ProviderId }>> {
-    const result = await invoke<Array<{ id: string; name: string; provider: ProviderId }>>("list_models");
-    return result;
+  async getGenerateImageJob(jobId: string): Promise<{
+    job_id: string;
+    status: 'queued' | 'running' | 'succeeded' | 'failed' | 'not_found';
+    result?: string | null;
+    error?: string | null;
+  }> {
+    const result = await invoke<{
+      job_id: string;
+      status: string;
+      result?: string | null;
+      error?: string | null;
+    }>("get_generate_image_job", { jobId });
+    return {
+      ...result,
+      status: result.status as 'queued' | 'running' | 'succeeded' | 'failed' | 'not_found',
+    };
   }
 }
 

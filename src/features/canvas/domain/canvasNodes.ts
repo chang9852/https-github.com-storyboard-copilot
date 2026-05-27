@@ -1,129 +1,242 @@
-import type { ProviderId } from "@/types/ai";
+import type { Edge, Node, XYPosition } from '@xyflow/react';
+import type { ProviderId } from '@/types/ai';
 
-// Node type keys
-export type NodeToolType = "crop" | "annotate" | "split-storyboard";
+export const CANVAS_NODE_TYPES = {
+  upload: 'uploadNode',
+  imageEdit: 'imageNode',
+  exportImage: 'exportImageNode',
+  textAnnotation: 'textAnnotationNode',
+  group: 'groupNode',
+  storyboardSplit: 'storyboardNode',
+  storyboardGen: 'storyboardGenNode',
+} as const;
 
-export interface ImageEditNodeData {
-  prompt: string;
-  negativePrompt?: string;
-  model: string;
-  provider: ProviderId;
-  size: { width: number; height: number };
+export type CanvasNodeType = (typeof CANVAS_NODE_TYPES)[keyof typeof CANVAS_NODE_TYPES];
+
+export const DEFAULT_ASPECT_RATIO = '1:1';
+export const AUTO_REQUEST_ASPECT_RATIO = 'auto';
+export const DEFAULT_NODE_WIDTH = 220;
+export const EXPORT_RESULT_NODE_DEFAULT_WIDTH = 384;
+export const EXPORT_RESULT_NODE_LAYOUT_HEIGHT = 288;
+export const EXPORT_RESULT_NODE_MIN_WIDTH = 168;
+export const EXPORT_RESULT_NODE_MIN_HEIGHT = 168;
+
+export const IMAGE_SIZES = ['0.5K', '1K', '2K', '4K'] as const;
+export const IMAGE_ASPECT_RATIOS = [
+  '1:1',
+  '16:9',
+  '9:16',
+  '4:3',
+  '3:4',
+  '21:9',
+] as const;
+
+export type ImageSize = (typeof IMAGE_SIZES)[number];
+
+export interface NodeDisplayData {
+  displayName?: string;
+  [key: string]: unknown;
+}
+
+export interface NodeImageData extends NodeDisplayData {
+  imageUrl: string | null;
+  previewImageUrl?: string | null;
   aspectRatio: string;
-  extraParams?: Record<string, unknown>;
-  isGenerating: boolean;
-  generatingStartTime?: number;
-  error?: string;
-  imageUrl?: string;
+  isSizeManuallyAdjusted?: boolean;
+  [key: string]: unknown;
 }
 
-export interface UploadNodeData {
-  imageUrl: string;
-  fileName?: string;
+export interface UploadImageNodeData extends NodeImageData {
+  sourceFileName?: string | null;
 }
 
-export interface ExportImageNodeData {
-  images: string[];
-  selectedImageIndex?: number;
+export type ExportImageNodeResultKind =
+  | 'generic'
+  | 'storyboardGenOutput'
+  | 'storyboardSplitExport'
+  | 'storyboardFrameEdit';
+
+export interface ExportImageNodeData extends NodeImageData {
+  resultKind?: ExportImageNodeResultKind;
 }
 
-export interface TextAnnotationNodeData {
-  text: string;
-  fontSize: number;
-  color: string;
-  backgroundColor?: string;
-}
-
-export interface GroupNodeData {
+export interface GroupNodeData extends NodeDisplayData {
   label: string;
   childNodeIds: string[];
+  [key: string]: unknown;
+}
+
+export interface TextAnnotationNodeData extends NodeDisplayData {
+  content: string;
+  [key: string]: unknown;
+}
+
+export interface ImageEditNodeData extends NodeImageData {
+  prompt: string;
+  model: string;
+  provider: ProviderId;
+  size: ImageSize;
+  requestAspectRatio?: string;
+  extraParams?: Record<string, unknown>;
+  isGenerating?: boolean;
+  generationStartedAt?: number | null;
+  generationDurationMs?: number;
+}
+
+export interface StoryboardFrameItem {
+  id: string;
+  imageUrl: string | null;
+  previewImageUrl?: string | null;
+  aspectRatio?: string;
+  note: string;
+  order: number;
+}
+
+export interface StoryboardExportOptions {
+  showFrameIndex: boolean;
+  showFrameNote: boolean;
+  notePlacement: 'overlay' | 'bottom';
+  imageFit: 'cover' | 'contain';
+  frameIndexPrefix: string;
+  cellGap: number;
+  outerPadding: number;
+  fontSize: number;
+  backgroundColor: string;
+  textColor: string;
 }
 
 export interface StoryboardSplitNodeData {
+  displayName?: string;
+  aspectRatio: string;
+  frameAspectRatio?: string;
   gridRows: number;
   gridCols: number;
-  frames: Array<{
-    id: string;
-    imageUrl: string | null;
-    note: string;
-    order: number;
-  }>;
-  exportOptions: {
-    showFrameIndex: boolean;
-    showFrameNote: boolean;
-    notePlacement: "overlay" | "bottom";
-    imageFit: "cover" | "contain";
-    frameIndexPrefix: string;
-    cellGap: number;
-    fontSize: number;
-    backgroundColor: string;
-    textColor: string;
-  };
+  frames: StoryboardFrameItem[];
+  exportOptions?: StoryboardExportOptions;
+  [key: string]: unknown;
 }
+
+export interface StoryboardGenFrameItem {
+  id: string;
+  description: string;
+  referenceIndex: number | null;
+}
+
+export type StoryboardRatioControlMode = 'overall' | 'cell';
 
 export interface StoryboardGenNodeData {
+  displayName?: string;
   gridRows: number;
   gridCols: number;
-  frames: Array<{
-    id: string;
-    description: string;
-    referenceIndex: number | null;
-  }>;
+  frames: StoryboardGenFrameItem[];
+  ratioControlMode?: StoryboardRatioControlMode;
   model: string;
-  provider: ProviderId;
-  size: { width: number; height: number };
+  size: ImageSize;
+  requestAspectRatio: string;
+  extraParams?: Record<string, unknown>;
+  imageUrl: string | null;
+  previewImageUrl?: string | null;
   aspectRatio: string;
-  isGenerating: boolean;
+  isGenerating?: boolean;
+  generationStartedAt?: number | null;
+  generationDurationMs?: number;
+  [key: string]: unknown;
 }
 
-// Union type for all node data
 export type CanvasNodeData =
-  | ImageEditNodeData
-  | UploadNodeData
+  | UploadImageNodeData
   | ExportImageNodeData
   | TextAnnotationNodeData
   | GroupNodeData
+  | ImageEditNodeData
   | StoryboardSplitNodeData
   | StoryboardGenNodeData;
 
-// Node type enum
-export const NodeTypes = {
-  upload: "upload",
-  imageEdit: "imageEdit",
-  exportImage: "exportImage",
-  textAnnotation: "textAnnotation",
-  group: "group",
-  storyboardSplit: "storyboardSplit",
-  storyboardGen: "storyboardGen",
+export type CanvasNode = Node<CanvasNodeData, CanvasNodeType>;
+export type CanvasEdge = Edge;
+
+export interface NodeCreationDto {
+  type: CanvasNodeType;
+  position: XYPosition;
+  data?: Partial<CanvasNodeData>;
+}
+
+export interface StoryboardNodeCreationDto {
+  position: XYPosition;
+  rows: number;
+  cols: number;
+  frames: StoryboardFrameItem[];
+}
+
+export const NODE_TOOL_TYPES = {
+  crop: 'crop',
+  annotate: 'annotate',
+  splitStoryboard: 'split-storyboard',
 } as const;
 
-export type NodeTypeKey = (typeof NodeTypes)[keyof typeof NodeTypes];
+export type NodeToolType = (typeof NODE_TOOL_TYPES)[keyof typeof NODE_TOOL_TYPES];
 
-// Helper to check node data type
-export function isImageEditNodeData(data: CanvasNodeData): data is ImageEditNodeData {
-  return "prompt" in data && "model" in data && "provider" in data;
+export interface ActiveToolDialog {
+  nodeId: string;
+  toolType: NodeToolType;
 }
 
-export function isUploadNodeData(data: CanvasNodeData): data is UploadNodeData {
-  return "imageUrl" in data && !("frames" in data);
+export function isUploadNode(
+  node: CanvasNode | null | undefined
+): node is Node<UploadImageNodeData, typeof CANVAS_NODE_TYPES.upload> {
+  return node?.type === CANVAS_NODE_TYPES.upload;
 }
 
-export function isExportImageNodeData(data: CanvasNodeData): data is ExportImageNodeData {
-  return "images" in data && Array.isArray(data.images);
+export function isImageEditNode(
+  node: CanvasNode | null | undefined
+): node is Node<ImageEditNodeData, typeof CANVAS_NODE_TYPES.imageEdit> {
+  return node?.type === CANVAS_NODE_TYPES.imageEdit;
 }
 
-export function isTextAnnotationNodeData(data: CanvasNodeData): data is TextAnnotationNodeData {
-  return "text" in data && "fontSize" in data;
+export function isExportImageNode(
+  node: CanvasNode | null | undefined
+): node is Node<ExportImageNodeData, typeof CANVAS_NODE_TYPES.exportImage> {
+  return node?.type === CANVAS_NODE_TYPES.exportImage;
 }
 
-export function isGroupNodeData(data: CanvasNodeData): data is GroupNodeData {
-  return "label" in data && "childNodeIds" in data;
+export function isGroupNode(
+  node: CanvasNode | null | undefined
+): node is Node<GroupNodeData, typeof CANVAS_NODE_TYPES.group> {
+  return node?.type === CANVAS_NODE_TYPES.group;
 }
 
-export function isStoryboardSplitNodeData(data: CanvasNodeData): data is StoryboardSplitNodeData {
-  return "frames" in data && "exportOptions" in data;
+export function isTextAnnotationNode(
+  node: CanvasNode | null | undefined
+): node is Node<TextAnnotationNodeData, typeof CANVAS_NODE_TYPES.textAnnotation> {
+  return node?.type === CANVAS_NODE_TYPES.textAnnotation;
 }
 
-export function isStoryboardGenNodeData(data: CanvasNodeData): data is StoryboardGenNodeData {
-  return "frames" in data && "gridRows" in data && "isGenerating" in data;
+export function isStoryboardSplitNode(
+  node: CanvasNode | null | undefined
+): node is Node<StoryboardSplitNodeData, typeof CANVAS_NODE_TYPES.storyboardSplit> {
+  return node?.type === CANVAS_NODE_TYPES.storyboardSplit;
+}
+
+export function isStoryboardGenNode(
+  node: CanvasNode | null | undefined
+): node is Node<StoryboardGenNodeData, typeof CANVAS_NODE_TYPES.storyboardGen> {
+  return node?.type === CANVAS_NODE_TYPES.storyboardGen;
+}
+
+export function nodeHasImage(node: CanvasNode | null | undefined): boolean {
+  if (!node) return false;
+
+  if (isUploadNode(node) || isImageEditNode(node) || isExportImageNode(node)) {
+    return Boolean(node.data.imageUrl);
+  }
+
+  if (isStoryboardSplitNode(node)) {
+    return node.data.frames.some((frame) => Boolean(frame.imageUrl));
+  }
+
+  if (isStoryboardGenNode(node)) {
+    return Boolean(node.data.imageUrl);
+  }
+
+  return false;
 }

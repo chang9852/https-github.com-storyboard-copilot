@@ -21,7 +21,7 @@ import { GridExport } from "./GridExport";
 import { getNodeDefinition } from "./domain/nodeRegistry";
 import { createCanvasNode } from "./application/canvasServices";
 import type { StoryboardCell, CellType } from "@/types/project";
-import type { NodeTypeKey } from "./domain/canvasNodes";
+import type { CanvasNodeType } from "./domain/canvasNodes";
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -156,30 +156,30 @@ export function Canvas() {
 
   // 创建节点 (using new domain architecture)
   const handleCreateNode = useCallback(
-    (nodeType: NodeTypeKey) => {
+    (nodeType: CanvasNodeType) => {
       if (!currentProject || !createMenu) return;
 
       const definition = getNodeDefinition(nodeType);
       if (!definition) return;
 
       // Create node using the new factory
-      const newNode = createCanvasNode({
-        type: nodeType,
-        position: {
+      const newNode = createCanvasNode(
+        nodeType,
+        {
           x: createMenu.canvasX - 190,
           y: createMenu.canvasY - 160,
-        },
-      });
+        }
+      );
 
       // Convert to StoryboardCell format for backward compatibility
-      const cellTypeMap: Record<NodeTypeKey, CellType> = {
-        upload: "upload_image",
-        imageEdit: "ai_image",
-        exportImage: "upload_image",
-        textAnnotation: "text_annotation",
-        group: "text_block",
-        storyboardSplit: "storyboard",
-        storyboardGen: "storyboard_gen",
+      const cellTypeMap: Record<CanvasNodeType, CellType> = {
+        uploadNode: "upload_image",
+        imageNode: "ai_image",
+        exportImageNode: "upload_image",
+        textAnnotationNode: "text_annotation",
+        groupNode: "text_block",
+        storyboardNode: "storyboard",
+        storyboardGenNode: "storyboard_gen",
       };
 
       const newCell: StoryboardCell = {
@@ -274,7 +274,7 @@ export function Canvas() {
           }}>
             {/* AI 图片 */}
             <button
-              onClick={(e) => { e.stopPropagation(); handleCreateNode("imageEdit"); }}
+              onClick={(e) => { e.stopPropagation(); handleCreateNode("imageNode"); }}
               className="group/btn"
               style={{
                 padding: "14px 16px",
@@ -320,7 +320,7 @@ export function Canvas() {
 
             {/* 上传图片 */}
             <button
-              onClick={(e) => { e.stopPropagation(); handleCreateNode("upload"); }}
+              onClick={(e) => { e.stopPropagation(); handleCreateNode("uploadNode"); }}
               style={{
                 padding: "14px 16px",
                 borderRadius: "12px",
@@ -365,7 +365,7 @@ export function Canvas() {
 
             {/* 文本 */}
             <button
-              onClick={(e) => { e.stopPropagation(); handleCreateNode("textAnnotation"); }}
+              onClick={(e) => { e.stopPropagation(); handleCreateNode("textAnnotationNode"); }}
               style={{
                 padding: "14px 16px",
                 borderRadius: "12px",
@@ -409,7 +409,7 @@ export function Canvas() {
 
             {/* 分镜生成 */}
             <button
-              onClick={(e) => { e.stopPropagation(); handleCreateNode("storyboardGen"); }}
+              onClick={(e) => { e.stopPropagation(); handleCreateNode("storyboardGenNode"); }}
               style={{
                 padding: "14px 16px",
                 borderRadius: "12px",
