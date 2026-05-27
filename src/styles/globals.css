@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-family-ui: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --bg: #ffffff;
+  --bg-rgb: 255 255 255;
+  --surface: #f5f5f5;
+  --surface-rgb: 245 245 245;
+  --border: #e0e0e0;
+  --border-rgb: 224 224 224;
+  --text: #000000;
+  --text-rgb: 0 0 0;
+  --text-muted: #666666;
+  --text-muted-rgb: 102 102 102;
+  --accent: #3B82F6;
+  --accent-rgb: 59 130 246;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+
+  --ui-surface-panel: rgba(255, 255, 255, 0.96);
+  --ui-surface-field: rgba(248, 250, 252, 0.95);
+  --ui-border-soft: rgba(15, 23, 42, 0.12);
+  --ui-border-strong: rgba(15, 23, 42, 0.2);
+  --ui-shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.18);
+  --ui-radius-lg: 12px;
+  --ui-radius-xl: 16px;
+  --node-radius: 12px;
+}
+
+.dark {
+  --bg: #0f0f0f;
+  --bg-rgb: 15 15 15;
+  --surface: #1a1a1a;
+  --surface-rgb: 26 26 26;
+  --border: #2a2a2a;
+  --border-rgb: 42 42 42;
+  --text: #ffffff;
+  --text-rgb: 255 255 255;
+  --text-muted: #888888;
+  --text-muted-rgb: 136 136 136;
+  --accent-rgb: 59 130 246;
+  --ui-surface-panel: rgb(26, 26, 26);
+  --ui-surface-field: rgba(10, 10, 12, 0.92);
+  --ui-border-soft: rgba(255, 255, 255, 0.14);
+  --ui-border-strong: rgba(255, 255, 255, 0.24);
+  --ui-shadow-panel: 0 14px 34px rgba(0, 0, 0, 0.38);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family-ui);
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* Scrollbar */
+.ui-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.56) transparent;
+}
+
+.ui-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.ui-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ui-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.ui-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.72);
+}
+
+/* UI Panel & Field */
+.ui-panel {
+  background: var(--ui-surface-panel);
+  border-color: var(--ui-border-soft);
+  border-radius: var(--ui-radius-xl);
+  box-shadow: var(--ui-shadow-panel);
+}
+
+.ui-field {
+  background: var(--ui-surface-field);
+  border-color: var(--ui-border-soft);
+  border-radius: var(--ui-radius-lg);
+}
+
+/* React Flow */
+.react-flow__node {
+  border-radius: var(--node-radius);
+}
+
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__handle:hover {
+  background: var(--accent);
+  transform: scale(1.2);
+}
+
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__controls {
+  border-radius: var(--ui-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--ui-border-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__controls button {
+  border-bottom-color: var(--ui-border-soft);
+}
+
+.react-flow__controls button:hover {
+  background: var(--ui-surface-field);
+}
+
+.react-flow__minimap {
+  border-radius: var(--ui-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--ui-border-soft);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--ui-surface-panel);
+}
+
+/* Edge animation */
+@keyframes canvas-edge-flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -36; }
+}
+
+.react-flow__edge.animated path {
+  stroke-dasharray: 12;
+  animation: canvas-edge-flow 1s linear infinite;
+}
+
+/* Node selection */
+.react-flow__node.selected {
+  z-index: 10;
+}
+
+/* Background dots */
+.react-flow__background {
+  background-color: var(--bg);
+}
+
+/* Connection line */
+.react-flow__connection-path {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 5 5;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  border-radius: 4px;
+}
+
+/* Panel animations */
+.panel-anim-enter {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+}
+
+.panel-anim-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 160ms ease, transform 180ms ease;
+}
+
+.panel-anim-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.panel-anim-exit-active {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition: opacity 130ms ease, transform 150ms ease;
+}
