@@ -9,11 +9,11 @@ export const PROVIDERS: AIProvider[] = [
     authType: "bearer",
     enabled: true,
     models: [
-      { id: "nano-banana-pro", name: "Nano Banana Pro", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "nano-banana-2", name: "Nano Banana 2", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "seedream-4.0", name: "Seedream 4.0", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
-      { id: "seedream-4.5", name: "Seedream 4.5", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
-      { id: "seedream-5.0-lite", name: "Seedream 5.0 Lite", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
+      { id: "kie/nano-banana-pro", name: "Nano Banana Pro", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
+      { id: "kie/nano-banana-2", name: "Nano Banana 2", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
+      { id: "kie/seedream-4.0", name: "Seedream 4.0", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
+      { id: "kie/seedream-4.5", name: "Seedream 4.5", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
+      { id: "kie/seedream-5.0-lite", name: "Seedream 5.0 Lite", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
     ],
   },
   {
@@ -23,9 +23,9 @@ export const PROVIDERS: AIProvider[] = [
     authType: "key",
     enabled: true,
     models: [
-      { id: "fal-ai/flux-2-pro", name: "Flux 2 Pro", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
-      { id: "fal-ai/gemini-3-pro-image-preview", name: "Nano Banana Pro (Gemini)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "fal-ai/recraft-v3", name: "Recraft V3", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
+      { id: "fal/fal-ai/flux-2-pro", name: "Flux 2 Pro", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
+      { id: "fal/fal-ai/gemini-3-pro-image-preview", name: "Nano Banana Pro (Gemini)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
+      { id: "fal/fal-ai/recraft-v3", name: "Recraft V3", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
     ],
   },
 ];
@@ -103,6 +103,8 @@ export async function createGenerationTask(params: {
   if (params.provider === "kie") {
     const aspectRatio = params.aspectRatio || "1:1";
     const resolution = params.resolution || "2K";
+    // Strip provider prefix from model name (e.g., "kie/nano-banana-pro" -> "nano-banana-pro")
+    const kieModelName = params.model.replace(/^kie\//, '');
 
     const response = await fetch(`${provider.baseUrl}/api/v1/jobs/createTask`, {
       method: "POST",
@@ -111,7 +113,7 @@ export async function createGenerationTask(params: {
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: params.model,
+        model: kieModelName,
         input: {
           prompt: params.prompt,
           aspect_ratio: aspectRatio,

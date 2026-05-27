@@ -51,7 +51,7 @@ export interface CanvasNodeDefinition<TData extends CanvasNodeData = CanvasNodeD
   createDefaultData: () => TData;
 }
 
-const DEFAULT_IMAGE_MODEL_ID = 'fal-ai/flux/dev';
+const DEFAULT_IMAGE_MODEL_ID = 'kie/nano-banana-pro';
 
 const uploadNodeDefinition: CanvasNodeDefinition<UploadImageNodeData> = {
   type: CANVAS_NODE_TYPES.upload,
