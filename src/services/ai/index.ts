@@ -183,17 +183,29 @@ export async function pollTaskResult(
   }
 
   const apiKey = useSettingsStore.getState().getApiKey(provider);
-  const maxAttempts = 90;
-  const interval = 1500; // 更快的轮询间隔
+  const maxAttempts = 180; // 增加到180次
+  const interval = 2000; // 2秒间隔
   const startTime = Date.now();
+  const timeoutMs = 360000; // 6分钟总超时
 
   for (let i = 0; i < maxAttempts; i++) {
+    // 检查总超时
+    if (Date.now() - startTime > timeoutMs) {
+      throw new Error("生成超时（超过6分钟），任务可能仍在处理中，请稍后在KIE网站查看结果");
+    }
+
     try {
       const response = await fetch(`https://api.kie.ai/api/v1/jobs/getTaskDetail?taskId=${taskId}`, {
         headers: {
           "Authorization": `Bearer ${apiKey}`,
         },
       });
+
+      if (!response.ok) {
+        console.warn(`[pollTaskResult] HTTP ${response.status}, retrying...`);
+        await new Promise((resolve) => setTimeout(resolve, interval));
+        continue;
+      }
 
       const result: KieTaskStatusResponse = await response.json();
       const elapsed = Math.round((Date.now() - startTime) / 1000);
@@ -208,22 +220,30 @@ export async function pollTaskResult(
           if (imageUrl) {
             return { images: [{ url: imageUrl }] };
           }
-          throw new Error("生成完成但未返回图片");
+          // 尝试其他可能的字段
+          const altImageUrl = (result.data.result as any)?.output?.[0]?.url;
+          if (altImageUrl) {
+            return { images: [{ url: altImageUrl }] };
+          }
+          throw new Error(`生成完成但未返回图片，请在KIE网站查看: taskId=${taskId}`);
         }
 
         if (status === "failed") {
           throw new Error(result.data.error || "生成失败");
         }
+
+        // 其他状态继续轮询：queued, running, processing
       }
     } catch (error: any) {
       if (error.message?.includes("生成失败") || error.message?.includes("生成完成")) {
         throw error;
       }
-      // 继续轮询
+      // 网络错误，继续轮询
+      console.warn(`[pollTaskResult] Error: ${error.message}, retrying...`);
     }
 
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
 
-  throw new Error("生成超时（超过2分钟），请重试");
+  throw new Error(`生成超时，任务ID: ${taskId}，请在KIE网站查看结果`);
 }
