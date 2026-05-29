@@ -38,6 +38,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          shared-key: windows-v1
+
+      - name: Clean Rust cache
+        run: cargo clean --release
+        working-directory: src-tauri
 
       - name: Setup MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -78,6 +83,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          shared-key: macos-v1
+
+      - name: Clean Rust cache
+        run: cargo clean --release
+        working-directory: src-tauri
 
       - name: Install dependencies
         run: npm ci
