@@ -1,6 +1,6 @@
 [package]
 name = "storyboard-copilot"
-version = "1.0.0"
+version = "1.0.1"
 description = "AI Storyboard Generator"
 authors = ["TianYuanYiFang"]
 edition = "2021"
