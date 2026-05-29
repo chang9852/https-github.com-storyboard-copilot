@@ -33,6 +33,74 @@ function parseAtReferences(text: string): { text: string; refs: number[] } {
   return { text: parsed, refs };
 }
 
+const GRID_LINE_THICKNESS_PERCENT = 0.4;
+
+function resolveSizeToPixels(size: string): number {
+  const sizeMap: Record<string, number> = {
+    '0.5K': 512,
+    '1K': 1024,
+    '2K': 2048,
+    '4K': 4096,
+  };
+  return sizeMap[size] ?? 1024;
+}
+
+function generateGridImageDataUrl(
+  aspectRatio: string,
+  rows: number,
+  cols: number,
+  resolution: string,
+  lineThicknessPercent: number = GRID_LINE_THICKNESS_PERCENT
+): string {
+  const [ratioW = '16', ratioH = '9'] = aspectRatio.split(':');
+  const ratioWNum = parseFloat(ratioW);
+  const ratioHNum = parseFloat(ratioH);
+
+  const totalPixels = resolveSizeToPixels(resolution);
+  const canvasWidth = totalPixels;
+  const canvasHeight = Math.round(totalPixels * (ratioHNum / ratioWNum));
+  const thickness = Math.max(
+    1,
+    Math.round((Math.min(canvasWidth, canvasHeight) * lineThicknessPercent) / 100)
+  );
+
+  const cellWidth = canvasWidth / cols;
+  const cellHeight = canvasHeight / rows;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Failed to create canvas context');
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = thickness;
+
+  for (let i = 1; i < cols; i++) {
+    const x = i * cellWidth;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvasHeight);
+    ctx.stroke();
+  }
+
+  for (let i = 1; i < rows; i++) {
+    const y = i * cellHeight;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvasWidth, y);
+    ctx.stroke();
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
 export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNodeProps) => {
   const { addNodes, addEdges } = useReactFlow();
   const { providerConfigs } = useSettingsStore();
@@ -171,12 +239,22 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
     try {
       const finalPrompt = buildPrompt();
 
+      const gridImageDataUrl = generateGridImageDataUrl(
+        selectedAspectRatio === 'auto' ? '1:1' : selectedAspectRatio,
+        gridRows,
+        gridCols,
+        selectedSize
+      );
+
+      const allReferenceImages = [...incomingImages, gridImageDataUrl];
+
       const result = await createGenerationTask({
         provider: selectedProvider,
         model: selectedModel,
         prompt: finalPrompt,
         width: 1024,
         height: 1024,
+        referenceImages: allReferenceImages,
       });
 
       if (result.status === "completed" && result.task_id) {

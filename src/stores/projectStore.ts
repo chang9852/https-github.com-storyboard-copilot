@@ -29,6 +29,61 @@ interface ProjectStore {
 
 const STORAGE_KEY = "storyboard-projects";
 
+const EXPORT_RESULT_NODE_DEFAULT_WIDTH = 384;
+const EXPORT_RESULT_NODE_MIN_WIDTH = 168;
+const EXPORT_RESULT_NODE_MIN_HEIGHT = 168;
+
+function parseAspectRatioValue(aspectRatio: string): number {
+  const [rawWidth = '1', rawHeight = '1'] = aspectRatio.split(':');
+  const width = Number(rawWidth);
+  const height = Number(rawHeight);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return 1;
+  }
+  return width / height;
+}
+
+function isImageAutoResizableType(cellType?: string): boolean {
+  return cellType === 'upload_image' || cellType === 'ai_image';
+}
+
+function maybeApplyImageAutoResize(
+  cell: StoryboardCell,
+  updates: Partial<StoryboardCell>
+): StoryboardCell {
+  if (!isImageAutoResizableType(cell.cellType)) {
+    return cell;
+  }
+
+  const hasImageRelatedChange = 'imageUrl' in updates || 'aspectRatio' in updates;
+  if (!hasImageRelatedChange) {
+    return cell;
+  }
+
+  const isSizeManuallyAdjusted = (updates as any).isSizeManuallyAdjusted ?? (cell as any).isSizeManuallyAdjusted ?? false;
+  if (isSizeManuallyAdjusted) {
+    return cell;
+  }
+
+  const nextImageUrl = updates.imageUrl ?? cell.imageUrl;
+  if (typeof nextImageUrl !== 'string' || nextImageUrl.trim().length === 0) {
+    return cell;
+  }
+
+  const nextAspectRatio = updates.aspectRatio ?? (cell as any).aspectRatio ?? '1:1';
+  const aspectValue = parseAspectRatioValue(nextAspectRatio);
+  const nextWidth = Math.max(EXPORT_RESULT_NODE_MIN_WIDTH, cell.size?.width ?? EXPORT_RESULT_NODE_DEFAULT_WIDTH);
+  const nextHeight = Math.max(
+    EXPORT_RESULT_NODE_MIN_HEIGHT,
+    Math.round(nextWidth / Math.max(0.1, aspectValue))
+  );
+
+  return {
+    ...cell,
+    size: { width: nextWidth, height: nextHeight },
+  };
+}
+
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
@@ -122,7 +177,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     const updated = {
       ...currentProject,
-      cells: currentProject.cells.map((c) => (c.id === id ? { ...c, ...updates } : c)),
+      cells: currentProject.cells.map((c) => {
+        if (c.id !== id) return c;
+        return maybeApplyImageAutoResize(c, updates);
+      }),
       updatedAt: new Date().toISOString(),
     };
     const updatedProjects = projects.map((p) => (p.id === updated.id ? updated : p));

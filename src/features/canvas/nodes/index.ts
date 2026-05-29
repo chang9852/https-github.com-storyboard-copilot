@@ -3,6 +3,7 @@ import { ImageNode } from "./ImageNode";
 import { TextNode } from "./TextNode";
 import { StoryboardGenNode } from "./StoryboardGenNode";
 import { StoryboardSplitNode } from "./StoryboardSplitNode";
+import { StoryboardNode } from "./StoryboardNode";
 import { UploadNode } from "./UploadNode";
 import { TextAnnotationNode } from "./TextAnnotationNode";
 import { GroupNode } from "./GroupNode";
@@ -13,7 +14,7 @@ export const nodeTypes: NodeTypes = {
   imageNode: ImageNode,
   textNode: TextNode,
   storyboardGenNode: StoryboardGenNode,
-  storyboardNode: StoryboardSplitNode,
+  storyboardNode: StoryboardNode,
 
   // New node types (from domain registry)
   upload: UploadNode,
@@ -23,4 +24,5 @@ export const nodeTypes: NodeTypes = {
   group: GroupNode,
   storyboardSplit: StoryboardSplitNode,
   storyboardGen: StoryboardGenNode,
+  storyboard: StoryboardNode,
 };

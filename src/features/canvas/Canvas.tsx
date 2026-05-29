@@ -30,7 +30,6 @@ function generateId(): string {
 // 将项目数据转换为 ReactFlow 节点
 function cellsToNodes(cells: StoryboardCell[]): Node[] {
   return cells.map((cell) => {
-    // 根据 cellType 映射到正确的节点类型
     let nodeType = "textNode";
     if (cell.cellType === "ai_image" || cell.cellType === "upload_image") {
       nodeType = "imageNode";
@@ -61,7 +60,7 @@ function connectionsToEdges(connections: { id: string; fromCellId: string; toCel
     target: conn.toCellId,
     type: "smoothstep",
     animated: true,
-    style: { stroke: "#3b82f6", strokeWidth: 2 },
+    style: { stroke: "rgba(99, 102, 241, 0.5)", strokeWidth: 2 },
   }));
 }
 
@@ -83,17 +82,14 @@ export function Canvas() {
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-  // 删除选中节点
   const deleteSelectedNodes = useCallback(() => {
     const selectedNodes = getNodes().filter((n) => n.selected);
     if (selectedNodes.length === 0) return;
-
     selectedNodes.forEach((node) => {
       deleteCell(node.id);
     });
   }, [getNodes, deleteCell]);
 
-  // 键盘事件监听
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Delete" || e.key === "Backspace") {
@@ -105,12 +101,10 @@ export function Canvas() {
         deleteSelectedNodes();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [deleteSelectedNodes]);
 
-  // 同步项目数据到 ReactFlow
   useMemo(() => {
     if (currentProject) {
       const newNodes = cellsToNodes(currentProject.cells);
@@ -120,11 +114,10 @@ export function Canvas() {
     }
   }, [currentProject?.cells, currentProject?.connections, setNodes, setEdges]);
 
-  // 连接节点
   const onConnect = useCallback(
     (params: Connection) => {
       if (!currentProject) return;
-      setEdges((eds) => addEdge({ ...params, type: "smoothstep", animated: true, style: { stroke: "#3b82f6", strokeWidth: 2 } } as Edge, eds));
+      setEdges((eds) => addEdge({ ...params, type: "smoothstep", animated: true, style: { stroke: "rgba(99, 102, 241, 0.5)", strokeWidth: 2 } } as Edge, eds));
       addConnection({
         id: generateId(),
         fromCellId: params.source!,
@@ -134,16 +127,13 @@ export function Canvas() {
     [currentProject, setEdges, addConnection]
   );
 
-  // 双击显示创建菜单
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
       if (event.detail < 2) return;
       if (!currentProject || !reactFlowWrapper.current) return;
-
       const wrapper = reactFlowWrapper.current.getBoundingClientRect();
       const canvasX = event.clientX - wrapper.left;
       const canvasY = event.clientY - wrapper.top;
-
       setCreateMenu({
         x: event.clientX,
         y: event.clientY,
@@ -154,24 +144,15 @@ export function Canvas() {
     [currentProject]
   );
 
-  // 创建节点 (using new domain architecture)
   const handleCreateNode = useCallback(
     (nodeType: CanvasNodeType) => {
       if (!currentProject || !createMenu) return;
-
       const definition = getNodeDefinition(nodeType);
       if (!definition) return;
-
-      // Create node using the new factory
-      const newNode = createCanvasNode(
-        nodeType,
-        {
-          x: createMenu.canvasX - 190,
-          y: createMenu.canvasY - 160,
-        }
-      );
-
-      // Convert to StoryboardCell format for backward compatibility
+      const newNode = createCanvasNode(nodeType, {
+        x: createMenu.canvasX - 190,
+        y: createMenu.canvasY - 160,
+      });
       const cellTypeMap: Record<CanvasNodeType, CellType> = {
         uploadNode: "upload_image",
         imageNode: "ai_image",
@@ -181,7 +162,6 @@ export function Canvas() {
         storyboardNode: "storyboard",
         storyboardGenNode: "storyboard_gen",
       };
-
       const newCell: StoryboardCell = {
         id: newNode.id,
         projectId: currentProject.id,
@@ -192,7 +172,6 @@ export function Canvas() {
         cellType: cellTypeMap[nodeType] || "text_block",
         shotType: "image_block",
       };
-
       addCell(newCell);
       setCreateMenu(null);
     },
@@ -202,7 +181,7 @@ export function Canvas() {
   if (!currentProject) return null;
 
   return (
-    <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%", position: "relative" }}>
+    <div ref={reactFlowWrapper} style={{ width: "100%", height: "100%", position: "relative", background: "#0d0d12" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -215,38 +194,38 @@ export function Canvas() {
         snapToGrid
         snapGrid={[16, 16]}
         defaultEdgeOptions={{ type: "smoothstep", animated: true }}
-        style={{ background: "var(--bg)" }}
-        connectionLineStyle={{ stroke: "var(--accent)", strokeWidth: 2 }}
+        style={{ background: "#0d0d12" }}
+        connectionLineStyle={{ stroke: "rgba(99, 102, 241, 0.5)", strokeWidth: 2 }}
       >
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="rgba(0, 0, 0, 0.08)"
+          color="rgba(255, 255, 255, 0.03)"
         />
         <MiniMap
           nodeColor={(node) => {
             if (node.type === "imageNode") return "#f97316";
             if (node.type === "storyboardGenNode") return "#ec4899";
             if (node.type === "storyboardNode") return "#8b5cf6";
-            return "#3b82f6";
+            return "#6366f1";
           }}
           style={{
-            background: "var(--ui-surface-panel)",
-            border: "1px solid var(--ui-border-soft)",
-            borderRadius: "var(--ui-radius-lg)",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+            background: "rgba(17, 17, 24, 0.9)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            borderRadius: "12px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
           }}
-          maskColor="rgba(var(--accent-rgb), 0.08)"
+          maskColor="rgba(99, 102, 241, 0.05)"
           pannable
           zoomable
         />
         <Controls
           style={{
-            background: "var(--ui-surface-panel)",
-            border: "1px solid var(--ui-border-soft)",
-            borderRadius: "var(--ui-radius-lg)",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+            background: "rgba(17, 17, 24, 0.9)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            borderRadius: "12px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
           }}
         />
       </ReactFlow>
@@ -263,195 +242,195 @@ export function Canvas() {
           }}
         >
           <div style={{
-            background: "#ffffff",
-            border: "1px solid rgba(0,0,0,0.08)",
-            borderRadius: "16px",
-            padding: "10px",
+            background: "rgba(17, 17, 24, 0.95)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            borderRadius: "20px",
+            padding: "12px",
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: "8px",
-            boxShadow: "0 12px 40px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.08)",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03)",
           }}>
             {/* AI 图片 */}
             <button
               onClick={(e) => { e.stopPropagation(); handleCreateNode("imageNode"); }}
-              className="group/btn"
               style={{
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: "1px solid #f0f0f0",
-                background: "linear-gradient(135deg, #f8f9fa, #ffffff)",
+                padding: "16px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                background: "rgba(99, 102, 241, 0.08)",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "8px",
-                minWidth: "90px",
-                transition: "all 0.2s ease",
+                gap: "10px",
+                minWidth: "100px",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #eff6ff, #f0f9ff)";
-                e.currentTarget.style.borderColor = "#3b82f6";
+                e.currentTarget.style.background = "rgba(99, 102, 241, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.4)";
                 e.currentTarget.style.transform = "scale(1.02)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #f8f9fa, #ffffff)";
-                e.currentTarget.style.borderColor = "#f0f0f0";
+                e.currentTarget.style.background = "rgba(99, 102, 241, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
                 e.currentTarget.style.transform = "scale(1)";
               }}
             >
               <div style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #6366f1, #4f46e5)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
+                boxShadow: "0 4px 12px rgba(99, 102, 241, 0.3)",
               }}>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                   <path d="M8 2L14 12H2L8 2Z" fill="white" />
-                  <circle cx="8" cy="9" r="2" fill="#3b82f6" />
+                  <circle cx="8" cy="9" r="2" fill="#6366f1" />
                 </svg>
               </div>
-              <span style={{ fontSize: "11px", color: "#333", fontWeight: 500 }}>AI 图片</span>
+              <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.8)", fontWeight: 500 }}>AI 生成</span>
             </button>
 
             {/* 上传图片 */}
             <button
               onClick={(e) => { e.stopPropagation(); handleCreateNode("uploadNode"); }}
               style={{
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: "1px solid #f0f0f0",
-                background: "linear-gradient(135deg, #f8f9fa, #ffffff)",
+                padding: "16px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                background: "rgba(34, 197, 94, 0.08)",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "8px",
-                minWidth: "90px",
-                transition: "all 0.2s ease",
+                gap: "10px",
+                minWidth: "100px",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #ecfdf5, #f0fdf4)";
-                e.currentTarget.style.borderColor = "#10b981";
+                e.currentTarget.style.background = "rgba(34, 197, 94, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(34, 197, 94, 0.4)";
                 e.currentTarget.style.transform = "scale(1.02)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #f8f9fa, #ffffff)";
-                e.currentTarget.style.borderColor = "#f0f0f0";
+                e.currentTarget.style.background = "rgba(34, 197, 94, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
                 e.currentTarget.style.transform = "scale(1)";
               }}
             >
               <div style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #10b981, #059669)",
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #22c55e, #16a34a)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
+                boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
               }}>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
                   <path d="M8 10V4M5 7l3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M2 11v2a2 2 0 002 2h8a2 2 0 002-2v-2" strokeLinecap="round" />
                 </svg>
               </div>
-              <span style={{ fontSize: "11px", color: "#333", fontWeight: 500 }}>上传图片</span>
+              <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.8)", fontWeight: 500 }}>上传</span>
             </button>
 
             {/* 文本 */}
             <button
               onClick={(e) => { e.stopPropagation(); handleCreateNode("textAnnotationNode"); }}
               style={{
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: "1px solid #f0f0f0",
-                background: "linear-gradient(135deg, #f8f9fa, #ffffff)",
+                padding: "16px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                background: "rgba(168, 85, 247, 0.08)",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "8px",
-                minWidth: "90px",
-                transition: "all 0.2s ease",
+                gap: "10px",
+                minWidth: "100px",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #faf5ff, #f5f3ff)";
-                e.currentTarget.style.borderColor = "#8b5cf6";
+                e.currentTarget.style.background = "rgba(168, 85, 247, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(168, 85, 247, 0.4)";
                 e.currentTarget.style.transform = "scale(1.02)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #f8f9fa, #ffffff)";
-                e.currentTarget.style.borderColor = "#f0f0f0";
+                e.currentTarget.style.background = "rgba(168, 85, 247, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
                 e.currentTarget.style.transform = "scale(1)";
               }}
             >
               <div style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #a855f7, #9333ea)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(139, 92, 246, 0.3)",
+                boxShadow: "0 4px 12px rgba(168, 85, 247, 0.3)",
               }}>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
                   <path d="M3 3h10M3 7h10M3 11h6" strokeLinecap="round" />
                 </svg>
               </div>
-              <span style={{ fontSize: "11px", color: "#333", fontWeight: 500 }}>文本</span>
+              <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.8)", fontWeight: 500 }}>文本</span>
             </button>
 
             {/* 分镜生成 */}
             <button
               onClick={(e) => { e.stopPropagation(); handleCreateNode("storyboardGenNode"); }}
               style={{
-                padding: "14px 16px",
-                borderRadius: "12px",
-                border: "1px solid #f0f0f0",
-                background: "linear-gradient(135deg, #f8f9fa, #ffffff)",
+                padding: "16px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                background: "rgba(236, 72, 153, 0.08)",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: "8px",
-                minWidth: "90px",
-                transition: "all 0.2s ease",
+                gap: "10px",
+                minWidth: "100px",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #fdf2f8, #fce7f3)";
-                e.currentTarget.style.borderColor = "#ec4899";
+                e.currentTarget.style.background = "rgba(236, 72, 153, 0.15)";
+                e.currentTarget.style.borderColor = "rgba(236, 72, 153, 0.4)";
                 e.currentTarget.style.transform = "scale(1.02)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, #f8f9fa, #ffffff)";
-                e.currentTarget.style.borderColor = "#f0f0f0";
+                e.currentTarget.style.background = "rgba(236, 72, 153, 0.08)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.06)";
                 e.currentTarget.style.transform = "scale(1)";
               }}
             >
               <div style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #ec4899, #be185d)",
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "linear-gradient(135deg, #ec4899, #db2777)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 boxShadow: "0 4px 12px rgba(236, 72, 153, 0.3)",
               }}>
-                <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
                   <rect x="2" y="2" width="5" height="5" rx="1" />
                   <rect x="9" y="2" width="5" height="5" rx="1" />
                   <rect x="2" y="9" width="5" height="5" rx="1" />
                   <rect x="9" y="9" width="5" height="5" rx="1" />
                 </svg>
               </div>
-              <span style={{ fontSize: "11px", color: "#333", fontWeight: 500 }}>分镜生成</span>
+              <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.8)", fontWeight: 500 }}>分镜</span>
             </button>
           </div>
         </div>
@@ -471,19 +450,25 @@ export function Canvas() {
             width: "80px",
             height: "80px",
             borderRadius: "20px",
-            background: "linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))",
-            border: "2px dashed rgba(59, 130, 246, 0.3)",
+            background: "rgba(99, 102, 241, 0.08)",
+            border: "1px dashed rgba(99, 102, 241, 0.2)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             margin: "0 auto 16px",
           }}>
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M16 10v12M10 16h12" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" />
+              <path d="M16 10v12M10 16h12" stroke="url(#emptyGradient)" strokeWidth="2" strokeLinecap="round" />
+              <defs>
+                <linearGradient id="emptyGradient" x1="10" y1="10" x2="22" y2="22">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
             </svg>
           </div>
-          <p style={{ fontSize: "14px", fontWeight: 500, color: "#666", marginBottom: "4px" }}>双击鼠标添加节点</p>
-          <p style={{ fontSize: "12px", color: "#999" }}>拖拽空白区域移动画布，滚轮缩放</p>
+          <p style={{ fontSize: "14px", fontWeight: 500, color: "rgba(255, 255, 255, 0.6)", marginBottom: "6px" }}>双击添加节点</p>
+          <p style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.3)" }}>拖拽移动画布 · 滚轮缩放</p>
         </div>
       )}
 
@@ -492,30 +477,39 @@ export function Canvas() {
         onClick={() => setShowGridExport(true)}
         style={{
           position: "absolute",
-          top: "16px",
-          right: "16px",
-          padding: "8px 16px",
-          fontSize: "12px",
+          bottom: "20px",
+          right: "20px",
+          padding: "10px 16px",
+          fontSize: "11px",
           fontWeight: 500,
-          color: "#666",
-          background: "#ffffff",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
+          color: "rgba(255, 255, 255, 0.7)",
+          background: "rgba(17, 17, 24, 0.8)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: "10px",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           gap: "6px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          zIndex: 10,
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(99, 102, 241, 0.2)";
+          e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(17, 17, 24, 0.8)";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.2">
           <rect x="1" y="1" width="5" height="5" rx="1" />
           <rect x="8" y="1" width="5" height="5" rx="1" />
           <rect x="1" y="8" width="5" height="5" rx="1" />
           <rect x="8" y="8" width="5" height="5" rx="1" />
         </svg>
-        导出网格
+        导出
       </button>
 
       {/* 网格导出弹窗 */}

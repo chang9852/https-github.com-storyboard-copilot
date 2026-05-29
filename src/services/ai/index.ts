@@ -88,6 +88,7 @@ export async function createGenerationTask(params: {
   numImages?: number;
   aspectRatio?: string;
   resolution?: string;
+  referenceImages?: string[];
 }): Promise<GenerateTaskResult> {
   const apiKey = useSettingsStore.getState().getApiKey(params.provider);
   if (!apiKey) {
@@ -119,6 +120,9 @@ export async function createGenerationTask(params: {
           aspect_ratio: aspectRatio,
           resolution: resolution,
           output_format: "png",
+          ...(params.referenceImages && params.referenceImages.length > 0 && {
+            reference_images: params.referenceImages,
+          }),
         },
       }),
     });
