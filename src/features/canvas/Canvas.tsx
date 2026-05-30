@@ -5,6 +5,7 @@ import {
   MiniMap,
   Controls,
   BackgroundVariant,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -16,17 +17,20 @@ import { ImageViewerModal } from "./ui/ImageViewerModal";
 import { SelectedNodeOverlay } from "./ui/SelectedNodeOverlay";
 import type { StoryboardCell, CellType } from "@/types/project";
 import type { CanvasNodeType, CanvasNode, CanvasNodeData } from "./domain/canvasNodes";
+import { CANVAS_NODE_TYPES } from "./domain/canvasNodes";
+
+const cellTypeToNodeType: Record<string, CanvasNodeType> = {
+  ai_image: CANVAS_NODE_TYPES.imageEdit,
+  upload_image: CANVAS_NODE_TYPES.upload,
+  storyboard_gen: CANVAS_NODE_TYPES.storyboardGen,
+  storyboard: CANVAS_NODE_TYPES.storyboardSplit,
+  text_annotation: CANVAS_NODE_TYPES.textAnnotation,
+  text_block: CANVAS_NODE_TYPES.group,
+};
 
 function cellsToNodes(cells: StoryboardCell[]): CanvasNode[] {
   return cells.map((cell) => {
-    let nodeType: CanvasNodeType = "textAnnotationNode";
-    if (cell.cellType === "ai_image" || cell.cellType === "upload_image") {
-      nodeType = cell.cellType === "ai_image" ? "imageNode" : "uploadNode";
-    } else if (cell.cellType === "storyboard_gen") {
-      nodeType = "storyboardGenNode";
-    } else if (cell.cellType === "storyboard") {
-      nodeType = "storyboardNode";
-    }
+    const nodeType = cellTypeToNodeType[cell.cellType ?? ''] ?? CANVAS_NODE_TYPES.textAnnotation;
 
     return {
       id: cell.id,
@@ -50,6 +54,7 @@ interface MenuPosition {
 
 export function Canvas() {
   const { currentProject, addCell } = useProjectStore();
+  const reactFlowInstance = useReactFlow();
 
   const nodes = useCanvasStore((s) => s.nodes);
   const edges = useCanvasStore((s) => s.edges);
@@ -72,10 +77,16 @@ export function Canvas() {
     if (currentProject) {
       const newNodes = cellsToNodes(currentProject.cells);
       setCanvasData(newNodes, []);
+      // Fit view after nodes are loaded
+      requestAnimationFrame(() => {
+        if (newNodes.length > 0) {
+          reactFlowInstance.fitView({ padding: 0.2, duration: 300 });
+        }
+      });
     } else {
       setCanvasData([], []);
     }
-  }, [currentProject?.id, setCanvasData]);
+  }, [currentProject?.id, setCanvasData, reactFlowInstance]);
 
   // Sync canvas node changes back to projectStore for persistence
   const prevNodesRef = useRef(nodes);
@@ -167,14 +178,14 @@ export function Canvas() {
     (nodeType: CanvasNodeType) => {
       if (!currentProject || !createMenu) return;
 
-      const cellTypeMap: Record<CanvasNodeType, CellType> = {
-        uploadNode: "upload_image",
-        imageNode: "ai_image",
-        exportImageNode: "upload_image",
-        textAnnotationNode: "text_annotation",
-        groupNode: "text_block",
-        storyboardNode: "storyboard",
-        storyboardGenNode: "storyboard_gen",
+      const nodeTypeToCellType: Record<CanvasNodeType, CellType> = {
+        [CANVAS_NODE_TYPES.upload]: "upload_image",
+        [CANVAS_NODE_TYPES.imageEdit]: "ai_image",
+        [CANVAS_NODE_TYPES.exportImage]: "upload_image",
+        [CANVAS_NODE_TYPES.textAnnotation]: "text_annotation",
+        [CANVAS_NODE_TYPES.group]: "text_block",
+        [CANVAS_NODE_TYPES.storyboardSplit]: "storyboard",
+        [CANVAS_NODE_TYPES.storyboardGen]: "storyboard_gen",
       };
 
       const position = {
@@ -191,7 +202,7 @@ export function Canvas() {
         size: { width: 380, height: 320 },
         prompt: "",
         status: "idle",
-        cellType: cellTypeMap[nodeType] || "text_block",
+        cellType: nodeTypeToCellType[nodeType] || "text_block",
         shotType: "image_block",
       };
       addCell(newCell);
@@ -228,7 +239,6 @@ export function Canvas() {
         }}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
-        fitView
         snapToGrid
         snapGrid={[16, 16]}
         defaultEdgeOptions={{
@@ -325,7 +335,7 @@ export function Canvas() {
                 bgHover="rgba(99, 102, 241, 0.15)"
                 borderHover="rgba(99, 102, 241, 0.4)"
                 shadow="rgba(99, 102, 241, 0.3)"
-                onClick={() => handleCreateNode("imageNode")}
+                onClick={() => handleCreateNode(CANVAS_NODE_TYPES.imageEdit)}
                 icon={
                   <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
                     <path d="M8 2L14 12H2L8 2Z" fill="white" />
@@ -340,7 +350,7 @@ export function Canvas() {
                 bgHover="rgba(34, 197, 94, 0.15)"
                 borderHover="rgba(34, 197, 94, 0.4)"
                 shadow="rgba(34, 197, 94, 0.3)"
-                onClick={() => handleCreateNode("uploadNode")}
+                onClick={() => handleCreateNode(CANVAS_NODE_TYPES.upload)}
                 icon={
                   <svg
                     width="20"
@@ -369,7 +379,7 @@ export function Canvas() {
                 bgHover="rgba(168, 85, 247, 0.15)"
                 borderHover="rgba(168, 85, 247, 0.4)"
                 shadow="rgba(168, 85, 247, 0.3)"
-                onClick={() => handleCreateNode("textAnnotationNode")}
+                onClick={() => handleCreateNode(CANVAS_NODE_TYPES.textAnnotation)}
                 icon={
                   <svg
                     width="20"
@@ -390,7 +400,7 @@ export function Canvas() {
                 bgHover="rgba(236, 72, 153, 0.15)"
                 borderHover="rgba(236, 72, 153, 0.4)"
                 shadow="rgba(236, 72, 153, 0.3)"
-                onClick={() => handleCreateNode("storyboardGenNode")}
+                onClick={() => handleCreateNode(CANVAS_NODE_TYPES.storyboardGen)}
                 icon={
                   <svg
                     width="20"

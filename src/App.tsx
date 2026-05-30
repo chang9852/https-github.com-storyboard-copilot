@@ -7,6 +7,7 @@ import { Canvas } from '@/features/canvas/Canvas';
 import { ProjectManager } from '@/features/project/ProjectManager';
 import { TitleBar } from '@/components/TitleBar';
 import { SettingsDialog } from '@/components/SettingsDialog';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { subscribeOpenSettingsDialog, type SettingsCategory } from '@/features/settings/settingsEvents';
 import '@/features/canvas/tools/builtInTools';
 
@@ -22,7 +23,7 @@ function toRgbCssValue(hexColor: string): string {
 }
 
 export default function App() {
-  const { currentProject, closeProject } = useProjectStore();
+  const { currentProject, closeProject, loadProjects } = useProjectStore();
   const { loadSettings } = useSettingsStore();
   const { theme } = useThemeStore();
   const uiRadiusPreset = useSettingsStore((state) => state.uiRadiusPreset);
@@ -30,6 +31,10 @@ export default function App() {
   const accentColor = useSettingsStore((state) => state.accentColor);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialCategory, setSettingsInitialCategory] = useState<SettingsCategory>('general');
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   useEffect(() => {
     loadSettings();
@@ -78,26 +83,28 @@ export default function App() {
 
   return (
     <ReactFlowProvider>
-      <div className="w-full h-full flex flex-col bg-bg-dark">
-        <TitleBar
-          onSettingsClick={() => {
-            setSettingsInitialCategory('general');
-            setShowSettings(true);
-          }}
-          showBackButton={!!currentProject}
-          onBackClick={handleBack}
-        />
+      <ErrorBoundary>
+        <div className="w-full h-full flex flex-col bg-bg-dark">
+          <TitleBar
+            onSettingsClick={() => {
+              setSettingsInitialCategory('general');
+              setShowSettings(true);
+            }}
+            showBackButton={!!currentProject}
+            onBackClick={handleBack}
+          />
 
-        <main className="flex-1 relative">
-          {currentProject ? <Canvas /> : <ProjectManager />}
-        </main>
+          <main className="flex-1 relative overflow-hidden">
+            {currentProject ? <Canvas /> : <ProjectManager />}
+          </main>
 
-        <SettingsDialog
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          initialCategory={settingsInitialCategory}
-        />
-      </div>
+          <SettingsDialog
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            initialCategory={settingsInitialCategory}
+          />
+        </div>
+      </ErrorBoundary>
     </ReactFlowProvider>
   );
 }
