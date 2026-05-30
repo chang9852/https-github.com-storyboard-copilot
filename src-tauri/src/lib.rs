@@ -95,43 +95,22 @@ pub fn run() {
             show_main_window(&window.app_handle());
         })
         .setup(|app| {
-            let window_config = app
-                .config()
-                .app
-                .windows
-                .iter()
-                .find(|window| window.label == MAIN_WINDOW_LABEL)
-                .cloned()
-                .ok_or_else(|| "missing main window config".to_string())?;
-
-            #[cfg(not(target_os = "macos"))]
-            let main_window = tauri::WebviewWindowBuilder::from_config(app, &window_config)?.build()?;
-
-            #[cfg(not(target_os = "macos"))]
-            {
+            // Window is auto-created from config in Tauri v2
+            if let Some(main_window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
                 if let Err(err) = main_window.hide() {
                     warn!("failed to hide main window on startup: {err}");
                 }
-            }
 
-            #[cfg(target_os = "macos")]
-            {
-                let mut mac_window_config = window_config;
-                mac_window_config.transparent = true;
-
-                let window = tauri::WebviewWindowBuilder::from_config(app, &mac_window_config)?.build()?;
-
-                if let Err(err) = window.hide() {
-                    warn!("failed to hide main window on startup: {err}");
-                }
-
-                if let Err(err) = window.set_effects(Some(
-                    tauri::window::EffectsBuilder::new()
-                        .effect(tauri::window::Effect::Titlebar)
-                        .radius(10.0)
-                        .build(),
-                )) {
-                    warn!("failed to apply macOS window effects: {err}");
+                #[cfg(target_os = "macos")]
+                {
+                    if let Err(err) = main_window.set_effects(Some(
+                        tauri::window::EffectsBuilder::new()
+                            .effect(tauri::window::Effect::Titlebar)
+                            .radius(10.0)
+                            .build(),
+                    )) {
+                        warn!("failed to apply macOS window effects: {err}");
+                    }
                 }
             }
 
