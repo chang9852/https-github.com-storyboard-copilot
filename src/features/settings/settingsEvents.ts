@@ -1,9 +1,8 @@
 export type SettingsCategory =
+  | 'generation'
   | 'providers'
-  | 'pricing'
   | 'appearance'
-  | 'general'
-  | 'experimental'
+  | 'pricing'
   | 'about';
 
 interface OpenSettingsEventDetail {

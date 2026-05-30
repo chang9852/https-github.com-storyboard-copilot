@@ -5,13 +5,13 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { SettingsCheckboxCard } from '../SettingsCheckboxCard';
 import type { SettingsDraft } from '../useSettingsDraft';
 
-interface GeneralTabProps {
+interface GenerationTabProps {
   draft: SettingsDraft;
   onDraftChange: <K extends keyof SettingsDraft>(key: K, value: SettingsDraft[K]) => void;
   onSave: () => void;
 }
 
-export function GeneralTab({ draft, onDraftChange, onSave }: GeneralTabProps) {
+export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabProps) {
   const { t } = useTranslation();
   const [localDownloadPathInput, setLocalDownloadPathInput] = useState('');
 
@@ -46,8 +46,8 @@ export function GeneralTab({ draft, onDraftChange, onSave }: GeneralTabProps) {
   return (
     <>
       <div className="px-6 py-5 border-b border-border-dark">
-        <h2 className="text-lg font-semibold text-text-dark">{t('settings.general')}</h2>
-        <p className="text-sm text-text-muted mt-1">{t('settings.generalDesc')}</p>
+        <h2 className="text-lg font-semibold text-text-dark">{t('settings.generation')}</h2>
+        <p className="text-sm text-text-muted mt-1">{t('settings.generationDesc')}</p>
       </div>
 
       <div className="ui-scrollbar flex-1 space-y-4 overflow-y-auto p-6">
@@ -59,13 +59,6 @@ export function GeneralTab({ draft, onDraftChange, onSave }: GeneralTabProps) {
         />
 
         <SettingsCheckboxCard
-          checked={draft.ignoreAtTagWhenCopyingAndGenerating}
-          onCheckedChange={(v) => onDraftChange('ignoreAtTagWhenCopyingAndGenerating', v)}
-          title={t('settings.ignoreAtTagWhenCopyingAndGenerating')}
-          description={t('settings.ignoreAtTagWhenCopyingAndGeneratingDesc')}
-        />
-
-        <SettingsCheckboxCard
           checked={draft.storyboardGenDisableTextInImage}
           onCheckedChange={(v) => onDraftChange('storyboardGenDisableTextInImage', v)}
           title={t('settings.storyboardGenDisableTextInImage')}
@@ -73,10 +66,38 @@ export function GeneralTab({ draft, onDraftChange, onSave }: GeneralTabProps) {
         />
 
         <SettingsCheckboxCard
+          checked={draft.storyboardGenAutoInferEmptyFrame}
+          onCheckedChange={(v) => onDraftChange('storyboardGenAutoInferEmptyFrame', v)}
+          title={t('settings.storyboardGenAutoInferEmptyFrame')}
+          description={t('settings.storyboardGenAutoInferEmptyFrameDesc')}
+        />
+
+        <SettingsCheckboxCard
+          checked={draft.ignoreAtTagWhenCopyingAndGenerating}
+          onCheckedChange={(v) => onDraftChange('ignoreAtTagWhenCopyingAndGenerating', v)}
+          title={t('settings.ignoreAtTagWhenCopyingAndGenerating')}
+          description={t('settings.ignoreAtTagWhenCopyingAndGeneratingDesc')}
+        />
+
+        <SettingsCheckboxCard
           checked={draft.useUploadFilenameAsNodeTitle}
           onCheckedChange={(v) => onDraftChange('useUploadFilenameAsNodeTitle', v)}
           title={t('settings.useUploadFilenameAsNodeTitle')}
           description={t('settings.useUploadFilenameAsNodeTitleDesc')}
+        />
+
+        <SettingsCheckboxCard
+          checked={draft.enableStoryboardGenGridPreviewShortcut}
+          onCheckedChange={(v) => onDraftChange('enableStoryboardGenGridPreviewShortcut', v)}
+          title={t('settings.enableStoryboardGenGridPreviewShortcut')}
+          description={t('settings.enableStoryboardGenGridPreviewShortcutDesc')}
+        />
+
+        <SettingsCheckboxCard
+          checked={draft.showStoryboardGenAdvancedRatioControls}
+          onCheckedChange={(v) => onDraftChange('showStoryboardGenAdvancedRatioControls', v)}
+          title={t('settings.showStoryboardGenAdvancedRatioControls')}
+          description={t('settings.showStoryboardGenAdvancedRatioControlsDesc')}
         />
 
         <div className="rounded-lg border border-border-dark bg-bg-dark p-4">

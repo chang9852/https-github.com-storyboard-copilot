@@ -29,7 +29,7 @@ export default function App() {
   const themeTonePreset = useSettingsStore((state) => state.themeTonePreset);
   const accentColor = useSettingsStore((state) => state.accentColor);
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsInitialCategory, setSettingsInitialCategory] = useState<SettingsCategory>('general');
+  const [settingsInitialCategory, setSettingsInitialCategory] = useState<SettingsCategory>('generation');
 
   useEffect(() => {
     loadProjects();
@@ -70,7 +70,7 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = subscribeOpenSettingsDialog(({ category }) => {
-      setSettingsInitialCategory(category ?? 'general');
+      setSettingsInitialCategory(category ?? 'generation');
       setShowSettings(true);
     });
     return unsubscribe;
@@ -86,7 +86,7 @@ export default function App() {
         <div className="w-full h-full flex flex-col bg-bg-dark">
           <TitleBar
             onSettingsClick={() => {
-              setSettingsInitialCategory('general');
+              setSettingsInitialCategory('generation');
               setShowSettings(true);
             }}
             showBackButton={!!currentProject}

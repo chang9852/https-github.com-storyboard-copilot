@@ -6,11 +6,10 @@ import { UI_CONTENT_OVERLAY_INSET_CLASS, UI_DIALOG_TRANSITION_MS } from '@/compo
 import { useDialogTransition } from '@/components/ui/useDialogTransition';
 import { useSettingsDraft } from '@/features/settings/useSettingsDraft';
 import { ProviderGuidePopover } from '@/features/settings/ProviderGuidePopover';
-import { GeneralTab } from '@/features/settings/tabs/GeneralTab';
+import { GenerationTab } from '@/features/settings/tabs/GenerationTab';
 import { ProvidersTab } from '@/features/settings/tabs/ProvidersTab';
 import { AppearanceTab } from '@/features/settings/tabs/AppearanceTab';
 import { PricingTab } from '@/features/settings/tabs/PricingTab';
-import { ExperimentalTab } from '@/features/settings/tabs/ExperimentalTab';
 import { AboutTab } from '@/features/settings/tabs/AboutTab';
 import type { SettingsCategory } from '@/features/settings/settingsEvents';
 
@@ -22,18 +21,17 @@ interface SettingsDialogProps {
 }
 
 const CATEGORY_KEYS: SettingsCategory[] = [
-  'general',
+  'generation',
   'providers',
   'appearance',
   'pricing',
-  'experimental',
   'about',
 ];
 
 export function SettingsDialog({
   isOpen,
   onClose,
-  initialCategory = 'general',
+  initialCategory = 'generation',
   onCheckUpdate,
 }: SettingsDialogProps) {
   const { t } = useTranslation();
@@ -98,8 +96,8 @@ export function SettingsDialog({
           </div>
 
           <div className="flex-1 flex flex-col">
-            {activeCategory === 'general' && (
-              <GeneralTab draft={draft} onDraftChange={updateDraft} onSave={handleSave} />
+            {activeCategory === 'generation' && (
+              <GenerationTab draft={draft} onDraftChange={updateDraft} onSave={handleSave} />
             )}
             {activeCategory === 'providers' && (
               <ProvidersTab draft={draft} onDraftChange={updateDraft} onSave={handleSave} />
@@ -109,9 +107,6 @@ export function SettingsDialog({
             )}
             {activeCategory === 'pricing' && (
               <PricingTab draft={draft} onDraftChange={updateDraft} onSave={handleSave} />
-            )}
-            {activeCategory === 'experimental' && (
-              <ExperimentalTab draft={draft} onDraftChange={updateDraft} onSave={handleSave} />
             )}
             {activeCategory === 'about' && (
               <AboutTab draft={draft} onDraftChange={updateDraft} onSave={handleSave} onClose={onClose} onCheckUpdate={onCheckUpdate} />
