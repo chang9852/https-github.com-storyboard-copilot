@@ -28,12 +28,37 @@ export interface SettingsDraft {
   enableUpdateDialog: boolean;
 }
 
-export function useSettingsDraft(isOpen: boolean) {
-  const store = useSettingsStore();
+function readStoreToDraft(): SettingsDraft {
+  const s = useSettingsStore.getState();
+  return {
+    apiKeys: { ...s.apiKeys },
+    grsaiNanoBananaProModel: s.grsaiNanoBananaProModel,
+    downloadPresetPaths: [...s.downloadPresetPaths],
+    useUploadFilenameAsNodeTitle: s.useUploadFilenameAsNodeTitle,
+    storyboardGenKeepStyleConsistent: s.storyboardGenKeepStyleConsistent,
+    storyboardGenDisableTextInImage: s.storyboardGenDisableTextInImage,
+    storyboardGenAutoInferEmptyFrame: s.storyboardGenAutoInferEmptyFrame,
+    ignoreAtTagWhenCopyingAndGenerating: s.ignoreAtTagWhenCopyingAndGenerating,
+    enableStoryboardGenGridPreviewShortcut: s.enableStoryboardGenGridPreviewShortcut,
+    showStoryboardGenAdvancedRatioControls: s.showStoryboardGenAdvancedRatioControls,
+    showNodePrice: s.showNodePrice,
+    priceDisplayCurrencyMode: s.priceDisplayCurrencyMode,
+    usdToCnyRate: String(s.usdToCnyRate),
+    preferDiscountedPrice: s.preferDiscountedPrice,
+    grsaiCreditTierId: s.grsaiCreditTierId,
+    uiRadiusPreset: s.uiRadiusPreset,
+    themeTonePreset: s.themeTonePreset,
+    accentColor: s.accentColor,
+    canvasEdgeRoutingMode: s.canvasEdgeRoutingMode,
+    autoCheckAppUpdateOnLaunch: s.autoCheckAppUpdateOnLaunch,
+    enableUpdateDialog: s.enableUpdateDialog,
+  };
+}
 
+export function useSettingsDraft(isOpen: boolean) {
   const [draft, setDraft] = useState<SettingsDraft>({
     apiKeys: {},
-    grsaiNanoBananaProModel: store.grsaiNanoBananaProModel,
+    grsaiNanoBananaProModel: useSettingsStore.getState().grsaiNanoBananaProModel,
     downloadPresetPaths: [],
     useUploadFilenameAsNodeTitle: true,
     storyboardGenKeepStyleConsistent: true,
@@ -46,7 +71,7 @@ export function useSettingsDraft(isOpen: boolean) {
     priceDisplayCurrencyMode: 'auto',
     usdToCnyRate: '7.2',
     preferDiscountedPrice: false,
-    grsaiCreditTierId: store.grsaiCreditTierId,
+    grsaiCreditTierId: useSettingsStore.getState().grsaiCreditTierId,
     uiRadiusPreset: 'default',
     themeTonePreset: 'neutral',
     accentColor: '#3B82F6',
@@ -56,30 +81,8 @@ export function useSettingsDraft(isOpen: boolean) {
   });
 
   const resetDraft = useCallback(() => {
-    setDraft({
-      apiKeys: { ...store.apiKeys },
-      grsaiNanoBananaProModel: store.grsaiNanoBananaProModel,
-      downloadPresetPaths: [...store.downloadPresetPaths],
-      useUploadFilenameAsNodeTitle: store.useUploadFilenameAsNodeTitle,
-      storyboardGenKeepStyleConsistent: store.storyboardGenKeepStyleConsistent,
-      storyboardGenDisableTextInImage: store.storyboardGenDisableTextInImage,
-      storyboardGenAutoInferEmptyFrame: store.storyboardGenAutoInferEmptyFrame,
-      ignoreAtTagWhenCopyingAndGenerating: store.ignoreAtTagWhenCopyingAndGenerating,
-      enableStoryboardGenGridPreviewShortcut: store.enableStoryboardGenGridPreviewShortcut,
-      showStoryboardGenAdvancedRatioControls: store.showStoryboardGenAdvancedRatioControls,
-      showNodePrice: store.showNodePrice,
-      priceDisplayCurrencyMode: store.priceDisplayCurrencyMode,
-      usdToCnyRate: String(store.usdToCnyRate),
-      preferDiscountedPrice: store.preferDiscountedPrice,
-      grsaiCreditTierId: store.grsaiCreditTierId,
-      uiRadiusPreset: store.uiRadiusPreset,
-      themeTonePreset: store.themeTonePreset,
-      accentColor: store.accentColor,
-      canvasEdgeRoutingMode: store.canvasEdgeRoutingMode,
-      autoCheckAppUpdateOnLaunch: store.autoCheckAppUpdateOnLaunch,
-      enableUpdateDialog: store.enableUpdateDialog,
-    });
-  }, [store]);
+    setDraft(readStoreToDraft());
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -95,6 +98,7 @@ export function useSettingsDraft(isOpen: boolean) {
   );
 
   const commitDraft = useCallback(() => {
+    const store = useSettingsStore.getState();
     const providers = Object.keys(draft.apiKeys);
     for (const providerId of providers) {
       store.setProviderApiKey(providerId, draft.apiKeys[providerId] ?? '');
@@ -119,7 +123,7 @@ export function useSettingsDraft(isOpen: boolean) {
     store.setCanvasEdgeRoutingMode(draft.canvasEdgeRoutingMode);
     store.setAutoCheckAppUpdateOnLaunch(draft.autoCheckAppUpdateOnLaunch);
     store.setEnableUpdateDialog(draft.enableUpdateDialog);
-  }, [draft, store]);
+  }, [draft]);
 
   return { draft, updateDraft, commitDraft };
 }
