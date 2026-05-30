@@ -1,9 +1,10 @@
 import { memo, useMemo, useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { StoryboardCell } from "@/types/project";
+import { NodeHeader } from "../ui/NodeHeader";
+import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 interface StoryboardSplitNodeProps {
-  id: string;
   data: StoryboardCell;
   selected?: boolean;
 }
@@ -41,30 +42,20 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
       <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
       <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-      {/* Header */}
-      <div style={{ padding: "8px 10px 6px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <div style={{
-            width: "18px",
-            height: "18px",
-            borderRadius: "4px",
-            background: "linear-gradient(135deg, #8b5cf6, #6366f1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
+
+      <div style={{ padding: "8px 10px 6px" }}>
+        <NodeHeader
+          icon={
             <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
               <rect x="2" y="2" width="5" height="5" rx="1" />
               <rect x="9" y="2" width="5" height="5" rx="1" />
               <rect x="2" y="9" width="5" height="5" rx="1" />
               <rect x="9" y="9" width="5" height="5" rx="1" />
             </svg>
-          </div>
-          <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--text)" }}>分镜切割</span>
-        </div>
-        <span style={{ fontSize: "9px", color: "var(--text-muted)", padding: "2px 6px", background: "var(--ui-surface-field)", borderRadius: "4px" }}>
-          {gridInfo.rows}×{gridInfo.cols} | {totalFrames}格
-        </span>
+          }
+          titleText="分镜切割"
+          metaText={`${gridInfo.rows}×${gridInfo.cols} | ${totalFrames}格`}
+        />
       </div>
 
       {/* Image Grid */}
@@ -194,6 +185,8 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
           </div>
         </div>
       )}
+
+      <NodeResizeHandle />
     </div>
   );
 });

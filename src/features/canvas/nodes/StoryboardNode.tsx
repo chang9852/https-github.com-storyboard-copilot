@@ -2,6 +2,9 @@ import { memo, useMemo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Download } from 'lucide-react';
 import type { StoryboardCell, StoryboardSplitFrame } from '@/types/project';
+import { mergeStoryboardImages, saveImageSourceToDownloads } from '@/commands/image';
+import { NodeHeader } from '../ui/NodeHeader';
+import { NodeResizeHandle } from '../ui/NodeResizeHandle';
 
 interface StoryboardNodeProps {
   id: string;
@@ -55,10 +58,45 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
   }, [id, updateNodeData]);
 
   // 导出分镜图
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExport = useCallback(async () => {
-    // TODO: 实现分镜导出功能
-    console.log('Export storyboard:', { frames: normalizedFrames, gridRows, gridCols, aspectRatio });
-  }, [normalizedFrames, gridRows, gridCols, aspectRatio]);
+    const frameSources = normalizedFrames
+      .map((f: StoryboardSplitFrame) => f.imageUrl)
+      .filter((url: string | null): url is string => Boolean(url));
+
+    if (frameSources.length === 0) {
+      alert('没有可导出的分镜图片');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const result = await mergeStoryboardImages({
+        frameSources,
+        rows: gridRows,
+        cols: gridCols,
+        cellGap: 4,
+        outerPadding: 16,
+        noteHeight: 0,
+        fontSize: 12,
+        backgroundColor: '#0f1115',
+        maxDimension: 4096,
+      });
+
+      // Load the merged image and save to downloads
+      const savedPath = await saveImageSourceToDownloads(
+        result.imagePath,
+        `storyboard-${gridRows}x${gridCols}`
+      );
+      alert(`分镜图已导出到: ${savedPath}`);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('导出失败，请重试');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [normalizedFrames, gridRows, gridCols]);
 
   // CSS宽高比
   const cssAspectRatio = useMemo(() => {
@@ -86,43 +124,31 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
       <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: 'var(--accent)', border: '2px solid white' }} />
       <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: 'var(--accent)', border: '2px solid white' }} />
 
-      {/* Header */}
-      <div style={{ padding: '12px 16px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '20px',
-            height: '20px',
-            borderRadius: '6px',
-            background: 'linear-gradient(135deg, #ec4899, #be185d)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+
+      <div style={{ padding: '12px 16px 8px' }}>
+        <NodeHeader
+          icon={
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
               <rect x="2" y="2" width="5" height="5" rx="1" />
               <rect x="9" y="2" width="5" height="5" rx="1" />
               <rect x="2" y="9" width="5" height="5" rx="1" />
               <rect x="9" y="9" width="5" height="5" rx="1" />
             </svg>
-          </div>
-          <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>分镜切割</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            style={{
-              padding: '4px 8px',
-              fontSize: '10px',
-              color: 'var(--text-muted)',
-              background: 'var(--ui-surface-field)',
-              border: '1px solid var(--ui-border-soft)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            {isExpanded ? '收起' : '展开'}
-          </button>
-        </div>
+          }
+          titleText="分镜切割"
+          rightSlot={
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{
+                padding: '4px 8px', fontSize: '10px', color: 'var(--text-muted)',
+                background: 'var(--ui-surface-field)', border: '1px solid var(--ui-border-soft)',
+                borderRadius: '4px', cursor: 'pointer',
+              }}
+            >
+              {isExpanded ? '收起' : '展开'}
+            </button>
+          }
+        />
       </div>
 
       {/* Grid Controls */}
@@ -257,6 +283,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
         {/* Export Button */}
         <button
           onClick={(e) => { e.stopPropagation(); handleExport(); }}
+          disabled={isExporting}
           style={{
             marginLeft: 'auto',
             padding: '8px 16px',
@@ -266,16 +293,30 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
             background: 'var(--accent)',
             border: 'none',
             borderRadius: 'var(--ui-radius-lg)',
-            cursor: 'pointer',
+            cursor: isExporting ? 'wait' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            opacity: isExporting ? 0.7 : 1,
           }}
         >
-          <Download size={12} />
-          导出
+          {isExporting ? (
+            <div style={{ width: '12px', height: '12px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          ) : (
+            <Download size={12} />
+          )}
+          {isExporting ? '导出中...' : '导出'}
         </button>
       </div>
+
+      <NodeResizeHandle />
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 });

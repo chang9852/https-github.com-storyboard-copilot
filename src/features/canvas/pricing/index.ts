@@ -1,58 +1,242 @@
-import type { ProviderId, UsageRecord, UsageSummary } from './types';
-import { MODEL_PRICING, PROVIDER_PRICING } from './types';
+import type { ImageModelDefinition } from '@/features/canvas/models/types';
 
-export function estimateCost(model: string, provider: ProviderId): number {
-  const modelKey = `${provider}/${model}`;
-  if (MODEL_PRICING[modelKey] !== undefined) {
-    return MODEL_PRICING[modelKey];
-  }
+import {
+  DEFAULT_GRSAI_CREDIT_TIER_ID,
+  GRSAI_CREDIT_TIERS,
+  type GrsaiCreditTierDefinition,
+  type GrsaiCreditTierId,
+  type ModelPricingDefinition,
+  type PriceComputationContext,
+  type PriceCurrency,
+  type PriceDisplayCurrencyMode,
+  type PricingSettingsSnapshot,
+} from './types';
 
-  const providerPricing = PROVIDER_PRICING[provider];
-  if (providerPricing && providerPricing.tiers.length > 0) {
-    return providerPricing.tiers[0].pricePerImage;
-  }
+type ResolutionPriceTable = Record<string, number>;
 
-  return 0;
+interface FixedResolutionPricingConfig {
+  currency: PriceCurrency;
+  standardRates: ResolutionPriceTable;
+  discountedRates?: ResolutionPriceTable;
 }
 
-export function formatCost(cost: number, currency: string = 'CNY'): string {
-  if (currency === 'CNY') {
-    return `¥${cost.toFixed(2)}`;
-  }
-  return `$${cost.toFixed(2)}`;
+interface MultiplierPricingConfig {
+  currency: PriceCurrency;
+  baseAmount: number;
+  resolutionMultipliers: ResolutionPriceTable;
+  resolveExtraCharges?: (context: PriceComputationContext) => number;
 }
 
-export function calculateUsageSummary(records: UsageRecord[]): UsageSummary {
-  const summary: UsageSummary = {
-    totalCost: 0,
-    totalImages: records.length,
-    byProvider: {} as Record<ProviderId, { cost: number; count: number }>,
-    byModel: {} as Record<string, { cost: number; count: number }>,
+interface ModelPriceDisplay {
+  label: string;
+  nativeLabel?: string;
+  originalLabel?: string;
+  pointsCost?: number;
+  grsaiCreditTier?: GrsaiCreditTierDefinition;
+}
+
+const DEFAULT_PRICING_SETTINGS: PricingSettingsSnapshot = {
+  displayCurrencyMode: 'auto',
+  usdToCnyRate: 7.2,
+  preferDiscountedPrice: false,
+  grsaiCreditTierId: DEFAULT_GRSAI_CREDIT_TIER_ID,
+};
+
+function toFiniteAmount(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function normalizeStringParam(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim().toLowerCase() : null;
+}
+
+function convertCurrency(amount: number, from: PriceCurrency, to: PriceCurrency, usdToCnyRate: number): number {
+  const safeRate = Number.isFinite(usdToCnyRate) && usdToCnyRate > 0 ? usdToCnyRate : 7.2;
+  if (from === to) {
+    return amount;
+  }
+
+  if (from === 'USD' && to === 'CNY') {
+    return amount * safeRate;
+  }
+
+  return amount / safeRate;
+}
+
+function formatCurrency(amount: number, currency: PriceCurrency, language: string): string {
+  const locale = language.startsWith('zh') ? 'zh-CN' : 'en-US';
+
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(toFiniteAmount(amount));
+}
+
+export function resolvePriceDisplayCurrency(
+  language: string,
+  mode: PriceDisplayCurrencyMode
+): PriceCurrency {
+  if (mode === 'cny') {
+    return 'CNY';
+  }
+
+  if (mode === 'usd') {
+    return 'USD';
+  }
+
+  return language.startsWith('zh') ? 'CNY' : 'USD';
+}
+
+export function getGrsaiCreditTier(
+  tierId: GrsaiCreditTierId | string | null | undefined
+): GrsaiCreditTierDefinition {
+  return (
+    GRSAI_CREDIT_TIERS.find((tier) => tier.id === tierId) ??
+    GRSAI_CREDIT_TIERS.find((tier) => tier.id === DEFAULT_GRSAI_CREDIT_TIER_ID) ??
+    GRSAI_CREDIT_TIERS[0]
+  );
+}
+
+export function createFixedResolutionPricing(
+  config: FixedResolutionPricingConfig
+): ModelPricingDefinition {
+  return {
+    quote: ({ resolution, settings }) => {
+      const standardAmount = config.standardRates[resolution];
+      if (!Number.isFinite(standardAmount)) {
+        return null;
+      }
+
+      const discountedAmount =
+        settings.preferDiscountedPrice && config.discountedRates
+          ? config.discountedRates[resolution]
+          : undefined;
+
+      if (typeof discountedAmount === 'number' && Number.isFinite(discountedAmount)) {
+        return {
+          amount: discountedAmount,
+          currency: config.currency,
+          originalAmount: standardAmount,
+          originalCurrency: config.currency,
+        };
+      }
+
+      return {
+        amount: standardAmount,
+        currency: config.currency,
+      };
+    },
   };
+}
 
-  for (const record of records) {
-    summary.totalCost += record.cost;
+export function createMultiplierPricing(
+  config: MultiplierPricingConfig
+): ModelPricingDefinition {
+  return {
+    quote: (context) => {
+      const multiplier = config.resolutionMultipliers[context.resolution];
+      if (!Number.isFinite(multiplier)) {
+        return null;
+      }
 
-    if (!summary.byProvider[record.provider]) {
-      summary.byProvider[record.provider] = { cost: 0, count: 0 };
-    }
-    summary.byProvider[record.provider].cost += record.cost;
-    summary.byProvider[record.provider].count += 1;
+      const extraCharges = config.resolveExtraCharges?.(context) ?? 0;
+      return {
+        amount: config.baseAmount * multiplier + extraCharges,
+        currency: config.currency,
+      };
+    },
+  };
+}
 
-    if (!summary.byModel[record.model]) {
-      summary.byModel[record.model] = { cost: 0, count: 0 };
-    }
-    summary.byModel[record.model].cost += record.cost;
-    summary.byModel[record.model].count += 1;
+export function createGrsaiPointsPricing(
+  resolvePointsCost: (context: PriceComputationContext) => number
+): ModelPricingDefinition {
+  return {
+    quote: (context) => {
+      const pointsCost = resolvePointsCost(context);
+      if (!Number.isFinite(pointsCost) || pointsCost <= 0) {
+        return null;
+      }
+
+      const creditTier = getGrsaiCreditTier(context.settings.grsaiCreditTierId);
+      return {
+        amount: (creditTier.priceCny * pointsCost) / creditTier.credits,
+        currency: 'CNY',
+        pointsCost,
+        metadata: {
+          grsaiCreditTierId: creditTier.id,
+        },
+      };
+    },
+  };
+}
+
+export function resolveModelPriceDisplay(
+  model: ImageModelDefinition,
+  options: {
+    resolution: string;
+    extraParams?: Record<string, unknown>;
+    settings?: Partial<PricingSettingsSnapshot>;
+    language: string;
+  }
+): ModelPriceDisplay | null {
+  if (!model.pricing) {
+    return null;
   }
 
-  return summary;
+  const pricingSettings: PricingSettingsSnapshot = {
+    ...DEFAULT_PRICING_SETTINGS,
+    ...options.settings,
+  };
+  const quote = model.pricing.quote({
+    resolution: options.resolution,
+    extraParams: options.extraParams,
+    settings: pricingSettings,
+  });
+  if (!quote) {
+    return null;
+  }
+
+  const displayCurrency = resolvePriceDisplayCurrency(
+    options.language,
+    pricingSettings.displayCurrencyMode
+  );
+  const displayAmount = convertCurrency(
+    quote.amount,
+    quote.currency,
+    displayCurrency,
+    pricingSettings.usdToCnyRate
+  );
+  const perRunSuffix = options.language.startsWith('zh') ? '/次' : '/run';
+  const nativeLabel =
+    quote.currency === displayCurrency
+      ? undefined
+      : `${formatCurrency(quote.amount, quote.currency, options.language)}${perRunSuffix}`;
+  const originalDisplayAmount =
+    quote.originalAmount != null
+      ? convertCurrency(
+          quote.originalAmount,
+          quote.originalCurrency ?? quote.currency,
+          displayCurrency,
+          pricingSettings.usdToCnyRate
+        )
+      : null;
+  const grsaiCreditTierId = normalizeStringParam(quote.metadata?.grsaiCreditTierId);
+
+  return {
+    label: `${formatCurrency(displayAmount, displayCurrency, options.language)}${perRunSuffix}`,
+    nativeLabel,
+    originalLabel:
+      originalDisplayAmount != null
+        ? `${formatCurrency(originalDisplayAmount, displayCurrency, options.language)}${perRunSuffix}`
+        : undefined,
+    pointsCost: quote.pointsCost,
+    grsaiCreditTier: grsaiCreditTierId ? getGrsaiCreditTier(grsaiCreditTierId) : undefined,
+  };
 }
 
-export function getFreeCredits(provider: ProviderId): number {
-  return PROVIDER_PRICING[provider]?.freeCredits ?? 0;
-}
-
-export function getPricingTiers(provider: ProviderId) {
-  return PROVIDER_PRICING[provider]?.tiers ?? [];
+export function isHighThinkingEnabled(extraParams: Record<string, unknown> | undefined): boolean {
+  return normalizeStringParam(extraParams?.thinking_level) === 'high';
 }

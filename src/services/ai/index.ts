@@ -11,9 +11,6 @@ export const PROVIDERS: AIProvider[] = [
     models: [
       { id: "kie/nano-banana-pro", name: "Nano Banana Pro", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
       { id: "kie/nano-banana-2", name: "Nano Banana 2", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "kie/seedream-4.0", name: "Seedream 4.0", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
-      { id: "kie/seedream-4.5", name: "Seedream 4.5", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
-      { id: "kie/seedream-5.0-lite", name: "Seedream 5.0 Lite", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
     ],
   },
   {
@@ -23,9 +20,29 @@ export const PROVIDERS: AIProvider[] = [
     authType: "key",
     enabled: true,
     models: [
-      { id: "fal/fal-ai/flux-2-pro", name: "Flux 2 Pro", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
-      { id: "fal/fal-ai/gemini-3-pro-image-preview", name: "Nano Banana Pro (Gemini)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "fal/fal-ai/recraft-v3", name: "Recraft V3", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: true },
+      { id: "fal/nano-banana-2", name: "Nano Banana 2 (fal)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
+      { id: "fal/nano-banana-pro", name: "Nano Banana Pro (fal)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
+    ],
+  },
+  {
+    id: "ppio",
+    name: "PPIO",
+    baseUrl: "https://api.ppinfra.com",
+    authType: "bearer",
+    enabled: false,
+    models: [
+      { id: "ppio/gemini-3.1-flash", name: "Gemini 3.1 Flash", provider: "ppio", type: "text-to-image", maxWidth: 4096, maxHeight: 4096, supportsNegativePrompt: false },
+    ],
+  },
+  {
+    id: "grsai",
+    name: "Grsai",
+    baseUrl: "https://api.grsai.com",
+    authType: "key",
+    enabled: false,
+    models: [
+      { id: "grsai/nano-banana-2", name: "Nano Banana 2", provider: "grsai", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
+      { id: "grsai/nano-banana-pro", name: "Nano Banana Pro", provider: "grsai", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
     ],
   },
 ];
@@ -104,7 +121,6 @@ export async function createGenerationTask(params: {
   if (params.provider === "kie") {
     const aspectRatio = params.aspectRatio || "1:1";
     const resolution = params.resolution || "2K";
-    // Strip provider prefix from model name (e.g., "kie/nano-banana-pro" -> "nano-banana-pro")
     const kieModelName = params.model.replace(/^kie\//, '');
 
     const response = await fetch(`${provider.baseUrl}/api/v1/jobs/createTask`, {
@@ -175,6 +191,66 @@ export async function createGenerationTask(params: {
     };
   }
 
+  // PPIO API
+  if (params.provider === "ppio") {
+    const response = await fetch(`${provider.baseUrl}/v1/images/generations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: params.model.replace(/^ppio\//, ''),
+        prompt: params.prompt,
+        n: params.numImages || 1,
+        size: `${params.width}x${params.height}`,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`API 错误: ${error}`);
+    }
+
+    const result = await response.json();
+    return {
+      task_id: "ppio-direct",
+      provider: params.provider,
+      status: "completed",
+      images: result.data?.map((img: any) => ({ url: img.url, width: params.width, height: params.height })) || [],
+    };
+  }
+
+  // Grsai API
+  if (params.provider === "grsai") {
+    const response = await fetch(`${provider.baseUrl}/v1/images/generations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: params.model.replace(/^grsai\//, ''),
+        prompt: params.prompt,
+        n: params.numImages || 1,
+        size: `${params.width}x${params.height}`,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`API 错误: ${error}`);
+    }
+
+    const result = await response.json();
+    return {
+      task_id: "grsai-direct",
+      provider: params.provider,
+      status: "completed",
+      images: result.data?.map((img: any) => ({ url: img.url, width: params.width, height: params.height })) || [],
+    };
+  }
+
   throw new Error("不支持的供应商");
 }
 
@@ -183,19 +259,18 @@ export async function pollTaskResult(
   taskId: string,
   onProgress?: (status: string, elapsed?: number) => void,
 ): Promise<{ images: { url: string }[] }> {
-  // fal 直接返回结果
-  if (taskId === "fal-direct") {
+  // fal, ppio, grsai 直接返回结果
+  if (taskId === "fal-direct" || taskId === "ppio-direct" || taskId === "grsai-direct") {
     return { images: [] };
   }
 
   const apiKey = useSettingsStore.getState().getApiKey(provider);
-  const maxAttempts = 180; // 增加到180次
-  const interval = 2000; // 2秒间隔
+  const maxAttempts = 180;
+  const interval = 2000;
   const startTime = Date.now();
-  const timeoutMs = 360000; // 6分钟总超时
+  const timeoutMs = 360000;
 
   for (let i = 0; i < maxAttempts; i++) {
-    // 检查总超时
     if (Date.now() - startTime > timeoutMs) {
       throw new Error("生成超时（超过6分钟），任务可能仍在处理中，请稍后在KIE网站查看结果");
     }
@@ -221,12 +296,10 @@ export async function pollTaskResult(
         onProgress?.(status, elapsed);
 
         if (status === "completed" || status === "succeeded") {
-          // 获取生成的图片
           const imageUrl = result.data.result?.imageUrl || result.data.result?.images?.[0]?.url;
           if (imageUrl) {
             return { images: [{ url: imageUrl }] };
           }
-          // 尝试其他可能的字段
           const altImageUrl = (result.data.result as any)?.output?.[0]?.url;
           if (altImageUrl) {
             return { images: [{ url: altImageUrl }] };
@@ -237,14 +310,11 @@ export async function pollTaskResult(
         if (status === "failed") {
           throw new Error(result.data.error || "生成失败");
         }
-
-        // 其他状态继续轮询：queued, running, processing
       }
     } catch (error: any) {
       if (error.message?.includes("生成失败") || error.message?.includes("生成完成")) {
         throw error;
       }
-      // 网络错误，继续轮询
       console.warn(`[pollTaskResult] Error: ${error.message}, retrying...`);
     }
 

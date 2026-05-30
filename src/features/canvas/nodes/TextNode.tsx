@@ -1,6 +1,8 @@
 import { memo, useState, useCallback } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import type { StoryboardCell } from "@/types/project";
+import { NodeHeader } from "../ui/NodeHeader";
+import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 function TextNodeComponent({ id, data, selected }: NodeProps & { data: StoryboardCell }) {
   const { updateNodeData } = useReactFlow();
@@ -19,6 +21,7 @@ function TextNodeComponent({ id, data, selected }: NodeProps & { data: Storyboar
       setEditText(data.prompt || "");
     }
   }, [data.prompt]);
+
 
   return (
     <div
@@ -39,25 +42,18 @@ function TextNodeComponent({ id, data, selected }: NodeProps & { data: Storyboar
       <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
       <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-      {/* Header */}
-      <div style={{ padding: "8px 10px 4px", display: "flex", alignItems: "center", gap: "6px" }}>
-        <div style={{
-          width: "18px",
-          height: "18px",
-          borderRadius: "4px",
-          background: "var(--accent)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5"><path d="M2 2h8M6 2v8M4 10h4" strokeLinecap="round" /></svg>
-        </div>
-        <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--text)" }}>
-          {data.cellType === "text_annotation" ? "文本注释" : "文本块"}
-        </span>
+
+      <div style={{ padding: "8px 10px 4px" }}>
+        <NodeHeader
+          icon={
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5">
+              <path d="M2 2h8M6 2v8M4 10h4" strokeLinecap="round" />
+            </svg>
+          }
+          titleText={data.cellType === "text_annotation" ? "文本注释" : "文本块"}
+        />
       </div>
 
-      {/* Content */}
       <div style={{ padding: "4px 10px 10px", flex: 1 }}>
         {isEditing ? (
           <textarea
@@ -84,15 +80,15 @@ function TextNodeComponent({ id, data, selected }: NodeProps & { data: Storyboar
               fontSize: "11px", lineHeight: "1.6",
               color: data.prompt ? "var(--text)" : "var(--text-muted)",
               overflow: "hidden", whiteSpace: "pre-wrap", wordBreak: "break-word",
-              height: "100%", cursor: "text",
-              padding: "4px",
-              borderRadius: "var(--ui-radius-lg)",
+              height: "100%", cursor: "text", padding: "4px", borderRadius: "var(--ui-radius-lg)",
             }}
           >
             {data.prompt || "双击编辑..."}
           </div>
         )}
       </div>
+
+      <NodeResizeHandle />
     </div>
   );
 }

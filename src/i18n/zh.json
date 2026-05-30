@@ -132,5 +132,45 @@
     "error": "错误",
     "success": "成功",
     "no_data": "暂无数据"
+  },
+  "modelParams": {
+    "model": "模型",
+    "quality": "画质",
+    "aspectRatio": "比例",
+    "otherParams": "其他参数",
+    "thinkingLevel": "思考等级",
+    "thinkingDisabled": "关闭",
+    "thinkingMinimal": "轻量",
+    "thinkingHigh": "深度",
+    "enableWebSearch": "启用网络搜索",
+    "provider": "供应商",
+    "providerKeyRequiredTitle": "需要配置 API Key",
+    "providerKeyRequiredDesc": "使用 {{provider}} 需要先配置 API Key",
+    "goConfigure": "去配置",
+    "extraOptions": "额外选项"
+  },
+  "nodeToolbar": {
+    "copy": "复制图片",
+    "download": "下载",
+    "copyText": "复制文本",
+    "copyErrorReport": "复制错误报告",
+    "copied": "已复制",
+    "reupload": "重新上传",
+    "ungroup": "取消分组",
+    "saveAs": "另存为...",
+    "noDownloadPresetPathsHint": "未配置预设下载路径",
+    "storyboardLine": "{{index}}. {{content}}"
+  },
+  "tool": {
+    "crop": "裁剪",
+    "annotate": "标注",
+    "split": "切割"
+  },
+  "settings": {
+    "missingAnyApiKeyMessage": "尚未配置任何 API Key，无法使用 AI 生成功能",
+    "openProvidersSettings": "去配置"
+  },
+  "project": {
+    "namePlaceholder": "输入项目名称"
   }
 }

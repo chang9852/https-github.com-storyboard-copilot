@@ -6,7 +6,7 @@ import { PROVIDERS } from "@/services/ai";
 
 export function ApiKeysSettings() {
   const { t } = useTranslation();
-  const { providerConfigs, setApiKey } = useSettingsStore();
+  const { providerConfigs, setProviderApiKey } = useSettingsStore();
   const [saved, setSaved] = useState(false);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
 
@@ -55,7 +55,7 @@ export function ApiKeysSettings() {
                     type={showKeys[provider.id] ? "text" : "password"}
                     placeholder={`${t("settings.api_key")} - ${provider.name}`}
                     value={providerConfigs[provider.id]?.apiKey || ""}
-                    onChange={(e) => setApiKey(provider.id, e.target.value)}
+                    onChange={(e) => setProviderApiKey(provider.id, e.target.value)}
                   />
                   <button
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
@@ -81,7 +81,7 @@ export function ApiKeysSettings() {
                   size="sm"
                   onClick={() => {
                     if (providerConfigs[provider.id]?.apiKey) {
-                      setApiKey(provider.id, "");
+                      setProviderApiKey(provider.id, "");
                     }
                   }}
                 >

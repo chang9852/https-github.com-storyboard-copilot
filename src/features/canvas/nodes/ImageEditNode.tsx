@@ -1,63 +1,26 @@
 import { memo, useState, useCallback } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
-import { createGenerationTask, pollTaskResult, getModelsByProvider } from "@/services/ai";
+import { createGenerationTask, pollTaskResult } from "@/services/ai";
 import { useSettingsStore } from "@/stores/settingsStore";
 import type { ImageEditNodeData } from "../domain/canvasNodes";
 import type { ProviderId } from "@/types/ai";
+import { NodeHeader } from "../ui/NodeHeader";
+import { CanvasNodeImage } from "../ui/CanvasNodeImage";
+import { NodeResizeHandle } from "../ui/NodeResizeHandle";
+import { ModelParamsControls } from "../ui/ModelParamsControls";
 
-type AspectRatioIcon = "auto" | "square" | "portrait" | "landscape";
+const ASPECT_RATIO_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  "auto": { width: 1024, height: 1024 },
+  "1:1": { width: 1024, height: 1024 },
+  "16:9": { width: 1024, height: 576 },
+  "9:16": { width: 576, height: 1024 },
+  "4:3": { width: 1024, height: 768 },
+  "3:4": { width: 768, height: 1024 },
+  "21:9": { width: 1024, height: 438 },
+};
 
-interface AspectRatioOption {
-  value: string;
-  label: string;
-  icon: AspectRatioIcon;
-  width: number;
-  height: number;
-}
-
-const QUICK_ASPECT_RATIOS: AspectRatioOption[] = [
-  { value: "auto", label: "自动", icon: "auto", width: 1024, height: 1024 },
-  { value: "1:1", label: "1:1", icon: "square", width: 1024, height: 1024 },
-  { value: "16:9", label: "16:9", icon: "landscape", width: 1024, height: 576 },
-  { value: "9:16", label: "9:16", icon: "portrait", width: 576, height: 1024 },
-  { value: "4:3", label: "4:3", icon: "landscape", width: 1024, height: 768 },
-  { value: "3:4", label: "3:4", icon: "portrait", width: 768, height: 1024 },
-];
-
-function AspectRatioIconSvg({ type, size = 16 }: { type: AspectRatioIcon; size?: number }) {
-  const color = "var(--text-muted)";
-  const strokeWidth = 1.5;
-
-  if (type === "auto") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-        <path d="M4 6L8 2L12 6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 10L8 14L12 10" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  if (type === "square") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-        <rect x="3" y="3" width="10" height="10" rx="1" />
-      </svg>
-    );
-  }
-
-  if (type === "portrait") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-        <rect x="4" y="2" width="8" height="12" rx="1" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-      <rect x="2" y="4" width="12" height="8" rx="1" />
-    </svg>
-  );
+function getAspectDimensions(ratio: string): { width: number; height: number } {
+  return ASPECT_RATIO_DIMENSIONS[ratio] ?? ASPECT_RATIO_DIMENSIONS["1:1"];
 }
 
 function generateId(): string {
@@ -72,13 +35,13 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>(data.provider || "kie");
   const [selectedModel, setSelectedModel] = useState(data.model || "kie/nano-banana-pro");
   const [selectedAspectRatio, setSelectedAspectRatio] = useState(data.aspectRatio || "1:1");
+  const [selectedSize, setSelectedSize] = useState<"0.5K" | "1K" | "2K" | "4K">("2K");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const models = getModelsByProvider(selectedProvider);
-  const aspectRatio = QUICK_ASPECT_RATIOS.find((r) => r.value === selectedAspectRatio) || QUICK_ASPECT_RATIOS[1];
+  const aspectDims = getAspectDimensions(selectedAspectRatio);
 
   const handlePromptChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     e.stopPropagation();
@@ -117,8 +80,8 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
         provider: selectedProvider,
         model: selectedModel,
         prompt: prompt.trim(),
-        width: aspectRatio.width,
-        height: aspectRatio.height,
+        width: aspectDims.width,
+        height: aspectDims.height,
         numImages: 1,
         aspectRatio: selectedAspectRatio,
         resolution: "2K",
@@ -132,21 +95,16 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       });
 
       if (pollResult.images && pollResult.images.length > 0) {
-        // Update current node with generated image
         updateNodeData(id, {
           imageUrl: pollResult.images[0].url,
           isGenerating: false,
         });
 
-        // Create a new export image node
         const newNodeId = generateId();
         addNodes({
           id: newNodeId,
           type: "exportImage",
-          position: {
-            x: 380 + 50,
-            y: 0,
-          },
+          position: { x: 380 + 50, y: 0 },
           data: {
             images: [pollResult.images[0].url],
             selectedImageIndex: 0,
@@ -173,9 +131,9 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       setGenerationProgress("");
       setElapsedTime(0);
     }
-  }, [id, prompt, selectedProvider, selectedModel, aspectRatio, selectedAspectRatio, data, providerConfigs, updateNodeData, addNodes, addEdges]);
+  }, [id, prompt, selectedProvider, selectedModel, aspectDims, selectedAspectRatio, data, providerConfigs, updateNodeData, addNodes, addEdges]);
 
-  // If image is generated, show preview
+
   if (data.imageUrl && !isGenerating) {
     return (
       <div
@@ -196,59 +154,51 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
         <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
         <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-        {/* Header */}
-        <div style={{ padding: "8px 10px 4px", display: "flex", alignItems: "center", gap: "6px" }}>
-          <div
-            style={{
-              width: "18px",
-              height: "18px",
-              borderRadius: "4px",
-              background: "var(--accent)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1L12 10H2L7 1Z" fill="white" />
-              <circle cx="7" cy="7" r="2" fill="var(--accent)" />
-            </svg>
-          </div>
-          <span style={{ fontSize: "11px", color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-            {prompt.slice(0, 25) || "AI 生成"}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              updateNodeData(id, { imageUrl: undefined });
-            }}
-            style={{
-              width: "16px",
-              height: "16px",
-              borderRadius: "4px",
-              border: "none",
-              background: "var(--ui-surface-field)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
-              <path d="M1 1l6 6M7 1l-6 6" strokeLinecap="round" />
-            </svg>
-          </button>
+
+        <div style={{ padding: "8px 10px 4px" }}>
+          <NodeHeader
+            icon={
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1L12 10H2L7 1Z" fill="white" />
+                <circle cx="7" cy="7" r="2" fill="var(--accent)" />
+              </svg>
+            }
+            titleText={prompt.slice(0, 25) || "AI 生成"}
+            rightSlot={
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateNodeData(id, { imageUrl: undefined });
+                }}
+                style={{
+                  width: "16px", height: "16px", borderRadius: "4px", border: "none",
+                  background: "var(--ui-surface-field)", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
+                  <path d="M1 1l6 6M7 1l-6 6" strokeLinecap="round" />
+                </svg>
+              </button>
+            }
+          />
         </div>
 
-        {/* Image */}
         <div style={{ margin: "0 8px 8px", borderRadius: "var(--ui-radius-lg)", overflow: "hidden", flex: 1 }}>
-          <img src={data.imageUrl} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <CanvasNodeImage
+            src={data.imageUrl}
+            alt=""
+            draggable={false}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            viewerImageList={[data.imageUrl]}
+          />
         </div>
+
+        <NodeResizeHandle />
       </div>
     );
   }
 
-  // AI generation node
   return (
     <div
       style={{
@@ -267,32 +217,20 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
       <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-      {/* Left side - Prompt input */}
+
       <div style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid var(--ui-border-soft)" }}>
-        {/* Header */}
-        <div style={{ padding: "8px 10px 6px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <div
-              style={{
-                width: "18px",
-                height: "18px",
-                borderRadius: "4px",
-                background: "var(--accent)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+        <div style={{ padding: "8px 10px 6px" }}>
+          <NodeHeader
+            icon={
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
                 <path d="M7 1L12 10H2L7 1Z" fill="white" />
                 <circle cx="7" cy="7" r="2" fill="var(--accent)" />
               </svg>
-            </div>
-            <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--text)" }}>AI 图片</span>
-          </div>
+            }
+            titleText="AI 图片"
+          />
         </div>
 
-        {/* Textarea */}
         <div style={{ flex: 1, padding: "0 10px" }}>
           <textarea
             value={prompt}
@@ -302,24 +240,14 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
             onMouseDown={(e) => e.stopPropagation()}
             placeholder="输入 AI 提示词..."
             style={{
-              width: "100%",
-              height: "100%",
-              minHeight: "80px",
-              padding: "8px",
-              fontSize: "11px",
-              lineHeight: "1.5",
-              color: "var(--text)",
-              background: "var(--ui-surface-field)",
-              border: "1px solid var(--ui-border-soft)",
-              borderRadius: "var(--ui-radius-lg)",
-              outline: "none",
-              resize: "none",
-              fontFamily: "inherit",
+              width: "100%", height: "100%", minHeight: "80px", padding: "8px",
+              fontSize: "11px", lineHeight: "1.5", color: "var(--text)",
+              background: "var(--ui-surface-field)", border: "1px solid var(--ui-border-soft)",
+              borderRadius: "var(--ui-radius-lg)", outline: "none", resize: "none", fontFamily: "inherit",
             }}
           />
         </div>
 
-        {/* Error message */}
         {error && (
           <div style={{ padding: "4px 10px", fontSize: "10px", color: "var(--danger)", display: "flex", alignItems: "center", gap: "4px" }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -330,7 +258,6 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
           </div>
         )}
 
-        {/* Generation progress */}
         {isGenerating && generationProgress && (
           <div style={{ padding: "4px 10px", fontSize: "10px", color: "var(--accent)", display: "flex", alignItems: "center", gap: "4px", background: "rgba(var(--accent-rgb), 0.05)", margin: "0 10px", borderRadius: "var(--ui-radius-lg)" }}>
             <div style={{ width: "10px", height: "10px", border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
@@ -338,109 +265,29 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
           </div>
         )}
 
-        {/* Bottom control bar */}
         <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          {/* Provider & Model selectors row */}
-          <div style={{ display: "flex", gap: "6px" }}>
-            <select
-              value={selectedProvider}
-              onChange={(e) => {
-                setSelectedProvider(e.target.value as ProviderId);
-                const newModels = getModelsByProvider(e.target.value as ProviderId);
-                if (newModels.length > 0) {
-                  setSelectedModel(newModels[0].id);
-                }
-              }}
-              style={{
-                flex: 1,
-                padding: "4px 6px",
-                background: "var(--ui-surface-field)",
-                border: "1px solid var(--ui-border-soft)",
-                borderRadius: "var(--ui-radius-lg)",
-                fontSize: "10px",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                outline: "none",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <option value="kie">KIE</option>
-              <option value="fal">fal</option>
-            </select>
-
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              style={{
-                flex: 1,
-                padding: "4px 6px",
-                background: "var(--ui-surface-field)",
-                border: "1px solid var(--ui-border-soft)",
-                borderRadius: "var(--ui-radius-lg)",
-                fontSize: "10px",
-                color: "var(--text-muted)",
-                cursor: "pointer",
-                outline: "none",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {models.map((model) => (
-                <option key={model.id} value={model.id}>
-                  {model.name}
-                </option>
-              ))}
-            </select>
+          <div onClick={(e) => e.stopPropagation()}>
+            <ModelParamsControls
+              selectedProvider={selectedProvider}
+              selectedModelId={selectedModel}
+              selectedResolution={selectedSize}
+              selectedAspectRatio={selectedAspectRatio}
+              onProviderChange={(p) => setSelectedProvider(p)}
+              onModelChange={setSelectedModel}
+              onResolutionChange={(r) => setSelectedSize(r as "0.5K" | "1K" | "2K" | "4K")}
+              onAspectRatioChange={setSelectedAspectRatio}
+            />
           </div>
 
-          {/* Aspect Ratio buttons */}
-          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
-            {QUICK_ASPECT_RATIOS.map((ratio) => (
-              <button
-                key={ratio.value}
-                onClick={() => setSelectedAspectRatio(ratio.value)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "3px",
-                  padding: "4px 8px",
-                  borderRadius: "var(--ui-radius-lg)",
-                  border: "1px solid var(--ui-border-soft)",
-                  background: selectedAspectRatio === ratio.value ? "var(--accent)" : "var(--ui-surface-field)",
-                  color: selectedAspectRatio === ratio.value ? "white" : "var(--text-muted)",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  fontSize: "9px",
-                  fontWeight: 500,
-                }}
-              >
-                <AspectRatioIconSvg type={ratio.icon} size={10} />
-                {ratio.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Generate button */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleGenerate();
-            }}
+            onClick={(e) => { e.stopPropagation(); handleGenerate(); }}
             disabled={isGenerating || !prompt.trim()}
             style={{
-              width: "100%",
-              padding: "8px",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "white",
+              width: "100%", padding: "8px", fontSize: "11px", fontWeight: 500, color: "white",
               background: isGenerating || !prompt.trim() ? "var(--text-muted)" : "var(--accent)",
-              border: "none",
-              borderRadius: "var(--ui-radius-lg)",
+              border: "none", borderRadius: "var(--ui-radius-lg)",
               cursor: isGenerating || !prompt.trim() ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "4px",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
             }}
           >
             {isGenerating ? (

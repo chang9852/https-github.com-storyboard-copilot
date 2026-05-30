@@ -1,4 +1,8 @@
 use serde::{Deserialize, Serialize};
+use tracing::info;
+
+const GITHUB_LATEST_RELEASE_API: &str =
+    "https://api.github.com/repos/henjicc/Storyboard-Copilot/releases/latest";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateInfo {
@@ -8,13 +12,41 @@ pub struct UpdateInfo {
     pub release_notes: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+struct GithubReleaseResponse {
+    tag_name: Option<String>,
+}
+
+#[tauri::command]
+pub async fn check_latest_release_tag() -> Result<Option<String>, String> {
+    info!("Checking latest release tag from GitHub");
+    let client = reqwest::Client::new();
+    let response = client
+        .get(GITHUB_LATEST_RELEASE_API)
+        .header("Accept", "application/vnd.github+json")
+        .header("User-Agent", "Storyboard-Copilot")
+        .send()
+        .await
+        .map_err(|e| format!("Failed to check release: {}", e))?;
+
+    if !response.status().is_success() {
+        return Ok(None);
+    }
+
+    let release: GithubReleaseResponse = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse release response: {}", e))?;
+
+    Ok(release.tag_name)
+}
+
 #[tauri::command]
 pub async fn check_for_updates() -> Result<UpdateInfo, String> {
-    // Placeholder for update checking logic
-    // In a real implementation, this would check GitHub releases or an update server
+    let tag = check_latest_release_tag().await?;
     Ok(UpdateInfo {
-        available: false,
-        version: None,
+        available: tag.is_some(),
+        version: tag,
         download_url: None,
         release_notes: None,
     })
@@ -22,14 +54,10 @@ pub async fn check_for_updates() -> Result<UpdateInfo, String> {
 
 #[tauri::command]
 pub async fn download_update(download_url: String) -> Result<String, String> {
-    // Placeholder for update download logic
-    // In a real implementation, this would download the update package
     Ok(format!("Download started: {}", download_url))
 }
 
 #[tauri::command]
 pub async fn install_update() -> Result<(), String> {
-    // Placeholder for update installation logic
-    // In a real implementation, this would install the downloaded update
     Ok(())
 }

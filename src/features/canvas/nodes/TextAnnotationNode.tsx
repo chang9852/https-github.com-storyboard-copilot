@@ -1,6 +1,8 @@
 import { memo, useState, useCallback } from "react";
 import { type NodeProps, useReactFlow } from "@xyflow/react";
 import type { TextAnnotationNodeData } from "../domain/canvasNodes";
+import { NodeHeader } from "../ui/NodeHeader";
+import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data: TextAnnotationNodeData }) {
   const { updateNodeData } = useReactFlow();
@@ -23,6 +25,7 @@ function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data:
     [data.text]
   );
 
+
   return (
     <div
       style={{
@@ -39,27 +42,18 @@ function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data:
         overflow: "hidden",
       }}
     >
-      {/* Header */}
-      <div style={{ padding: "8px 10px 4px", display: "flex", alignItems: "center", gap: "6px" }}>
-        <div
-          style={{
-            width: "18px",
-            height: "18px",
-            borderRadius: "4px",
-            background: "var(--accent)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5">
-            <path d="M2 2h8M6 2v8M4 10h4" strokeLinecap="round" />
-          </svg>
-        </div>
-        <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--text)" }}>文本标注</span>
+
+      <div style={{ padding: "8px 10px 4px" }}>
+        <NodeHeader
+          icon={
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" strokeWidth="1.5">
+              <path d="M2 2h8M6 2v8M4 10h4" strokeLinecap="round" />
+            </svg>
+          }
+          titleText="文本标注"
+        />
       </div>
 
-      {/* Content */}
       <div style={{ padding: "4px 10px 10px", flex: 1 }}>
         {isEditing ? (
           <textarea
@@ -110,6 +104,8 @@ function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data:
           </div>
         )}
       </div>
+
+      <NodeResizeHandle />
     </div>
   );
 }

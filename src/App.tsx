@@ -6,7 +6,6 @@ import { useThemeStore } from "@/stores/themeStore";
 import { Canvas } from "@/features/canvas/Canvas";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { TitleBar } from "@/components/TitleBar";
-import { initializeModels } from "@/features/canvas/models";
 import "@/features/canvas/tools/builtInTools";
 
 export default function App() {
@@ -18,7 +17,6 @@ export default function App() {
 
   useEffect(() => {
     loadSettings();
-    initializeModels();
   }, [loadSettings]);
 
   useEffect(() => {

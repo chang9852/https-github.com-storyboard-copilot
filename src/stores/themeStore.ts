@@ -1,47 +1,45 @@
-import { create } from "zustand";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-type Theme = "dark" | "light";
+type Theme = 'dark' | 'light';
 
-interface ThemeStore {
+interface ThemeState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 }
 
-export const useThemeStore = create<ThemeStore>((set) => ({
-  theme: (localStorage.getItem("theme") as Theme) || "dark",
-
-  setTheme: (theme) => {
-    localStorage.setItem("theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+export const useThemeStore = create<ThemeState>()(
+  persist(
+    (set) => ({
+      theme: 'dark',
+      setTheme: (theme) => {
+        set({ theme });
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+      },
+      toggleTheme: () => {
+        set((state) => {
+          const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', newTheme);
+          document.documentElement.classList.toggle('dark', newTheme === 'dark');
+          return { theme: newTheme };
+        });
+      },
+    }),
+    {
+      name: 'theme-storage',
     }
-    set({ theme });
-  },
-
-  toggleTheme: () => {
-    set((state) => {
-      const newTheme = state.theme === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", newTheme);
-      document.documentElement.setAttribute("data-theme", newTheme);
-      if (newTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      return { theme: newTheme };
-    });
-  },
-}));
+  )
+);
 
 // Initialize theme on load
-const savedTheme = (localStorage.getItem("theme") as Theme) || "dark";
-document.documentElement.setAttribute("data-theme", savedTheme);
-if (savedTheme === "dark") {
-  document.documentElement.classList.add("dark");
+const savedTheme = (localStorage.getItem('theme-storage')
+  ? JSON.parse(localStorage.getItem('theme-storage')!).state?.theme
+  : 'dark') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+if (savedTheme === 'dark') {
+  document.documentElement.classList.add('dark');
 } else {
-  document.documentElement.classList.remove("dark");
+  document.documentElement.classList.remove('dark');
 }

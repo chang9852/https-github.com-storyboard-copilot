@@ -5,6 +5,9 @@ import { useProjectStore } from "@/stores/projectStore";
 import { createGenerationTask, pollTaskResult, getModelsByProvider } from "@/services/ai";
 import type { StoryboardCell, StoryboardGenFrame } from "@/types/project";
 import type { ProviderId } from "@/types/ai";
+import { NodeHeader } from "../ui/NodeHeader";
+import { NodeResizeHandle } from "../ui/NodeResizeHandle";
+import { NodePriceBadge } from "../ui/NodePriceBadge";
 
 interface StoryboardGenNodeProps {
   id: string;
@@ -362,35 +365,29 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
       <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
       <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-      {/* Header */}
-      <div style={{ padding: "12px 16px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{
-            width: "20px",
-            height: "20px",
-            borderRadius: "6px",
-            background: "linear-gradient(135deg, #ec4899, #be185d)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
+
+      <div style={{ padding: "12px 16px 8px" }}>
+        <NodeHeader
+          icon={
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
               <rect x="2" y="2" width="5" height="5" rx="1" />
               <rect x="9" y="2" width="5" height="5" rx="1" />
               <rect x="2" y="9" width="5" height="5" rx="1" />
               <rect x="9" y="9" width="5" height="5" rx="1" />
             </svg>
-          </div>
-          <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--text)" }}>分镜生成</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          {incomingImages.length > 0 && (
-            <span style={{ fontSize: "10px", color: "var(--accent)", padding: "2px 6px", background: "rgba(var(--accent-rgb), 0.1)", borderRadius: "4px" }}>
-              {incomingImages.length}张参考图
-            </span>
-          )}
-          <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>¥0.43/次</span>
-        </div>
+          }
+          titleText="分镜生成"
+          rightSlot={
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {incomingImages.length > 0 && (
+                <span style={{ fontSize: "10px", color: "var(--accent)", padding: "2px 6px", background: "rgba(var(--accent-rgb), 0.1)", borderRadius: "4px" }}>
+                  {incomingImages.length}张参考图
+                </span>
+              )}
+              <NodePriceBadge label="¥0.43/次" title="每次生成约0.43元" />
+            </div>
+          }
+        />
       </div>
 
       {/* Grid Controls */}
@@ -650,6 +647,8 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
           to { transform: rotate(360deg); }
         }
       `}</style>
+
+      <NodeResizeHandle />
     </div>
   );
 });

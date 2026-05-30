@@ -35,6 +35,11 @@ pub async fn get_app_data_dir(app: tauri::AppHandle) -> Result<String, String> {
 }
 
 #[tauri::command]
+pub async fn get_runtime_system_info(app: tauri::AppHandle) -> Result<SystemInfo, String> {
+    get_system_info(app).await
+}
+
+#[tauri::command]
 pub async fn open_external_url(url: String) -> Result<(), String> {
     open::that(&url).map_err(|e| format!("Failed to open URL: {}", e))
 }

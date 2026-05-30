@@ -1,53 +1,87 @@
-import type { ProviderId } from "@/types/ai";
-import type { ImageModelDefinition, ModelProviderDefinition } from "./types";
+import type {
+  ImageModelDefinition,
+  ImageModelRuntimeContext,
+  ModelProviderDefinition,
+  ResolutionOption,
+} from './types';
 
-const providerRegistry = new Map<ProviderId, ModelProviderDefinition>();
-const modelRegistry = new Map<string, ImageModelDefinition>();
+const providerModules = import.meta.glob<{ provider: ModelProviderDefinition }>(
+  './providers/*.ts',
+  { eager: true }
+);
+const modelModules = import.meta.glob<{ imageModel: ImageModelDefinition }>(
+  './image/**/*.ts',
+  { eager: true }
+);
 
-export function registerProvider(provider: ModelProviderDefinition): void {
-  providerRegistry.set(provider.id, provider);
-  for (const model of provider.models) {
-    modelRegistry.set(`${provider.id}/${model.id}`, model);
-  }
+const providers: ModelProviderDefinition[] = Object.values(providerModules)
+  .map((module) => module.provider)
+  .filter((provider): provider is ModelProviderDefinition => Boolean(provider))
+  .sort((a, b) => a.id.localeCompare(b.id));
+
+const imageModels: ImageModelDefinition[] = Object.values(modelModules)
+  .map((module) => module.imageModel)
+  .filter((model): model is ImageModelDefinition => Boolean(model))
+  .sort((a, b) => a.id.localeCompare(b.id));
+
+const providerMap = new Map<string, ModelProviderDefinition>(
+  providers.map((provider) => [provider.id, provider])
+);
+const imageModelMap = new Map<string, ImageModelDefinition>(
+  imageModels.map((model) => [model.id, model])
+);
+
+export const DEFAULT_IMAGE_MODEL_ID = 'kie/nano-banana-2';
+
+const imageModelAliasMap = new Map<string, string>([
+  ['gemini-3.1-flash', 'ppio/gemini-3.1-flash'],
+  ['gemini-3.1-flash-edit', 'ppio/gemini-3.1-flash'],
+]);
+
+export function listImageModels(): ImageModelDefinition[] {
+  return imageModels;
 }
 
-export function getProvider(id: ProviderId): ModelProviderDefinition | undefined {
-  return providerRegistry.get(id);
+export function listModelProviders(): ModelProviderDefinition[] {
+  return providers;
 }
 
-export function getAllProviders(): ModelProviderDefinition[] {
-  return Array.from(providerRegistry.values());
+export function getImageModel(modelId: string): ImageModelDefinition {
+  const resolvedModelId = imageModelAliasMap.get(modelId) ?? modelId;
+  return imageModelMap.get(resolvedModelId) ?? imageModelMap.get(DEFAULT_IMAGE_MODEL_ID)!;
 }
 
-export function getModel(providerId: ProviderId, modelId: string): ImageModelDefinition | undefined {
-  return modelRegistry.get(`${providerId}/${modelId}`);
+export function resolveImageModelResolutions(
+  model: ImageModelDefinition,
+  context: ImageModelRuntimeContext = {}
+): ResolutionOption[] {
+  const resolvedOptions = model.resolveResolutions?.(context);
+  return resolvedOptions && resolvedOptions.length > 0 ? resolvedOptions : model.resolutions;
 }
 
-export function getModelByFullId(fullId: string): ImageModelDefinition | undefined {
-  return modelRegistry.get(fullId);
+export function resolveImageModelResolution(
+  model: ImageModelDefinition,
+  requestedResolution: string | undefined,
+  context: ImageModelRuntimeContext = {}
+): ResolutionOption {
+  const resolutionOptions = resolveImageModelResolutions(model, context);
+
+  return (
+    (requestedResolution
+      ? resolutionOptions.find((item) => item.value === requestedResolution)
+      : undefined) ??
+    resolutionOptions.find((item) => item.value === model.defaultResolution) ??
+    resolutionOptions[0] ??
+    model.resolutions[0]
+  );
 }
 
-export function getModelsForProvider(providerId: ProviderId): ImageModelDefinition[] {
-  const provider = providerRegistry.get(providerId);
-  return provider?.models ?? [];
-}
-
-export function getAllModels(): ImageModelDefinition[] {
-  return Array.from(modelRegistry.values());
-}
-
-// Model alias support
-const modelAliases = new Map<string, string>();
-
-export function registerModelAlias(alias: string, fullId: string): void {
-  modelAliases.set(alias, fullId);
-}
-
-export function resolveModelAlias(alias: string): string | undefined {
-  return modelAliases.get(alias);
-}
-
-export function getModelByAlias(alias: string): ImageModelDefinition | undefined {
-  const fullId = modelAliases.get(alias);
-  return fullId ? modelRegistry.get(fullId) : undefined;
+export function getModelProvider(providerId: string): ModelProviderDefinition {
+  return (
+    providerMap.get(providerId) ?? {
+      id: 'unknown',
+      name: 'Unknown Provider',
+      label: 'Unknown',
+    }
+  );
 }

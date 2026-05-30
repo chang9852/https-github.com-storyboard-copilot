@@ -1,4 +1,4 @@
-export type ProviderId = "kie" | "fal" | "派欧云" | "GRSAI";
+export type ProviderId = "kie" | "fal" | "ppio" | "grsai";
 
 export interface AIProvider {
   id: ProviderId;
