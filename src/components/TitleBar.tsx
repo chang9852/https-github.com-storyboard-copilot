@@ -3,7 +3,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, X, Maximize2, Settings, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Moon, Sun, Languages } from 'lucide-react';
-import { useThemeStore } from '@/stores/themeStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useProjectStore } from '@/stores/projectStore';
 
 interface TitleBarProps {
@@ -14,7 +14,8 @@ interface TitleBarProps {
 
 export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: TitleBarProps) {
   const { t, i18n } = useTranslation();
-  const { theme, toggleTheme } = useThemeStore();
+  const theme = useSettingsStore((state) => state.theme);
+  const toggleTheme = useSettingsStore((state) => state.toggleTheme);
   const currentProjectName = useProjectStore((state) => state.currentProject?.name);
 
   const appWindow = getCurrentWindow();

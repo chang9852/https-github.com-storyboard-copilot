@@ -10,12 +10,14 @@ import {
 
 export type UiRadiusPreset = 'compact' | 'default' | 'large';
 export type ThemeTonePreset = 'neutral' | 'warm' | 'cool';
+export type Theme = 'dark' | 'light';
 export type CanvasEdgeRoutingMode = 'spline' | 'orthogonal' | 'smartOrthogonal';
 export type ProviderApiKeys = Record<string, string>;
 export const DEFAULT_GRSAI_NANO_BANANA_PRO_MODEL = 'nano-banana-pro';
 
 interface SettingsState {
   isHydrated: boolean;
+  theme: Theme;
   apiKeys: ProviderApiKeys;
   providerConfigs: Record<ProviderId, { apiKey: string; enabled: boolean }>;
   grsaiNanoBananaProModel: string;
@@ -63,6 +65,8 @@ interface SettingsState {
   setCanvasEdgeRoutingMode: (mode: CanvasEdgeRoutingMode) => void;
   setAutoCheckAppUpdateOnLaunch: (enabled: boolean) => void;
   setEnableUpdateDialog: (enabled: boolean) => void;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
 }
 
 const HEX_COLOR_PATTERN = /^#?[0-9a-fA-F]{6}$/;
@@ -166,6 +170,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       isHydrated: false,
+      theme: 'dark',
       apiKeys: {},
       providerConfigs: {
         kie: { apiKey: '', enabled: true },
@@ -268,10 +273,23 @@ export const useSettingsStore = create<SettingsState>()(
         set({ canvasEdgeRoutingMode: normalizeCanvasEdgeRoutingMode(canvasEdgeRoutingMode) }),
       setAutoCheckAppUpdateOnLaunch: (enabled) => set({ autoCheckAppUpdateOnLaunch: enabled }),
       setEnableUpdateDialog: (enabled) => set({ enableUpdateDialog: enabled }),
+      setTheme: (theme) => {
+        set({ theme });
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+      },
+      toggleTheme: () => {
+        set((state) => {
+          const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', newTheme);
+          document.documentElement.classList.toggle('dark', newTheme === 'dark');
+          return { theme: newTheme };
+        });
+      },
     }),
     {
       name: 'settings-storage',
-      version: 10,
+      version: 11,
       onRehydrateStorage: () => {
         return (_state, error) => {
           if (error) {
@@ -299,7 +317,23 @@ export const useSettingsStore = create<SettingsState>()(
           usdToCnyRate?: number | string;
           preferDiscountedPrice?: boolean;
           grsaiCreditTierId?: GrsaiCreditTierId | string;
+          theme?: Theme | string;
         };
+
+        // Migrate theme from separate theme-storage if not present
+        let theme: Theme = (state.theme === 'light' || state.theme === 'dark') ? state.theme : 'dark';
+        if (!state.theme) {
+          try {
+            const themeStorage = localStorage.getItem('theme-storage');
+            if (themeStorage) {
+              const parsed = JSON.parse(themeStorage);
+              const storedTheme = parsed?.state?.theme;
+              if (storedTheme === 'light' || storedTheme === 'dark') {
+                theme = storedTheme;
+              }
+            }
+          } catch { /* use default */ }
+        }
 
         const migratedApiKeys = normalizeApiKeys(state.apiKeys);
         const ignoreAtTagWhenCopyingAndGenerating =
@@ -309,6 +343,7 @@ export const useSettingsStore = create<SettingsState>()(
           return {
             ...(persistedState as object),
             isHydrated: true,
+            theme,
             apiKeys: migratedApiKeys,
             ignoreAtTagWhenCopyingAndGenerating,
             grsaiNanoBananaProModel: normalizeGrsaiNanoBananaProModel(
@@ -346,6 +381,7 @@ export const useSettingsStore = create<SettingsState>()(
         return {
           ...(persistedState as object),
           isHydrated: true,
+          theme,
           apiKeys: state.apiKey ? { ppio: normalizeApiKey(state.apiKey) } : legacyApiKeys,
           ignoreAtTagWhenCopyingAndGenerating,
           grsaiNanoBananaProModel: normalizeGrsaiNanoBananaProModel(

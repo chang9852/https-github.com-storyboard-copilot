@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { useThemeStore } from '@/stores/themeStore';
 import { Canvas } from '@/features/canvas/Canvas';
 import { ProjectManager } from '@/features/project/ProjectManager';
 import { TitleBar } from '@/components/TitleBar';
-import { SettingsDialog } from '@/components/SettingsDialog';
+import { SettingsDialog } from '@/features/settings/SettingsDialog';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { subscribeOpenSettingsDialog, type SettingsCategory } from '@/features/settings/settingsEvents';
 import '@/features/canvas/tools/builtInTools';
@@ -25,7 +24,7 @@ function toRgbCssValue(hexColor: string): string {
 export default function App() {
   const { currentProject, closeProject, loadProjects } = useProjectStore();
   const { loadSettings } = useSettingsStore();
-  const { theme } = useThemeStore();
+  const theme = useSettingsStore((state) => state.theme);
   const uiRadiusPreset = useSettingsStore((state) => state.uiRadiusPreset);
   const themeTonePreset = useSettingsStore((state) => state.themeTonePreset);
   const accentColor = useSettingsStore((state) => state.accentColor);
