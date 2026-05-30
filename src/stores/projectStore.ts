@@ -4,6 +4,7 @@ import type { Project, StoryboardCell, Connection } from "@/types/project";
 interface ProjectStore {
   projects: Project[];
   currentProject: Project | null;
+  isOpeningProject: boolean;
 
   // Project operations
   loadProjects: () => void;
@@ -12,6 +13,7 @@ interface ProjectStore {
   openProject: (id: string) => void;
   closeProject: () => void;
   updateProject: (updates: Partial<Project>) => void;
+  renameProject: (id: string, name: string) => void;
 
   // Cell operations
   addCell: (cell: StoryboardCell) => void;
@@ -101,6 +103,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   projects: [],
   currentProject: null,
   selectedCellId: null,
+  isOpeningProject: false,
 
   loadProjects: () => {
     const projects = loadFromStorage();
@@ -154,6 +157,22 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     saveToStorage(updatedProjects);
     set({ currentProject: updated, projects: updatedProjects });
+  },
+
+  renameProject: (id, name) => {
+    const { currentProject, projects } = get();
+    const now = new Date().toISOString();
+
+    const updatedProjects = projects.map((p) =>
+      p.id === id ? { ...p, name, updatedAt: now } : p
+    );
+
+    saveToStorage(updatedProjects);
+    set({
+      projects: updatedProjects,
+      currentProject:
+        currentProject?.id === id ? { ...currentProject, name, updatedAt: now } : currentProject,
+    });
   },
 
   addCell: (cell) => {

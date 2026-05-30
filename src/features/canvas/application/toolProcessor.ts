@@ -17,6 +17,7 @@ import type {
   ToolProcessor,
   ToolProcessorResult,
 } from './ports';
+import { drawAnnotations, parseAnnotationItems } from '../tools/annotation';
 
 export class CanvasToolProcessor implements ToolProcessor {
   constructor(
@@ -151,38 +152,13 @@ export class CanvasToolProcessor implements ToolProcessor {
 
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-    const text = String(options.text ?? '').trim();
-    const position = String(options.position ?? 'bottom');
-    const color = String(options.color ?? '#FFFFFF');
-
-    if (!text) return canvasToDataUrl(canvas);
-
-    const fontSize = Math.max(24, Math.round(canvas.width * 0.04));
-    context.font = `600 ${fontSize}px sans-serif`;
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-
-    const textWidth = context.measureText(text).width;
-    const paddingX = Math.round(fontSize * 0.8);
-    const paddingY = Math.round(fontSize * 0.6);
-    const boxWidth = textWidth + paddingX * 2;
-    const boxHeight = fontSize + paddingY * 2;
-
-    const x = canvas.width / 2;
-    const y = this.resolveAnnotateY(position, canvas.height, boxHeight);
-
-    context.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    context.fillRect(x - boxWidth / 2, y - boxHeight / 2, boxWidth, boxHeight);
-    context.fillStyle = color;
-    context.fillText(text, x, y);
+    const annotationsRaw = options.annotations;
+    const items = parseAnnotationItems(annotationsRaw);
+    if (items.length > 0) {
+      drawAnnotations(context, items);
+    }
 
     return canvasToDataUrl(canvas);
-  }
-
-  private resolveAnnotateY(position: string, canvasHeight: number, boxHeight: number): number {
-    if (position === 'top') return boxHeight / 2 + 24;
-    if (position === 'center') return canvasHeight / 2;
-    return canvasHeight - boxHeight / 2 - 24;
   }
 
   private async splitStoryboard(

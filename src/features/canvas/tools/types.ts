@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import type { NodeToolType } from "../domain/canvasNodes";
 
+export type ToolOptionPrimitive = string | number | boolean;
+export type ToolOptions = Record<string, ToolOptionPrimitive>;
+
 export interface ToolFieldSchema {
   key: string;
   label: string;
@@ -10,6 +13,7 @@ export interface ToolFieldSchema {
   min?: number;
   max?: number;
   step?: number;
+  placeholder?: string;
 }
 
 export interface CanvasToolPlugin {

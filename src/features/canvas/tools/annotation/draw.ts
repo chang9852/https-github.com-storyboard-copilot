@@ -1,143 +1,105 @@
-import type { AnnotationItem, AnnotationContext } from './types';
+import type { AnnotationItem } from './types';
+
+function drawArrowHead(
+  context: CanvasRenderingContext2D,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  color: string,
+  lineWidth: number
+) {
+  const headLength = Math.max(10, lineWidth * 4);
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const leftX = x2 - headLength * Math.cos(angle - Math.PI / 6);
+  const leftY = y2 - headLength * Math.sin(angle - Math.PI / 6);
+  const rightX = x2 - headLength * Math.cos(angle + Math.PI / 6);
+  const rightY = y2 - headLength * Math.sin(angle + Math.PI / 6);
+
+  context.beginPath();
+  context.moveTo(x2, y2);
+  context.lineTo(leftX, leftY);
+  context.lineTo(rightX, rightY);
+  context.closePath();
+  context.fillStyle = color;
+  context.fill();
+}
 
 export function drawAnnotations(
-  ctx: CanvasRenderingContext2D,
-  items: AnnotationItem[],
-  context: AnnotationContext
+  context: CanvasRenderingContext2D,
+  items: AnnotationItem[]
 ): void {
-  const { canvasWidth, canvasHeight } = context;
-
   for (const item of items) {
-    ctx.save();
-    ctx.strokeStyle = item.color;
-    ctx.fillStyle = item.color;
-    ctx.lineWidth = item.lineWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    switch (item.type) {
-      case 'arrow':
-        drawArrow(ctx, item, canvasWidth, canvasHeight);
-        break;
-      case 'rect':
-        drawRect(ctx, item, canvasWidth, canvasHeight);
-        break;
-      case 'circle':
-        drawCircle(ctx, item, canvasWidth, canvasHeight);
-        break;
-      case 'text':
-        drawText(ctx, item, canvasWidth, canvasHeight);
-        break;
-      case 'freehand':
-        drawFreehand(ctx, item, canvasWidth, canvasHeight);
-        break;
+    if (item.type === 'rect') {
+      context.save();
+      context.strokeStyle = item.stroke;
+      context.lineWidth = item.lineWidth;
+      context.strokeRect(item.x, item.y, item.width, item.height);
+      context.restore();
+      continue;
     }
 
-    ctx.restore();
+    if (item.type === 'ellipse') {
+      context.save();
+      context.strokeStyle = item.stroke;
+      context.lineWidth = item.lineWidth;
+      context.beginPath();
+      context.ellipse(
+        item.x + item.width / 2,
+        item.y + item.height / 2,
+        Math.max(1, item.width / 2),
+        Math.max(1, item.height / 2),
+        0,
+        0,
+        Math.PI * 2
+      );
+      context.stroke();
+      context.restore();
+      continue;
+    }
+
+    if (item.type === 'arrow') {
+      const [x1, y1, x2, y2] = item.points;
+      context.save();
+      context.strokeStyle = item.stroke;
+      context.lineWidth = item.lineWidth;
+      context.beginPath();
+      context.moveTo(x1, y1);
+      context.lineTo(x2, y2);
+      context.stroke();
+      drawArrowHead(context, x1, y1, x2, y2, item.stroke, item.lineWidth);
+      context.restore();
+      continue;
+    }
+
+    if (item.type === 'pen') {
+      context.save();
+      context.strokeStyle = item.stroke;
+      context.lineWidth = item.lineWidth;
+      context.lineJoin = 'round';
+      context.lineCap = 'round';
+      context.beginPath();
+      context.moveTo(item.points[0], item.points[1]);
+      for (let index = 2; index < item.points.length; index += 2) {
+        context.lineTo(item.points[index], item.points[index + 1]);
+      }
+      context.stroke();
+      context.restore();
+      continue;
+    }
+
+    if (item.type === 'text') {
+      context.save();
+      context.fillStyle = item.color;
+      context.font = `600 ${item.fontSize}px sans-serif`;
+      context.textBaseline = 'top';
+      const lines = item.text.split('\n');
+      const lineHeight = Math.max(1, Math.round(item.fontSize * 1.2));
+      lines.forEach((line, index) => {
+        context.fillText(line, item.x, item.y + index * lineHeight);
+      });
+      context.restore();
+      continue;
+    }
   }
-}
-
-function drawArrow(
-  ctx: CanvasRenderingContext2D,
-  item: AnnotationItem,
-  canvasWidth: number,
-  canvasHeight: number
-): void {
-  const x1 = item.x1 * canvasWidth;
-  const y1 = item.y1 * canvasHeight;
-  const x2 = item.x2 * canvasWidth;
-  const y2 = item.y2 * canvasHeight;
-
-  const headLen = Math.max(10, item.lineWidth * 3);
-  const angle = Math.atan2(y2 - y1, x2 - x1);
-
-  ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(
-    x2 - headLen * Math.cos(angle - Math.PI / 6),
-    y2 - headLen * Math.sin(angle - Math.PI / 6)
-  );
-  ctx.moveTo(x2, y2);
-  ctx.lineTo(
-    x2 - headLen * Math.cos(angle + Math.PI / 6),
-    y2 - headLen * Math.sin(angle + Math.PI / 6)
-  );
-  ctx.stroke();
-}
-
-function drawRect(
-  ctx: CanvasRenderingContext2D,
-  item: AnnotationItem,
-  canvasWidth: number,
-  canvasHeight: number
-): void {
-  const x1 = item.x1 * canvasWidth;
-  const y1 = item.y1 * canvasHeight;
-  const x2 = item.x2 * canvasWidth;
-  const y2 = item.y2 * canvasHeight;
-
-  const width = x2 - x1;
-  const height = y2 - y1;
-
-  ctx.strokeRect(x1, y1, width, height);
-}
-
-function drawCircle(
-  ctx: CanvasRenderingContext2D,
-  item: AnnotationItem,
-  canvasWidth: number,
-  canvasHeight: number
-): void {
-  const x1 = item.x1 * canvasWidth;
-  const y1 = item.y1 * canvasHeight;
-  const x2 = item.x2 * canvasWidth;
-  const y2 = item.y2 * canvasHeight;
-
-  const centerX = (x1 + x2) / 2;
-  const centerY = (y1 + y2) / 2;
-  const radiusX = Math.abs(x2 - x1) / 2;
-  const radiusY = Math.abs(y2 - y1) / 2;
-
-  ctx.beginPath();
-  ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-  ctx.stroke();
-}
-
-function drawText(
-  ctx: CanvasRenderingContext2D,
-  item: AnnotationItem,
-  canvasWidth: number,
-  canvasHeight: number
-): void {
-  const x = item.x1 * canvasWidth;
-  const y = item.y1 * canvasHeight;
-  const fontSize = item.fontSize || 16;
-
-  ctx.font = `bold ${fontSize}px sans-serif`;
-  ctx.fillText(item.text || '', x, y);
-}
-
-function drawFreehand(
-  ctx: CanvasRenderingContext2D,
-  item: AnnotationItem,
-  canvasWidth: number,
-  canvasHeight: number
-): void {
-  if (!item.points || item.points.length < 2) return;
-
-  ctx.beginPath();
-  const firstPoint = item.points[0];
-  ctx.moveTo(firstPoint.x * canvasWidth, firstPoint.y * canvasHeight);
-
-  for (let i = 1; i < item.points.length; i++) {
-    const point = item.points[i];
-    ctx.lineTo(point.x * canvasWidth, point.y * canvasHeight);
-  }
-
-  ctx.stroke();
 }

@@ -1,25 +1,60 @@
-export interface AnnotationItem {
-  id: string;
-  type: 'arrow' | 'rect' | 'circle' | 'text' | 'freehand';
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  color: string;
+export type AnnotationToolType = 'rect' | 'ellipse' | 'arrow' | 'pen' | 'text';
+
+export interface AnnotationStyle {
+  stroke: string;
   lineWidth: number;
-  text?: string;
-  fontSize?: number;
-  points?: { x: number; y: number }[];
 }
+
+export interface RectAnnotation extends AnnotationStyle {
+  id: string;
+  type: 'rect';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface EllipseAnnotation extends AnnotationStyle {
+  id: string;
+  type: 'ellipse';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface ArrowAnnotation extends AnnotationStyle {
+  id: string;
+  type: 'arrow';
+  points: [number, number, number, number];
+}
+
+export interface PenAnnotation extends AnnotationStyle {
+  id: string;
+  type: 'pen';
+  points: number[];
+}
+
+export interface TextAnnotation {
+  id: string;
+  type: 'text';
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  fontSize: number;
+}
+
+export type AnnotationItem =
+  | RectAnnotation
+  | EllipseAnnotation
+  | ArrowAnnotation
+  | PenAnnotation
+  | TextAnnotation;
 
 export interface AnnotationOptions {
   color: string;
   lineWidthPercent: number;
   fontSizePercent: number;
   annotations: string;
-}
-
-export interface AnnotationContext {
-  canvasWidth: number;
-  canvasHeight: number;
 }

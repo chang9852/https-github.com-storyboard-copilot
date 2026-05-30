@@ -1,3 +1,5 @@
+const withOpacity = (variable) => `rgb(var(${variable}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -5,31 +7,33 @@ export default {
   theme: {
     extend: {
       colors: {
-        accent: {
-          DEFAULT: "var(--accent)",
-          hover: "#2563eb",
-          active: "#1d4ed8",
-          light: "#dbeafe",
-        },
         bg: {
-          dark: "var(--bg)",
+          DEFAULT: withOpacity('--bg-rgb'),
+          dark: withOpacity('--bg-rgb'),
         },
         surface: {
-          primary: "var(--surface)",
-          secondary: "var(--bg)",
-          tertiary: "var(--border)",
-        },
-        text: {
-          primary: "var(--text)",
-          secondary: "var(--text-muted)",
-          muted: "rgba(128, 128, 128, 0.6)",
+          DEFAULT: withOpacity('--surface-rgb'),
+          dark: withOpacity('--surface-rgb'),
         },
         border: {
-          DEFAULT: "var(--border)",
+          DEFAULT: withOpacity('--border-rgb'),
+          dark: withOpacity('--border-rgb'),
         },
+        text: {
+          DEFAULT: withOpacity('--text-rgb'),
+          dark: withOpacity('--text-rgb'),
+        },
+        'text-muted': {
+          DEFAULT: withOpacity('--text-muted-rgb'),
+          dark: withOpacity('--text-muted-rgb'),
+        },
+        accent: withOpacity('--accent-rgb'),
+        danger: '#ef4444',
+        success: '#22c55e',
+        warning: '#f59e0b',
       },
-      borderRadius: {
-        DEFAULT: "8px",
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },

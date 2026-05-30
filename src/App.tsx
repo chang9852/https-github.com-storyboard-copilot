@@ -1,27 +1,76 @@
-import { useEffect, useState } from "react";
-import { ReactFlowProvider } from "@xyflow/react";
-import { useProjectStore } from "@/stores/projectStore";
-import { useSettingsStore } from "@/stores/settingsStore";
-import { useThemeStore } from "@/stores/themeStore";
-import { Canvas } from "@/features/canvas/Canvas";
-import { LeftSidebar } from "@/components/LeftSidebar";
-import { TitleBar } from "@/components/TitleBar";
-import "@/features/canvas/tools/builtInTools";
+import { useEffect, useState } from 'react';
+import { ReactFlowProvider } from '@xyflow/react';
+import { useProjectStore } from '@/stores/projectStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useThemeStore } from '@/stores/themeStore';
+import { Canvas } from '@/features/canvas/Canvas';
+import { ProjectManager } from '@/features/project/ProjectManager';
+import { TitleBar } from '@/components/TitleBar';
+import { SettingsDialog } from '@/components/SettingsDialog';
+import { subscribeOpenSettingsDialog, type SettingsCategory } from '@/features/settings/settingsEvents';
+import '@/features/canvas/tools/builtInTools';
+
+function toRgbCssValue(hexColor: string): string {
+  const hex = hexColor.replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
+    return '59 130 246';
+  }
+  const r = Number.parseInt(hex.slice(0, 2), 16);
+  const g = Number.parseInt(hex.slice(2, 4), 16);
+  const b = Number.parseInt(hex.slice(4, 6), 16);
+  return `${r} ${g} ${b}`;
+}
 
 export default function App() {
   const { currentProject, closeProject } = useProjectStore();
   const { loadSettings } = useSettingsStore();
   const { theme } = useThemeStore();
+  const uiRadiusPreset = useSettingsStore((state) => state.uiRadiusPreset);
+  const themeTonePreset = useSettingsStore((state) => state.themeTonePreset);
+  const accentColor = useSettingsStore((state) => state.accentColor);
   const [showSettings, setShowSettings] = useState(false);
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
+  const [settingsInitialCategory, setSettingsInitialCategory] = useState<SettingsCategory>('general');
 
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.uiRadius = uiRadiusPreset;
+  }, [uiRadiusPreset]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.themeTone = themeTonePreset;
+  }, [themeTonePreset]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const isMac =
+      typeof navigator !== 'undefined'
+      && /(Mac|iPhone|iPad|iPod)/i.test(`${navigator.platform} ${navigator.userAgent}`);
+    root.dataset.platform = isMac ? 'macos' : 'default';
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const normalized = accentColor.startsWith('#') ? accentColor : `#${accentColor}`;
+    root.style.setProperty('--accent', normalized);
+    root.style.setProperty('--accent-rgb', toRgbCssValue(normalized));
+  }, [accentColor]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeOpenSettingsDialog(({ category }) => {
+      setSettingsInitialCategory(category ?? 'general');
+      setShowSettings(true);
+    });
+    return unsubscribe;
+  }, []);
 
   const handleBack = () => {
     closeProject();
@@ -29,42 +78,25 @@ export default function App() {
 
   return (
     <ReactFlowProvider>
-      <div className="w-full h-full flex flex-col bg-[#0a0a0f] overflow-hidden">
-        {/* Title Bar */}
+      <div className="w-full h-full flex flex-col bg-bg-dark">
         <TitleBar
-          onSettingsClick={() => setShowSettings(true)}
+          onSettingsClick={() => {
+            setSettingsInitialCategory('general');
+            setShowSettings(true);
+          }}
           showBackButton={!!currentProject}
           onBackClick={handleBack}
         />
 
-        {/* Main Content - Two Column Layout */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar */}
-          <LeftSidebar
-            collapsed={leftSidebarCollapsed}
-            onToggle={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
-          />
+        <main className="flex-1 relative">
+          {currentProject ? <Canvas /> : <ProjectManager />}
+        </main>
 
-          {/* Center Canvas - Full Width */}
-          <div className="flex-1 relative">
-            <Canvas />
-          </div>
-        </div>
-
-        {/* Settings Dialog */}
-        {showSettings && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowSettings(false)}
-            />
-            <div className="relative w-[680px] h-[520px] max-w-[90vw] max-h-[85vh] bg-[#1a1a2e]/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden flex shadow-2xl">
-              <div className="w-full h-full flex items-center justify-center text-white/50">
-                设置页面开发中...
-              </div>
-            </div>
-          </div>
-        )}
+        <SettingsDialog
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          initialCategory={settingsInitialCategory}
+        />
       </div>
     </ReactFlowProvider>
   );

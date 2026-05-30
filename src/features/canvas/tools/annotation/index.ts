@@ -1,3 +1,3 @@
-export type { AnnotationItem, AnnotationOptions, AnnotationContext } from './types';
-export { stringifyAnnotationItems, parseAnnotationItems, createAnnotationId } from './codec';
+export type { AnnotationItem, AnnotationOptions, AnnotationToolType, RectAnnotation, EllipseAnnotation, ArrowAnnotation, PenAnnotation, TextAnnotation } from './types';
+export { normalizeAnnotationRect, parseAnnotationItems, stringifyAnnotationItems, createAnnotationId } from './codec';
 export { drawAnnotations } from './draw';
