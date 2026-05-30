@@ -85,12 +85,12 @@ export function AboutTab({ draft, onDraftChange, onSave, onClose, onCheckUpdate 
           <p className="text-text-dark">
             {t('settings.aboutRepositoryLabel')}:{' '}
             <a
-              href="https://github.com/henjicc/Storyboard-Copilot"
+              href="https://github.com/chang9852/https-github.com-storyboard-copilot"
               target="_blank"
               rel="noreferrer"
               className="text-accent hover:underline break-all"
             >
-              https://github.com/henjicc/Storyboard-Copilot
+              https://github.com/chang9852/https-github.com-storyboard-copilot
             </a>
           </p>
         </div>
