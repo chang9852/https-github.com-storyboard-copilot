@@ -28,8 +28,12 @@ export interface StoryboardCell {
   aiProvider?: string;
   aiModel?: string;
   resolution?: "1K" | "2K" | "4K";
-  aspectRatio?: "16:9" | "4:3" | "3:4" | "1:1";
+  aspectRatio?: string;
   status: "idle" | "generating" | "completed" | "error";
+  // Storyboard node fields
+  gridRows?: number;
+  gridCols?: number;
+  frames?: StoryboardGenFrame[] | StoryboardSplitFrame[];
 }
 
 export interface Connection {

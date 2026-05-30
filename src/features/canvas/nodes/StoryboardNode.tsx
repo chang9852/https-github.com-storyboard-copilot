@@ -19,9 +19,9 @@ function generateFrameId(): string {
 export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps) => {
   const { updateNodeData } = useReactFlow();
 
-  const frames = (data as any).frames || [];
-  const gridRows = (data as any).gridRows || 2;
-  const gridCols = (data as any).gridCols || 2;
+  const frames = (data.frames as StoryboardSplitFrame[] | undefined) || [];
+  const gridRows = data.gridRows || 2;
+  const gridCols = data.gridCols || 2;
   const aspectRatio = data.aspectRatio || '16:9';
 
   const [isExpanded, setIsExpanded] = useState(false);
