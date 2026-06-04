@@ -22,7 +22,7 @@ function toRgbCssValue(hexColor: string): string {
 }
 
 export default function App() {
-  const { currentProject, closeProject, loadProjects } = useProjectStore();
+  const { currentProject, closeProject, hydrate } = useProjectStore();
   const { loadSettings } = useSettingsStore();
   const theme = useSettingsStore((state) => state.theme);
   const uiRadiusPreset = useSettingsStore((state) => state.uiRadiusPreset);
@@ -32,8 +32,8 @@ export default function App() {
   const [settingsInitialCategory, setSettingsInitialCategory] = useState<SettingsCategory>('generation');
 
   useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+    hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     loadSettings();

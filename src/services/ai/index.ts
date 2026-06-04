@@ -1,100 +1,91 @@
-import { useSettingsStore } from "@/stores/settingsStore";
-import type { AIProvider, AIModel, ProviderId } from "@/types/ai";
+/**
+ * AI service facade — delegates to the Tauri-secured gateway.
+ *
+ * All actual network calls route through the Rust backend via
+ * canvasAiGateway, never directly from the browser.
+ */
 
-export const PROVIDERS: AIProvider[] = [
-  {
-    id: "kie",
-    name: "KIE",
-    baseUrl: "https://api.kie.ai",
-    authType: "bearer",
-    enabled: true,
-    models: [
-      { id: "kie/nano-banana-pro", name: "Nano Banana Pro", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "kie/nano-banana-2", name: "Nano Banana 2", provider: "kie", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-    ],
-  },
-  {
-    id: "fal",
-    name: "fal",
-    baseUrl: "https://fal.run",
-    authType: "key",
-    enabled: true,
-    models: [
-      { id: "fal/nano-banana-2", name: "Nano Banana 2 (fal)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "fal/nano-banana-pro", name: "Nano Banana Pro (fal)", provider: "fal", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-    ],
-  },
-  {
-    id: "ppio",
-    name: "PPIO",
-    baseUrl: "https://api.ppinfra.com",
-    authType: "bearer",
-    enabled: false,
-    models: [
-      { id: "ppio/gemini-3.1-flash", name: "Gemini 3.1 Flash", provider: "ppio", type: "text-to-image", maxWidth: 4096, maxHeight: 4096, supportsNegativePrompt: false },
-    ],
-  },
-  {
-    id: "grsai",
-    name: "Grsai",
-    baseUrl: "https://api.grsai.com",
-    authType: "key",
-    enabled: false,
-    models: [
-      { id: "grsai/nano-banana-2", name: "Nano Banana 2", provider: "grsai", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-      { id: "grsai/nano-banana-pro", name: "Nano Banana Pro", provider: "grsai", type: "text-to-image", maxWidth: 2048, maxHeight: 2048, supportsNegativePrompt: false },
-    ],
-  },
-];
+import { canvasAiGateway } from '@/features/canvas/application/canvasServices';
+import { listImageModels, listModelProviders } from '@/features/canvas/models/registry';
+import { useSettingsStore } from '@/stores/settingsStore';
+import type { ProviderId } from '@/types/ai';
 
-export function getModelsByProvider(providerId: ProviderId): AIModel[] {
-  const provider = PROVIDERS.find((p) => p.id === providerId);
-  return provider?.models || [];
+// --- Provider / Model introspection ---
+
+export type { ProviderId } from '@/types/ai';
+
+export interface AIModel {
+  id: string;
+  name: string;
+  provider: ProviderId;
+  type: string;
+  maxWidth: number;
+  maxHeight: number;
+  supportsNegativePrompt: boolean;
 }
 
-export function getProviderById(id: ProviderId): AIProvider | undefined {
+export interface AIProvider {
+  id: ProviderId;
+  name: string;
+  baseUrl: string;
+  authType: 'bearer' | 'key';
+  enabled: boolean;
+  models: AIModel[];
+}
+
+export const PROVIDERS: AIProvider[] = listModelProviders().map((p) => ({
+  id: p.id as ProviderId,
+  name: p.name || p.label,
+  baseUrl: '',
+  authType: 'bearer' as const,
+  enabled: true,
+  models: listImageModels()
+    .filter((m) => m.providerId === p.id)
+    .map((m) => ({
+      id: m.id,
+      name: m.displayName,
+      provider: m.providerId as ProviderId,
+      type: m.mediaType,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      supportsNegativePrompt: false,
+    })),
+}));
+
+export function getModelsByProvider(providerId: string): AIModel[] {
+  return listImageModels()
+    .filter((m) => m.providerId === providerId)
+    .map((m) => ({
+      id: m.id,
+      name: m.displayName,
+      provider: m.providerId as ProviderId,
+      type: m.mediaType,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      supportsNegativePrompt: false,
+    }));
+}
+
+export function getProviderById(id: string): AIProvider | undefined {
   return PROVIDERS.find((p) => p.id === id);
 }
 
-// --- KIE API ---
+// --- Generation (gateway-backed) ---
 
-interface KieCreateTaskResponse {
-  code: number;
-  msg: string;
-  data: {
-    taskId: string;
-  };
-}
-
-interface KieTaskStatusResponse {
-  code: number;
-  msg: string;
-  data: {
-    taskId: string;
-    status: string;
-    result?: {
-      imageUrl?: string;
-      images?: { url: string; width: number; height: number }[];
-    };
-    error?: string;
-  };
-}
-
-// --- fal API ---
-
-interface FalGenerateResponse {
-  images?: { url: string; width: number; height: number }[];
-}
-
-// --- Public API ---
-
-interface GenerateTaskResult {
+export interface GenerateTaskResult {
   task_id: string;
   provider: string;
   status: string;
-  images?: { url: string; width: number; height: number }[];
+  images?: { url: string; width?: number; height?: number }[];
 }
 
+const POLL_INTERVAL_MS = 2000;
+const MAX_POLL_DURATION_MS = 360000; // 6 minutes
+
+/**
+ * Submit an image generation job via the Tauri-secured gateway.
+ * Handles both async (KIE, fal, grsai) and sync (PPIO) providers.
+ */
 export async function createGenerationTask(params: {
   provider: ProviderId;
   model: string;
@@ -109,217 +100,92 @@ export async function createGenerationTask(params: {
 }): Promise<GenerateTaskResult> {
   const apiKey = useSettingsStore.getState().getApiKey(params.provider);
   if (!apiKey) {
-    throw new Error("请先在设置中配置 API Key");
+    throw new Error('请先在设置中配置 API Key');
   }
 
-  const provider = getProviderById(params.provider);
-  if (!provider) {
-    throw new Error("未知的供应商");
-  }
+  // Set the API key via the gateway
+  await canvasAiGateway.setApiKey(params.provider, apiKey);
 
-  // KIE API
-  if (params.provider === "kie") {
-    const aspectRatio = params.aspectRatio || "1:1";
-    const resolution = params.resolution || "2K";
-    const kieModelName = params.model.replace(/^kie\//, '');
+  const size = `${params.width}x${params.height}`;
 
-    const response = await fetch(`${provider.baseUrl}/api/v1/jobs/createTask`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: kieModelName,
-        input: {
-          prompt: params.prompt,
-          aspect_ratio: aspectRatio,
-          resolution: resolution,
-          output_format: "png",
-          ...(params.referenceImages && params.referenceImages.length > 0 && {
-            reference_images: params.referenceImages,
-          }),
-        },
-      }),
-    });
+  // Submit through the gateway
+  const jobId = await canvasAiGateway.submitGenerateImageJob({
+    prompt: params.prompt,
+    model: params.model,
+    size,
+    aspectRatio: params.aspectRatio || '1:1',
+    referenceImages: params.referenceImages,
+  });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API 错误: ${error}`);
+  // Poll for completion
+  const startTime = Date.now();
+
+  while (true) {
+    const elapsedMs = Date.now() - startTime;
+    if (elapsedMs > MAX_POLL_DURATION_MS) {
+      throw new Error('生成超时（超过6分钟）');
     }
 
-    const result: KieCreateTaskResponse = await response.json();
+    const status = await canvasAiGateway.getGenerateImageJob(jobId);
 
-    if (result.code !== 200) {
-      throw new Error(result.msg || "创建任务失败");
+    if (status.status === 'succeeded') {
+      return {
+        task_id: jobId,
+        provider: params.provider,
+        status: 'completed',
+        images: status.result ? [{ url: status.result }] : [],
+      };
     }
 
-    return {
-      task_id: result.data.taskId,
-      provider: params.provider,
-      status: "queued",
-    };
-  }
-
-  // fal API
-  if (params.provider === "fal") {
-    const response = await fetch(`https://fal.run/${params.model}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Key ${apiKey}`,
-      },
-      body: JSON.stringify({
-        prompt: params.prompt,
-        image_size: { width: params.width, height: params.height },
-        num_images: params.numImages || 1,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API 错误: ${error}`);
+    if (status.status === 'failed') {
+      throw new Error(status.error || '生成失败');
     }
 
-    const result: FalGenerateResponse = await response.json();
-
-    return {
-      task_id: "fal-direct",
-      provider: params.provider,
-      status: "completed",
-      images: result.images || [],
-    };
-  }
-
-  // PPIO API
-  if (params.provider === "ppio") {
-    const response = await fetch(`${provider.baseUrl}/v1/images/generations`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: params.model.replace(/^ppio\//, ''),
-        prompt: params.prompt,
-        n: params.numImages || 1,
-        size: `${params.width}x${params.height}`,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API 错误: ${error}`);
+    if (status.status === 'not_found') {
+      throw new Error('任务未找到');
     }
 
-    const result = await response.json();
-    return {
-      task_id: "ppio-direct",
-      provider: params.provider,
-      status: "completed",
-      images: result.data?.map((img: any) => ({ url: img.url, width: params.width, height: params.height })) || [],
-    };
+    // Wait before polling again
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
-
-  // Grsai API
-  if (params.provider === "grsai") {
-    const response = await fetch(`${provider.baseUrl}/v1/images/generations`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: params.model.replace(/^grsai\//, ''),
-        prompt: params.prompt,
-        n: params.numImages || 1,
-        size: `${params.width}x${params.height}`,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API 错误: ${error}`);
-    }
-
-    const result = await response.json();
-    return {
-      task_id: "grsai-direct",
-      provider: params.provider,
-      status: "completed",
-      images: result.data?.map((img: any) => ({ url: img.url, width: params.width, height: params.height })) || [],
-    };
-  }
-
-  throw new Error("不支持的供应商");
 }
 
+/**
+ * Poll a previously submitted task for completion.
+ */
 export async function pollTaskResult(
-  provider: ProviderId,
+  _provider: ProviderId,
   taskId: string,
   onProgress?: (status: string, elapsed?: number) => void,
 ): Promise<{ images: { url: string }[] }> {
-  // fal, ppio, grsai 直接返回结果
-  if (taskId === "fal-direct" || taskId === "ppio-direct" || taskId === "grsai-direct") {
-    return { images: [] };
-  }
-
-  const apiKey = useSettingsStore.getState().getApiKey(provider);
-  const maxAttempts = 180;
-  const interval = 2000;
   const startTime = Date.now();
-  const timeoutMs = 360000;
 
-  for (let i = 0; i < maxAttempts; i++) {
-    if (Date.now() - startTime > timeoutMs) {
-      throw new Error("生成超时（超过6分钟），任务可能仍在处理中，请稍后在KIE网站查看结果");
+  while (true) {
+    const elapsedMs = Date.now() - startTime;
+    if (elapsedMs > MAX_POLL_DURATION_MS) {
+      throw new Error('生成超时（超过6分钟）');
     }
 
-    try {
-      const response = await fetch(`https://api.kie.ai/api/v1/jobs/getTaskDetail?taskId=${taskId}`, {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-        },
-      });
+    const status = await canvasAiGateway.getGenerateImageJob(taskId);
+    const elapsedSec = Math.round(elapsedMs / 1000);
 
-      if (!response.ok) {
-        console.warn(`[pollTaskResult] HTTP ${response.status}, retrying...`);
-        await new Promise((resolve) => setTimeout(resolve, interval));
-        continue;
+    onProgress?.(status.status, elapsedSec);
+
+    if (status.status === 'succeeded') {
+      if (status.result) {
+        return { images: [{ url: status.result }] };
       }
-
-      const result: KieTaskStatusResponse = await response.json();
-      const elapsed = Math.round((Date.now() - startTime) / 1000);
-
-      if (result.code === 200 && result.data) {
-        const status = result.data.status;
-        onProgress?.(status, elapsed);
-
-        if (status === "completed" || status === "succeeded") {
-          const imageUrl = result.data.result?.imageUrl || result.data.result?.images?.[0]?.url;
-          if (imageUrl) {
-            return { images: [{ url: imageUrl }] };
-          }
-          const altImageUrl = (result.data.result as any)?.output?.[0]?.url;
-          if (altImageUrl) {
-            return { images: [{ url: altImageUrl }] };
-          }
-          throw new Error(`生成完成但未返回图片，请在KIE网站查看: taskId=${taskId}`);
-        }
-
-        if (status === "failed") {
-          throw new Error(result.data.error || "生成失败");
-        }
-      }
-    } catch (error: any) {
-      if (error.message?.includes("生成失败") || error.message?.includes("生成完成")) {
-        throw error;
-      }
-      console.warn(`[pollTaskResult] Error: ${error.message}, retrying...`);
+      throw new Error('生成完成但未返回图片');
     }
 
-    await new Promise((resolve) => setTimeout(resolve, interval));
+    if (status.status === 'failed') {
+      throw new Error(status.error || '生成失败');
+    }
+
+    if (status.status === 'not_found') {
+      throw new Error('任务未找到');
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
-
-  throw new Error(`生成超时，任务ID: ${taskId}，请在KIE网站查看结果`);
 }
