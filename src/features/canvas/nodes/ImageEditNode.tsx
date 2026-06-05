@@ -151,15 +151,15 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
           overflow: "hidden",
         }}
       >
-        <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
-        <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
+        <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
+        <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
 
 
         <div style={{ padding: "8px 10px 4px" }}>
           <NodeHeader
             icon={
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L12 10H2L7 1Z" fill="white" />
+                <path d="M7 1L12 10H2L7 1Z" fill="var(--text)" />
                 <circle cx="7" cy="7" r="2" fill="var(--accent)" />
               </svg>
             }
@@ -214,8 +214,8 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
         overflow: "hidden",
       }}
     >
-      <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
-      <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
+      <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
+      <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
 
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid var(--ui-border-soft)" }}>
@@ -223,7 +223,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
           <NodeHeader
             icon={
               <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L12 10H2L7 1Z" fill="white" />
+                <path d="M7 1L12 10H2L7 1Z" fill="var(--text)" />
                 <circle cx="7" cy="7" r="2" fill="var(--accent)" />
               </svg>
             }
@@ -283,7 +283,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
             onClick={(e) => { e.stopPropagation(); handleGenerate(); }}
             disabled={isGenerating || !prompt.trim()}
             style={{
-              width: "100%", padding: "8px", fontSize: "11px", fontWeight: 500, color: "white",
+              width: "100%", padding: "8px", fontSize: "11px", fontWeight: 500, color: "#fff",
               background: isGenerating || !prompt.trim() ? "var(--text-muted)" : "var(--accent)",
               border: "none", borderRadius: "var(--ui-radius-lg)",
               cursor: isGenerating || !prompt.trim() ? "not-allowed" : "pointer",
@@ -291,10 +291,10 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
             }}
           >
             {isGenerating ? (
-              <div style={{ width: "10px", height: "10px", border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+              <div style={{ width: "10px", height: "10px", border: "2px solid rgba(255,255,255,0.8)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
             ) : (
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M5 1L8 8H2L5 1Z" fill="white" />
+                <path d="M5 1L8 8H2L5 1Z" fill="#fff" />
               </svg>
             )}
             {isGenerating ? `${elapsedTime}s` : "生成"}

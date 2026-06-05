@@ -85,24 +85,24 @@ export const ModelParamsControls = memo(({
       {/* Model selector */}
       <div className="relative">
         <button
-          className={`${NODE_CONTROL_CHIP_CLASS} flex items-center gap-1 bg-surface-dark/80 border border-[rgba(255,255,255,0.1)] text-white/70 hover:text-white hover:border-[rgba(255,255,255,0.2)] transition-colors`}
+          className={`${NODE_CONTROL_CHIP_CLASS} flex items-center gap-1 bg-[var(--ui-surface-field)] border border-[var(--ui-border-soft)] text-[var(--text)] hover:border-[var(--ui-border-strong)] transition-colors`}
           onClick={(e) => {
             e.stopPropagation();
             setOpenPanel(openPanel === 'model' ? null : 'model');
           }}
         >
-          <span className="text-[11px] font-medium">{selectedModel?.name ?? 'Model'}</span>
-          <span className="text-[10px] text-white/40">{providerLabel}</span>
+          <span className="text-[11px] font-medium text-[var(--text)]">{selectedModel?.name ?? 'Model'}</span>
+          <span className="text-[10px] text-[var(--text-muted)]">{providerLabel}</span>
         </button>
 
         {openPanel === 'model' && createPortal(
           <div
-            className="fixed z-[80] min-w-[320px] rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(17,17,24,0.95)] p-3 shadow-2xl backdrop-blur-sm"
+            className="fixed z-[80] min-w-[320px] rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-panel)] p-3 shadow-2xl backdrop-blur-sm"
             style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
           >
             {/* Providers */}
             <div className="mb-3">
-              <div className="mb-2 text-xs font-medium text-white/50">{t('modelParams.provider', 'Provider')}</div>
+              <div className="mb-2 text-xs font-medium text-[var(--text-muted)]">{t('modelParams.provider', 'Provider')}</div>
               <div className="flex flex-wrap gap-2">
                 {PROVIDERS.map((provider) => {
                   const active = provider.id === selectedProvider;
@@ -111,8 +111,8 @@ export const ModelParamsControls = memo(({
                       key={provider.id}
                       className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
                         active
-                          ? 'border-accent/50 bg-accent/15 text-white'
-                          : 'border-[rgba(255,255,255,0.1)] bg-white/5 text-white/50 hover:border-[rgba(255,255,255,0.2)]'
+                          ? 'border-accent/50 bg-accent/15 text-[var(--text)]'
+                          : 'border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] text-[var(--text-muted)] hover:border-[var(--ui-border-strong)]'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -130,7 +130,7 @@ export const ModelParamsControls = memo(({
 
             {/* Models */}
             <div>
-              <div className="mb-2 text-xs font-medium text-white/50">{t('modelParams.model', 'Model')}</div>
+              <div className="mb-2 text-xs font-medium text-[var(--text-muted)]">{t('modelParams.model', 'Model')}</div>
               <div className="flex flex-wrap gap-2">
                 {currentModels.map((model) => {
                   const active = model.id === selectedModelId;
@@ -139,8 +139,8 @@ export const ModelParamsControls = memo(({
                       key={model.id}
                       className={`rounded-lg border px-3 py-2 text-xs transition-colors ${
                         active
-                          ? 'border-accent/50 bg-accent/15 text-white'
-                          : 'border-[rgba(255,255,255,0.1)] bg-white/5 text-white/50 hover:border-[rgba(255,255,255,0.2)]'
+                          ? 'border-accent/50 bg-accent/15 text-[var(--text)]'
+                          : 'border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] text-[var(--text-muted)] hover:border-[var(--ui-border-strong)]'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -162,33 +162,33 @@ export const ModelParamsControls = memo(({
       {/* Params selector */}
       <div className="relative">
         <button
-          className={`${NODE_CONTROL_CHIP_CLASS} flex items-center gap-1 bg-surface-dark/80 border border-[rgba(255,255,255,0.1)] text-white/70 hover:text-white hover:border-[rgba(255,255,255,0.2)] transition-colors`}
+          className={`${NODE_CONTROL_CHIP_CLASS} flex items-center gap-1 bg-[var(--ui-surface-field)] border border-[var(--ui-border-soft)] text-[var(--text)] hover:border-[var(--ui-border-strong)] transition-colors`}
           onClick={(e) => {
             e.stopPropagation();
             setOpenPanel(openPanel === 'params' ? null : 'params');
           }}
         >
           <SlidersHorizontal className={NODE_CONTROL_ICON_CLASS} />
-          <span className="text-[11px]">{selectedRatioLabel}</span>
-          <span className="text-[10px] text-white/40">· {selectedResLabel}</span>
+          <span className="text-[11px] text-[var(--text)]">{selectedRatioLabel}</span>
+          <span className="text-[10px] text-[var(--text-muted)]">· {selectedResLabel}</span>
         </button>
 
         {openPanel === 'params' && createPortal(
           <div
-            className="fixed z-[80] min-w-[320px] rounded-xl border border-[rgba(255,255,255,0.1)] bg-[rgba(17,17,24,0.95)] p-3 shadow-2xl backdrop-blur-sm"
+            className="fixed z-[80] min-w-[320px] rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-panel)] p-3 shadow-2xl backdrop-blur-sm"
             style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
           >
             {/* Resolution */}
             <div className="mb-3">
-              <div className="mb-2 text-xs text-white/50">{t('modelParams.quality', 'Quality')}</div>
-              <div className="grid grid-cols-4 gap-1 rounded-xl border border-[rgba(255,255,255,0.1)] bg-white/5 p-1">
+              <div className="mb-2 text-xs text-[var(--text-muted)]">{t('modelParams.quality', 'Quality')}</div>
+              <div className="grid grid-cols-4 gap-1 rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] p-1">
                 {DEFAULT_RESOLUTIONS.map((item) => {
                   const active = item.value === selectedResolution;
                   return (
                     <button
                       key={item.value}
                       className={`h-8 rounded-lg text-sm transition-colors ${
-                        active ? 'bg-surface-dark text-white' : 'text-white/50 hover:bg-white/10'
+                        active ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm' : 'text-[var(--text-muted)] hover:bg-[var(--surface)]'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -204,15 +204,15 @@ export const ModelParamsControls = memo(({
 
             {/* Aspect Ratio */}
             <div>
-              <div className="mb-2 text-xs text-white/50">{t('modelParams.aspectRatio', 'Aspect Ratio')}</div>
-              <div className="grid grid-cols-5 gap-1 rounded-xl border border-[rgba(255,255,255,0.1)] bg-white/5 p-1">
+              <div className="mb-2 text-xs text-[var(--text-muted)]">{t('modelParams.aspectRatio', 'Aspect Ratio')}</div>
+              <div className="grid grid-cols-5 gap-1 rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] p-1">
                 {DEFAULT_ASPECT_RATIOS.map((item) => {
                   const active = item.value === selectedAspectRatio;
                   return (
                     <button
                       key={item.value}
                       className={`rounded-lg px-1 py-1.5 transition-colors ${
-                        active ? 'bg-surface-dark text-white' : 'text-white/50 hover:bg-white/10'
+                        active ? 'bg-[var(--surface)] text-[var(--text)] shadow-sm' : 'text-[var(--text-muted)] hover:bg-[var(--surface)]'
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();

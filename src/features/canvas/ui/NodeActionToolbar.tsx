@@ -53,18 +53,18 @@ export const NodeActionToolbar = memo(({ node }: NodeActionToolbarProps) => {
       offset={NODE_TOOLBAR_OFFSET}
       className={NODE_TOOLBAR_CLASS}
     >
-      <div className="flex items-center gap-1 rounded-full bg-[rgba(17,17,24,0.9)] p-1 backdrop-blur-sm border border-[rgba(255,255,255,0.1)]">
+      <div className="flex items-center gap-1 rounded-full bg-[var(--ui-surface-panel)] p-1 backdrop-blur-sm border border-[var(--ui-border-soft)]">
         {imageSource && (
           <>
             <button
-              className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface)] transition-colors"
               onClick={handleCopyImage}
               title={t('nodeToolbar.copy', 'Copy')}
             >
               <Copy className="h-3.5 w-3.5" />
             </button>
             <button
-              className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface)] transition-colors"
               onClick={handleDownload}
               title={t('nodeToolbar.download', 'Download')}
             >

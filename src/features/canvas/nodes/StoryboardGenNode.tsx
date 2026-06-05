@@ -362,14 +362,14 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
         position: "relative",
       }}
     >
-      <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
-      <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
+      <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
+      <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
 
 
       <div style={{ padding: "12px 16px 8px" }}>
         <NodeHeader
           icon={
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--text)" strokeWidth="1.5">
               <rect x="2" y="2" width="5" height="5" rx="1" />
               <rect x="9" y="2" width="5" height="5" rx="1" />
               <rect x="2" y="9" width="5" height="5" rx="1" />
@@ -612,7 +612,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
             padding: "8px 16px",
             fontSize: "12px",
             fontWeight: 500,
-            color: "white",
+            color: "#fff",
             background: isGenerating ? "var(--text-muted)" : "var(--accent)",
             border: "none",
             borderRadius: "var(--ui-radius-lg)",
@@ -623,11 +623,11 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
           }}
         >
           {isGenerating ? (
-            <div style={{ width: "12px", height: "12px", border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+            <div style={{ width: "12px", height: "12px", border: "2px solid rgba(255,255,255,0.8)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
           ) : (
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M8 2L14 12H2L8 2Z" fill="currentColor" />
-              <circle cx="8" cy="9" r="2" fill="white" />
+              <circle cx="8" cy="9" r="2" fill="#fff" />
             </svg>
           )}
           {isGenerating ? "生成中..." : "生成"}

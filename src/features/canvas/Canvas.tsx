@@ -90,13 +90,17 @@ export function Canvas() {
 
   // Sync canvas node changes back to projectStore for persistence
   const prevNodesRef = useRef(nodes);
+  const currentProjectRef = useRef(currentProject);
+  currentProjectRef.current = currentProject;
+
   useEffect(() => {
-    if (!currentProject) return;
+    const project = currentProjectRef.current;
+    if (!project) return;
     const projectStore = useProjectStore.getState();
     const prevNodes = prevNodesRef.current;
 
     for (const node of nodes) {
-      const existingCell = currentProject.cells.find((c) => c.id === node.id);
+      const existingCell = project.cells.find((c) => c.id === node.id);
       if (!existingCell) continue;
 
       const prevNode = prevNodes.find((n) => n.id === node.id);
@@ -119,7 +123,7 @@ export function Canvas() {
     }
 
     prevNodesRef.current = nodes;
-  }, [nodes, currentProject]);
+  }, [nodes]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
