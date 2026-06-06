@@ -6,6 +6,7 @@ export interface ModelProviderDefinition {
   id: string;
   name: string;
   label: string;
+  labelZh?: string;
 }
 
 export interface AspectRatioOption {
@@ -42,6 +43,7 @@ export interface ImageModelDefinition {
   id: string;
   mediaType: 'image';
   displayName: string;
+  displayNameZh?: string;
   providerId: string;
   description: string;
   eta: string;

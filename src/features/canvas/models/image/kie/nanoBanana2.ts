@@ -24,6 +24,7 @@ export const imageModel: ImageModelDefinition = {
   id: KIE_NANO_BANANA_2_MODEL_ID,
   mediaType: 'image',
   displayName: 'Nano Banana 2 (KIE)',
+  displayNameZh: 'Nano Banana 2',
   providerId: 'kie',
   description: 'KIE · Nano Banana 2 图像生成与编辑',
   eta: '1min',

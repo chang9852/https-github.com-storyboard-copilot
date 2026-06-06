@@ -71,7 +71,7 @@
     }
   },
   "ai": {
-    "title": "AI Generator",
+    "title": "AI Generate",
     "provider": "Provider",
     "model": "Model",
     "prompt": "Prompt",
@@ -82,7 +82,8 @@
     "grid_2x2": "2x2 Grid",
     "grid_3x3": "3x3 Grid",
     "grid_custom": "Custom",
-    "no_api_key": "Please configure your API key in Settings first"
+    "no_api_key": "Please configure your API key in Settings first",
+    "outputSize": "Output size"
   },
   "settings": {
     "title": "Settings",

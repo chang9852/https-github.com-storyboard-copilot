@@ -4,4 +4,5 @@ export const provider: ModelProviderDefinition = {
   id: 'fal',
   name: 'fal',
   label: 'fal',
+  labelZh: 'fal',
 };

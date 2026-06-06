@@ -30,6 +30,7 @@ interface ProvidersTabProps {
 
 export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps) {
   const { t, i18n } = useTranslation();
+  const isZh = i18n.language?.startsWith('zh');
   const [revealedApiKeys, setRevealedApiKeys] = useState<Record<string, boolean>>({});
 
   const providers = listModelProviders().slice().sort((left, right) => {
@@ -47,7 +48,7 @@ export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps
 
       <div className="ui-scrollbar flex-1 space-y-4 overflow-y-auto p-6">
         {providers.map((provider) => {
-          const displayName = i18n.language.startsWith('zh') ? provider.label : provider.name;
+          const displayName = isZh ? (provider.labelZh || provider.label) : provider.name;
           const isRevealed = Boolean(revealedApiKeys[provider.id]);
 
           return (

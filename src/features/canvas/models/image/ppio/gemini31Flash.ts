@@ -7,6 +7,7 @@ export const imageModel: ImageModelDefinition = {
   id: PPIO_GEMINI_FLASH_MODEL_ID,
   mediaType: 'image',
   displayName: 'Nano Banana 2',
+  displayNameZh: 'Nano Banana 2',
   providerId: 'ppio',
   description: '高性价比图像生成与编辑模型',
   eta: '1min',

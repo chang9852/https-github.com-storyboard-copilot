@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PROVIDERS, getModelsByProvider } from '@/services/ai';
-import { getImageModel } from '@/features/canvas/models';
+import { getImageModel, listModelProviders } from '@/features/canvas/models';
 import type { ProviderId } from '@/types/ai';
 import type { AspectRatioOption, ResolutionOption } from '@/features/canvas/models';
 import { NODE_CONTROL_CHIP_CLASS, NODE_CONTROL_ICON_CLASS } from './nodeControlStyles';
@@ -63,18 +63,26 @@ export const ModelParamsControls = memo(({
   onAspectRatioChange,
 }: ModelParamsControlsProps) => {
   const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language?.startsWith('zh');
   const containerRef = useRef<HTMLDivElement>(null);
   const [openPanel, setOpenPanel] = useState<'model' | 'params' | null>(null);
 
+  const providerDefs = useMemo(() => listModelProviders(), []);
   const currentModels = useMemo(() => getModelsByProvider(selectedProvider), [selectedProvider]);
   const selectedModel = useMemo(
     () => currentModels.find((m) => m.id === selectedModelId) ?? currentModels[0],
     [currentModels, selectedModelId]
   );
-  const providerLabel = useMemo(
-    () => PROVIDERS.find((p) => p.id === selectedProvider)?.name ?? selectedProvider,
-    [selectedProvider]
-  );
+  const selectedModelDef = useMemo(() => getImageModel(selectedModelId), [selectedModelId]);
+  const selectedModelDisplay = useMemo(() => {
+    if (isZh && selectedModelDef?.displayNameZh) return selectedModelDef.displayNameZh;
+    return selectedModel?.name ?? 'Model';
+  }, [selectedModel, selectedModelDef, isZh]);
+  const providerLabel = useMemo(() => {
+    const p = providerDefs.find((p) => p.id === selectedProvider);
+    return p ? (isZh && p.labelZh ? p.labelZh : p.label) : selectedProvider;
+  }, [selectedProvider, providerDefs, isZh]);
 
   const { resolutions, aspectRatios } = useModelOptions(selectedModelId);
 
@@ -124,7 +132,7 @@ export const ModelParamsControls = memo(({
             setOpenPanel(openPanel === 'model' ? null : 'model');
           }}
         >
-          <span className="text-[11px] font-medium text-[var(--text)]">{selectedModel?.name ?? 'Model'}</span>
+          <span className="text-[11px] font-medium text-[var(--text)]">{selectedModelDisplay}</span>
           <span className="text-[10px] text-[var(--text-muted)]">{providerLabel}</span>
         </button>
 
@@ -139,6 +147,8 @@ export const ModelParamsControls = memo(({
               <div className="flex flex-wrap gap-2">
                 {PROVIDERS.map((provider) => {
                   const active = provider.id === selectedProvider;
+                  const providerDef = providerDefs.find((p) => p.id === provider.id);
+                  const providerDisplay = isZh && providerDef?.labelZh ? providerDef.labelZh : provider.name;
                   return (
                     <button
                       key={provider.id}
@@ -154,7 +164,7 @@ export const ModelParamsControls = memo(({
                         if (models.length > 0) onModelChange(models[0].id);
                       }}
                     >
-                      {provider.name}
+                      {providerDisplay}
                     </button>
                   );
                 })}
@@ -167,6 +177,8 @@ export const ModelParamsControls = memo(({
               <div className="flex flex-wrap gap-2">
                 {currentModels.map((model) => {
                   const active = model.id === selectedModelId;
+                  const modelDef = getImageModel(model.id);
+                  const modelDisplay = isZh && modelDef?.displayNameZh ? modelDef.displayNameZh : model.name;
                   return (
                     <button
                       key={model.id}
@@ -181,7 +193,7 @@ export const ModelParamsControls = memo(({
                         setOpenPanel(null);
                       }}
                     >
-                      {model.name}
+                      {modelDisplay}
                     </button>
                   );
                 })}

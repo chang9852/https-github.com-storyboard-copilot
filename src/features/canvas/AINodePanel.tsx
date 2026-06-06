@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { PROVIDERS, getModelsByProvider, createGenerationTask, pollTaskResult } from "@/services/ai";
-import { getImageModel } from "@/features/canvas/models";
+import { getImageModel, listModelProviders } from "@/features/canvas/models";
 import type { AspectRatioOption, ResolutionOption } from "@/features/canvas/models";
 import type { ProviderId } from "@/types/ai";
 
@@ -27,6 +28,8 @@ const FALLBACK_ASPECT_RATIOS: AspectRatioOption[] = [
 ];
 
 export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
+  const { t, i18n } = useTranslation();
+  const isZh = i18n.language?.startsWith('zh');
   const { providerConfigs } = useSettingsStore();
   const { updateCell } = useProjectStore();
 
@@ -139,7 +142,7 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
               <circle cx="7" cy="7" r="2" fill="#3b82f6" />
             </svg>
           </div>
-          <span className="text-sm font-semibold">AI 生成图片</span>
+          <span className="text-sm font-semibold">{t('ai.title', 'AI 生成图片')}</span>
         </div>
         <button
           onClick={onClose}
@@ -152,7 +155,7 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
       {/* Model selector */}
       <div className="flex gap-3 mb-4">
         <div className="flex-1">
-          <label className="text-xs text-text-secondary mb-1.5 block">供应商</label>
+          <label className="text-xs text-text-secondary mb-1.5 block">{t('ai.provider', '供应商')}</label>
           <select
             value={provider}
             onChange={(e) => {
@@ -165,28 +168,36 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
             }}
             className="w-full px-3 py-2 text-xs bg-surface-tertiary border border-border rounded-lg outline-none focus:border-accent transition-colors"
           >
-            {PROVIDERS.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
+            {PROVIDERS.map((p) => {
+              const providerDef = listModelProviders().find(pd => pd.id === p.id);
+              const providerDisplay = isZh && providerDef?.labelZh ? providerDef.labelZh : p.name;
+              return (
+                <option key={p.id} value={p.id}>{providerDisplay}</option>
+              );
+            })}
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-xs text-text-secondary mb-1.5 block">模型</label>
+          <label className="text-xs text-text-secondary mb-1.5 block">{t('ai.model', '模型')}</label>
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="w-full px-3 py-2 text-xs bg-surface-tertiary border border-border rounded-lg outline-none focus:border-accent transition-colors"
           >
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
+            {models.map((m) => {
+              const mDef = getImageModel(m.id);
+              const modelDisplay = isZh && mDef?.displayNameZh ? mDef.displayNameZh : m.name;
+              return (
+                <option key={m.id} value={m.id}>{modelDisplay}</option>
+              );
+            })}
           </select>
         </div>
       </div>
 
       {/* Resolution */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs text-text-secondary shrink-0">分辨率</label>
+        <label className="text-xs text-text-secondary shrink-0">{t('modelParams.quality', '画质')}</label>
         <div className="flex gap-1 bg-surface-tertiary rounded-lg p-1" style={{ gridTemplateColumns: `repeat(${resolutions.length}, 1fr)`, display: 'grid' }}>
           {resolutions.map((r) => {
             const active = resolution === r.value;
@@ -209,7 +220,7 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
 
       {/* Aspect ratio */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs text-text-secondary shrink-0">比例</label>
+        <label className="text-xs text-text-secondary shrink-0">{t('modelParams.aspectRatio', '比例')}</label>
         <div className="flex flex-wrap gap-1 bg-surface-tertiary rounded-lg p-1">
           {aspectRatios.map((ar) => {
             const active = aspectRatio === ar.value;
@@ -235,7 +246,7 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="输入 AI 提示词..."
+          placeholder={t('ai.prompt', '输入 AI 提示词...')}
           className="w-full h-16 px-3 py-2 text-xs bg-surface-tertiary border border-border rounded-lg outline-none resize-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all"
         />
       </div>
@@ -246,7 +257,7 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
           type="text"
           value={negativePrompt}
           onChange={(e) => setNegativePrompt(e.target.value)}
-          placeholder="负面提示词（可选）..."
+          placeholder={t('ai.negative_prompt', '负面提示词（可选）…')}
           className="w-full px-3 py-2 text-xs bg-surface-tertiary border border-border rounded-lg outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all"
         />
       </div>
@@ -269,14 +280,14 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
         ) : (
           <>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M7 2L12 12L2 12L7 2Z" fill="currentColor" /></svg>
-            生成图片
+            {t('ai.generate', '生成图片')}
           </>
         )}
       </button>
 
       {/* Dimensions preview */}
       <div className="mt-3 text-center text-xs text-text-muted">
-        输出尺寸: {getDimensions().width} x {getDimensions().height}
+        {t('ai.outputSize', '输出尺寸')}: {getDimensions().width} x {getDimensions().height}
       </div>
     </div>
   );

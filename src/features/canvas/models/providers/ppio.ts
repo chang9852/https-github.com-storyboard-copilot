@@ -4,4 +4,5 @@ export const provider: ModelProviderDefinition = {
   id: 'ppio',
   name: 'PPIO',
   label: 'PPIO',
+  labelZh: '派欧云',
 };

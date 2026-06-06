@@ -12,4 +12,5 @@ export const provider: ModelProviderDefinition = {
   id: 'grsai',
   name: 'GRSAI',
   label: 'GRSAI',
+  labelZh: '智谱清言',
 };

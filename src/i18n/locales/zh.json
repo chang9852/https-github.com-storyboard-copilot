@@ -82,7 +82,8 @@
     "grid_2x2": "2x2 四宫格",
     "grid_3x3": "3x3 九宫格",
     "grid_custom": "自定义",
-    "no_api_key": "请先在设置中配置 API 密钥"
+    "no_api_key": "请先在设置中配置 API 密钥",
+    "outputSize": "输出尺寸"
   },
   "settings": {
     "title": "设置",

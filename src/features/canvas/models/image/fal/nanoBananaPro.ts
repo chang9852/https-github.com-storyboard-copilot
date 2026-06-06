@@ -20,6 +20,7 @@ export const imageModel: ImageModelDefinition = {
   id: FAL_NANO_BANANA_PRO_MODEL_ID,
   mediaType: 'image',
   displayName: 'Nano Banana Pro (fal)',
+  displayNameZh: 'Nano Banana Pro',
   providerId: 'fal',
   description: 'fal · Nano Banana Pro 图像生成与编辑',
   eta: '1min',
