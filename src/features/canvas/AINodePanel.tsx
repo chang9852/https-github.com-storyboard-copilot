@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { PROVIDERS, getModelsByProvider, createGenerationTask, pollTaskResult } from "@/services/ai";
+import { getImageModel } from "@/features/canvas/models";
+import type { AspectRatioOption, ResolutionOption } from "@/features/canvas/models";
 import type { ProviderId } from "@/types/ai";
 
 interface AINodePanelProps {
@@ -9,20 +11,19 @@ interface AINodePanelProps {
   onClose: () => void;
 }
 
-type Resolution = "1K" | "2K" | "4K";
-type AspectRatio = "16:9" | "4:3" | "3:4" | "1:1";
-
-const RESOLUTIONS: { value: Resolution; label: string; size: number }[] = [
-  { value: "1K", label: "1K", size: 1024 },
-  { value: "2K", label: "2K", size: 2048 },
-  { value: "4K", label: "4K", size: 4096 },
+const FALLBACK_RESOLUTIONS: ResolutionOption[] = [
+  { value: "1K", label: "1K" },
+  { value: "2K", label: "2K" },
+  { value: "4K", label: "4K" },
 ];
 
-const ASPECT_RATIOS: { value: AspectRatio; label: string; widthRatio: number; heightRatio: number }[] = [
-  { value: "16:9", label: "16:9", widthRatio: 16, heightRatio: 9 },
-  { value: "4:3", label: "4:3", widthRatio: 4, heightRatio: 3 },
-  { value: "3:4", label: "3:4", widthRatio: 3, heightRatio: 4 },
-  { value: "1:1", label: "1:1", widthRatio: 1, heightRatio: 1 },
+const FALLBACK_ASPECT_RATIOS: AspectRatioOption[] = [
+  { value: "16:9", label: "16:9" },
+  { value: "4:3", label: "4:3" },
+  { value: "3:4", label: "3:4" },
+  { value: "1:1", label: "1:1" },
+  { value: "9:16", label: "9:16" },
+  { value: "21:9", label: "21:9" },
 ];
 
 export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
@@ -30,30 +31,54 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
   const { updateCell } = useProjectStore();
 
   const [provider, setProvider] = useState<ProviderId>("kie");
-  const [model, setModel] = useState("nano-banana-pro");
+  const [model, setModel] = useState("kie/nano-banana-2");
+  const [resolution, setResolution] = useState("1K");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [resolution, setResolution] = useState<Resolution>("2K");
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
   const [isGenerating, setIsGenerating] = useState(false);
 
   const models = getModelsByProvider(provider);
 
-  const getDimensions = () => {
-    const res = RESOLUTIONS.find((r) => r.value === resolution);
-    const ar = ASPECT_RATIOS.find((a) => a.value === aspectRatio);
-    if (!res || !ar) return { width: 2048, height: 1152 };
+  // Derive valid options from the selected model definition
+  const modelDef = useMemo(() => getImageModel(model), [model]);
+  const resolutions = modelDef?.resolutions?.length ? modelDef.resolutions : FALLBACK_RESOLUTIONS;
+  const aspectRatios = modelDef?.aspectRatios?.length ? modelDef.aspectRatios : FALLBACK_ASPECT_RATIOS;
 
-    const baseSize = res.size;
-    const ratio = ar.widthRatio / ar.heightRatio;
+  // Auto-reset resolution & aspect ratio when model changes
+  const prevModelRef = useRef(model);
+  useEffect(() => {
+    if (prevModelRef.current !== model) {
+      prevModelRef.current = model;
+      const validRes = modelDef?.resolutions?.length ? modelDef.resolutions : FALLBACK_RESOLUTIONS;
+      const validAR = modelDef?.aspectRatios?.length ? modelDef.aspectRatios : FALLBACK_ASPECT_RATIOS;
+      if (!validRes.some((r) => r.value === resolution)) {
+        setResolution(modelDef?.defaultResolution ?? validRes[0]?.value ?? "1K");
+      }
+      if (!validAR.some((a) => a.value === aspectRatio)) {
+        setAspectRatio(modelDef?.defaultAspectRatio ?? validAR[0]?.value ?? "1:1");
+      }
+    }
+  }, [model]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const getDimensions = () => {
+    const resValue = resolution;
+    const baseSize = { "0.5K": 512, "1K": 1024, "2K": 2048, "4K": 4096 }[resValue] ?? 1024;
+    const arMap: Record<string, { w: number; h: number }> = {
+      "1:1": { w: 1, h: 1 }, "16:9": { w: 16, h: 9 }, "9:16": { w: 9, h: 16 },
+      "4:3": { w: 4, h: 3 }, "3:4": { w: 3, h: 4 }, "21:9": { w: 21, h: 9 },
+      "2:3": { w: 2, h: 3 }, "3:2": { w: 3, h: 2 }, "5:4": { w: 5, h: 4 },
+      "4:5": { w: 4, h: 5 }, "1:4": { w: 1, h: 4 }, "1:8": { w: 1, h: 8 },
+      "4:1": { w: 4, h: 1 }, "8:1": { w: 8, h: 1 },
+    };
+    const ar = arMap[aspectRatio] ?? { w: 1, h: 1 };
+    const ratio = ar.w / ar.h;
     let width = baseSize;
     let height = baseSize / ratio;
-
     if (height > baseSize) {
       height = baseSize;
       width = baseSize * ratio;
     }
-
     return { width: Math.round(width), height: Math.round(height) };
   };
 
@@ -79,6 +104,8 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
         negativePrompt: negativePrompt || undefined,
         width: dims.width,
         height: dims.height,
+        aspectRatio,
+        resolution,
       });
 
       if (result.status === "completed" && result.task_id) {
@@ -125,19 +152,26 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
       {/* Model selector */}
       <div className="flex gap-3 mb-4">
         <div className="flex-1">
-          <label className="text-xs text-text-secondary mb-1.5 block">模型</label>
+          <label className="text-xs text-text-secondary mb-1.5 block">供应商</label>
           <select
             value={provider}
-            onChange={(e) => { setProvider(e.target.value as ProviderId); setModel(""); }}
+            onChange={(e) => {
+              const newProvider = e.target.value as ProviderId;
+              setProvider(newProvider);
+              const newModels = getModelsByProvider(newProvider);
+              if (newModels.length > 0) {
+                setModel(newModels[0].id);
+              }
+            }}
             className="w-full px-3 py-2 text-xs bg-surface-tertiary border border-border rounded-lg outline-none focus:border-accent transition-colors"
           >
-            {PROVIDERS.filter((p) => providerConfigs[p.id]?.enabled).map((p) => (
+            {PROVIDERS.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         </div>
         <div className="flex-1">
-          <label className="text-xs text-text-secondary mb-1.5 block">模型名称</label>
+          <label className="text-xs text-text-secondary mb-1.5 block">模型</label>
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
@@ -152,41 +186,47 @@ export function AINodePanel({ cellId, onClose }: AINodePanelProps) {
 
       {/* Resolution */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs text-text-secondary">分辨率</label>
-        <div className="flex gap-1 bg-surface-tertiary rounded-lg p-1">
-          {RESOLUTIONS.map((r) => (
-            <button
-              key={r.value}
-              onClick={() => setResolution(r.value)}
-              className={`px-3 py-1.5 text-xs rounded-md transition-all ${
-                resolution === r.value
-                  ? "bg-accent text-white shadow-sm"
-                  : "text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
+        <label className="text-xs text-text-secondary shrink-0">分辨率</label>
+        <div className="flex gap-1 bg-surface-tertiary rounded-lg p-1" style={{ gridTemplateColumns: `repeat(${resolutions.length}, 1fr)`, display: 'grid' }}>
+          {resolutions.map((r) => {
+            const active = resolution === r.value;
+            return (
+              <button
+                key={r.value}
+                onClick={() => setResolution(r.value)}
+                className={`px-3 py-1.5 text-xs rounded-md transition-all ${
+                  active
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {r.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Aspect ratio */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs text-text-secondary">尺寸比例</label>
-        <div className="flex gap-1 bg-surface-tertiary rounded-lg p-1">
-          {ASPECT_RATIOS.map((ar) => (
-            <button
-              key={ar.value}
-              onClick={() => setAspectRatio(ar.value)}
-              className={`px-3 py-1.5 text-xs rounded-md transition-all ${
-                aspectRatio === ar.value
-                  ? "bg-accent text-white shadow-sm"
-                  : "text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {ar.label}
-            </button>
-          ))}
+        <label className="text-xs text-text-secondary shrink-0">比例</label>
+        <div className="flex flex-wrap gap-1 bg-surface-tertiary rounded-lg p-1">
+          {aspectRatios.map((ar) => {
+            const active = aspectRatio === ar.value;
+            return (
+              <button
+                key={ar.value}
+                onClick={() => setAspectRatio(ar.value)}
+                className={`px-2.5 py-1.5 text-xs rounded-md transition-all ${
+                  active
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {ar.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

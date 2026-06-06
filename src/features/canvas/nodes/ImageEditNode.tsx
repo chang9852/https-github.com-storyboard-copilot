@@ -17,6 +17,14 @@ const ASPECT_RATIO_DIMENSIONS: Record<string, { width: number; height: number }>
   "4:3": { width: 1024, height: 768 },
   "3:4": { width: 768, height: 1024 },
   "21:9": { width: 1024, height: 438 },
+  "2:3": { width: 768, height: 1024 },
+  "3:2": { width: 1024, height: 683 },
+  "5:4": { width: 1024, height: 819 },
+  "4:5": { width: 819, height: 1024 },
+  "1:4": { width: 256, height: 1024 },
+  "1:8": { width: 128, height: 1024 },
+  "4:1": { width: 1024, height: 256 },
+  "8:1": { width: 1024, height: 128 },
 };
 
 function getAspectDimensions(ratio: string): { width: number; height: number } {
@@ -33,9 +41,9 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
 
   const [prompt, setPrompt] = useState(data.prompt || "");
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>(data.provider || "kie");
-  const [selectedModel, setSelectedModel] = useState(data.model || "kie/nano-banana-pro");
+  const [selectedModel, setSelectedModel] = useState(data.model || "kie/nano-banana-2");
   const [selectedAspectRatio, setSelectedAspectRatio] = useState(data.aspectRatio || "1:1");
-  const [selectedSize, setSelectedSize] = useState<"0.5K" | "1K" | "2K" | "4K">("2K");
+  const [selectedSize, setSelectedSize] = useState<string>((data.size as string) || "1K");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -274,7 +282,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
               selectedAspectRatio={selectedAspectRatio}
               onProviderChange={(p) => setSelectedProvider(p)}
               onModelChange={setSelectedModel}
-              onResolutionChange={(r) => setSelectedSize(r as "0.5K" | "1K" | "2K" | "4K")}
+              onResolutionChange={setSelectedSize}
               onAspectRatioChange={setSelectedAspectRatio}
             />
           </div>

@@ -27,7 +27,7 @@ export interface StoryboardCell {
   duration?: number;
   aiProvider?: string;
   aiModel?: string;
-  resolution?: "1K" | "2K" | "4K";
+  resolution?: string;
   aspectRatio?: string;
   status: "idle" | "generating" | "completed" | "error";
   // Storyboard node fields

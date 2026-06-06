@@ -3,18 +3,12 @@ import { createPortal } from 'react-dom';
 import { SlidersHorizontal } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { PROVIDERS, getModelsByProvider } from '@/services/ai';
+import { getImageModel } from '@/features/canvas/models';
 import type { ProviderId } from '@/types/ai';
+import type { AspectRatioOption, ResolutionOption } from '@/features/canvas/models';
 import { NODE_CONTROL_CHIP_CLASS, NODE_CONTROL_ICON_CLASS } from './nodeControlStyles';
 
-export interface AspectRatioOption {
-  value: string;
-  label: string;
-}
-
-export interface ResolutionOption {
-  value: string;
-  label: string;
-}
+export type { AspectRatioOption, ResolutionOption };
 
 interface ModelParamsControlsProps {
   selectedProvider: ProviderId;
@@ -27,14 +21,14 @@ interface ModelParamsControlsProps {
   onAspectRatioChange: (aspectRatio: string) => void;
 }
 
-const DEFAULT_RESOLUTIONS: ResolutionOption[] = [
+const FALLBACK_RESOLUTIONS: ResolutionOption[] = [
   { value: '0.5K', label: '0.5K' },
   { value: '1K', label: '1K' },
   { value: '2K', label: '2K' },
   { value: '4K', label: '4K' },
 ];
 
-const DEFAULT_ASPECT_RATIOS: AspectRatioOption[] = [
+const FALLBACK_ASPECT_RATIOS: AspectRatioOption[] = [
   { value: '1:1', label: '1:1' },
   { value: '16:9', label: '16:9' },
   { value: '9:16', label: '9:16' },
@@ -42,6 +36,21 @@ const DEFAULT_ASPECT_RATIOS: AspectRatioOption[] = [
   { value: '3:4', label: '3:4' },
   { value: '21:9', label: '21:9' },
 ];
+
+/**
+ * Get the resolution & aspect ratio options that are valid for the currently
+ * selected model, falling back to a generous default when no model is matched.
+ */
+function useModelOptions(modelId: string) {
+  return useMemo(() => {
+    const model = getImageModel(modelId);
+    const resolutions = model?.resolutions?.length ? model.resolutions : FALLBACK_RESOLUTIONS;
+    const aspectRatios = model?.aspectRatios?.length ? model.aspectRatios : FALLBACK_ASPECT_RATIOS;
+    const defaultResolution = model?.defaultResolution ?? resolutions[0]?.value ?? '1K';
+    const defaultAspectRatio = model?.defaultAspectRatio ?? aspectRatios[0]?.value ?? '1:1';
+    return { resolutions, aspectRatios, defaultResolution, defaultAspectRatio };
+  }, [modelId]);
+}
 
 export const ModelParamsControls = memo(({
   selectedProvider,
@@ -67,8 +76,32 @@ export const ModelParamsControls = memo(({
     [selectedProvider]
   );
 
-  const selectedRatioLabel = DEFAULT_ASPECT_RATIOS.find((r) => r.value === selectedAspectRatio)?.label ?? selectedAspectRatio;
-  const selectedResLabel = DEFAULT_RESOLUTIONS.find((r) => r.value === selectedResolution)?.label ?? selectedResolution;
+  const { resolutions, aspectRatios } = useModelOptions(selectedModelId);
+
+  const selectedRatioLabel = aspectRatios.find((r) => r.value === selectedAspectRatio)?.label ?? selectedAspectRatio;
+  const selectedResLabel = resolutions.find((r) => r.value === selectedResolution)?.label ?? selectedResolution;
+
+  // Auto-reset resolution & aspect ratio when the selected model changes
+  // so the user never sees an invalid combination.
+  const prevModelIdRef = useRef(selectedModelId);
+  useEffect(() => {
+    if (prevModelIdRef.current !== selectedModelId) {
+      prevModelIdRef.current = selectedModelId;
+
+      const model = getImageModel(selectedModelId);
+      const validResolutions = model?.resolutions?.length ? model.resolutions : FALLBACK_RESOLUTIONS;
+      const validAspectRatios = model?.aspectRatios?.length ? model.aspectRatios : FALLBACK_ASPECT_RATIOS;
+
+      // Reset resolution if the current one is not available for this model
+      if (!validResolutions.some((r) => r.value === selectedResolution)) {
+        onResolutionChange(model?.defaultResolution ?? validResolutions[0]?.value ?? '1K');
+      }
+      // Reset aspect ratio if the current one is not available for this model
+      if (!validAspectRatios.some((r) => r.value === selectedAspectRatio)) {
+        onAspectRatioChange(model?.defaultAspectRatio ?? validAspectRatios[0]?.value ?? '1:1');
+      }
+    }
+  }, [selectedModelId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handleOutside = (event: MouseEvent) => {
@@ -181,8 +214,8 @@ export const ModelParamsControls = memo(({
             {/* Resolution */}
             <div className="mb-3">
               <div className="mb-2 text-xs text-[var(--text-muted)]">{t('modelParams.quality', 'Quality')}</div>
-              <div className="grid grid-cols-4 gap-1 rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] p-1">
-                {DEFAULT_RESOLUTIONS.map((item) => {
+              <div className="grid gap-1 rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] p-1" style={{ gridTemplateColumns: `repeat(${Math.min(resolutions.length, 4)}, 1fr)` }}>
+                {resolutions.map((item) => {
                   const active = item.value === selectedResolution;
                   return (
                     <button
@@ -205,8 +238,8 @@ export const ModelParamsControls = memo(({
             {/* Aspect Ratio */}
             <div>
               <div className="mb-2 text-xs text-[var(--text-muted)]">{t('modelParams.aspectRatio', 'Aspect Ratio')}</div>
-              <div className="grid grid-cols-5 gap-1 rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] p-1">
-                {DEFAULT_ASPECT_RATIOS.map((item) => {
+              <div className="grid gap-1 rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] p-1" style={{ gridTemplateColumns: `repeat(${Math.min(aspectRatios.length, 5)}, 1fr)` }}>
+                {aspectRatios.map((item) => {
                   const active = item.value === selectedAspectRatio;
                   return (
                     <button

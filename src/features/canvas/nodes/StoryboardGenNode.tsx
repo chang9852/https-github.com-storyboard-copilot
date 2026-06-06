@@ -8,6 +8,7 @@ import type { ProviderId } from "@/types/ai";
 import { NodeHeader } from "../ui/NodeHeader";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 import { NodePriceBadge } from "../ui/NodePriceBadge";
+import { ModelParamsControls } from "../ui/ModelParamsControls";
 
 interface StoryboardGenNodeProps {
   id: string;
@@ -112,9 +113,9 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
   const edges = useEdges();
 
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>((data.aiProvider as ProviderId) || "kie");
-  const [selectedModel, setSelectedModel] = useState(data.aiModel || "kie/nano-banana-pro");
-  const [selectedSize, setSelectedSize] = useState<"1K" | "2K" | "4K">("2K");
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState("auto");
+  const [selectedModel, setSelectedModel] = useState(data.aiModel || "kie/nano-banana-2");
+  const [selectedSize, setSelectedSize] = useState("1K");
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState("1:1");
   const [gridRows, setGridRows] = useState(2);
   const [gridCols, setGridCols] = useState(2);
   const [frames, setFrames] = useState<StoryboardGenFrame[]>(() => {
@@ -131,7 +132,6 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
   const [pickerFrameIndex, setPickerFrameIndex] = useState<number | null>(null);
   const [pickerActiveIndex, setPickerActiveIndex] = useState(0);
 
-  const models = getModelsByProvider(selectedProvider);
   const totalFrames = gridRows * gridCols;
 
   // 获取上游图片
@@ -257,6 +257,8 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
         prompt: finalPrompt,
         width: 1024,
         height: 1024,
+        aspectRatio: selectedAspectRatio,
+        resolution: selectedSize,
         referenceImages: allReferenceImages,
       });
 
@@ -515,100 +517,33 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
       )}
 
       {/* Bottom Controls */}
-      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: "8px", borderTop: "1px solid var(--ui-border-soft)" }}>
-        {/* Model selector */}
-        <select
-          value={`${selectedProvider}-${selectedModel}`}
-          onChange={(e) => {
-            const [provider, model] = e.target.value.split("-");
-            setSelectedProvider(provider as ProviderId);
-            setSelectedModel(model);
-          }}
-          style={{
-            padding: "6px 10px",
-            background: "var(--ui-surface-field)",
-            border: "1px solid var(--ui-border-soft)",
-            borderRadius: "var(--ui-radius-lg)",
-            fontSize: "11px",
-            color: "var(--text)",
-            cursor: "pointer",
-            outline: "none",
-            minWidth: "140px",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {models.map((m) => (
-            <option key={m.id} value={`${selectedProvider}-${m.id}`}>{m.name}</option>
-          ))}
-        </select>
-
-        {/* Aspect Ratio */}
-        <select
-          value={selectedAspectRatio}
-          onChange={(e) => setSelectedAspectRatio(e.target.value)}
-          style={{
-            padding: "6px 10px",
-            background: "var(--ui-surface-field)",
-            border: "1px solid var(--ui-border-soft)",
-            borderRadius: "var(--ui-radius-lg)",
-            fontSize: "11px",
-            color: "var(--text)",
-            cursor: "pointer",
-            outline: "none",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <option value="auto">自动</option>
-          <option value="1:1">1:1</option>
-          <option value="16:9">16:9</option>
-          <option value="9:16">9:16</option>
-          <option value="4:3">4:3</option>
-          <option value="3:4">3:4</option>
-        </select>
-
-        {/* Resolution */}
-        <select
-          value={selectedSize}
-          onChange={(e) => setSelectedSize(e.target.value as "1K" | "2K" | "4K")}
-          style={{
-            padding: "6px 10px",
-            background: "var(--ui-surface-field)",
-            border: "1px solid var(--ui-border-soft)",
-            borderRadius: "var(--ui-radius-lg)",
-            fontSize: "11px",
-            color: "var(--text)",
-            cursor: "pointer",
-            outline: "none",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <option value="1K">1K</option>
-          <option value="2K">2K</option>
-          <option value="4K">4K</option>
-        </select>
-
-        {/* Other params button */}
-        <button
-          style={{
-            padding: "6px 10px",
-            background: "var(--ui-surface-field)",
-            border: "1px solid var(--ui-border-soft)",
-            borderRadius: "var(--ui-radius-lg)",
-            fontSize: "11px",
-            color: "var(--text-muted)",
-            cursor: "pointer",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          其他参数
-        </button>
+      <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: "8px", borderTop: "1px solid var(--ui-border-soft)" }}>
+        {/* Model & params selector */}
+        <div onClick={(e) => e.stopPropagation()}>
+          <ModelParamsControls
+            selectedProvider={selectedProvider}
+            selectedModelId={selectedModel}
+            selectedResolution={selectedSize}
+            selectedAspectRatio={selectedAspectRatio}
+            onProviderChange={(p) => {
+              setSelectedProvider(p);
+              const models = getModelsByProvider(p);
+              if (models.length > 0) {
+                setSelectedModel(models[0].id);
+              }
+            }}
+            onModelChange={setSelectedModel}
+            onResolutionChange={setSelectedSize}
+            onAspectRatioChange={setSelectedAspectRatio}
+          />
+        </div>
 
         {/* Generate button */}
         <button
           onClick={(e) => { e.stopPropagation(); handleGenerate(); }}
           disabled={isGenerating}
           style={{
-            marginLeft: "auto",
+            width: "100%",
             padding: "8px 16px",
             fontSize: "12px",
             fontWeight: 500,
@@ -619,6 +554,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
             cursor: isGenerating ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: "6px",
           }}
         >
