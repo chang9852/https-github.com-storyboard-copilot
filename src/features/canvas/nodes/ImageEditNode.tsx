@@ -43,7 +43,9 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
   const [selectedProvider, setSelectedProvider] = useState<ProviderId>(data.provider || "kie");
   const [selectedModel, setSelectedModel] = useState(data.model || "kie/nano-banana-2");
   const [selectedAspectRatio, setSelectedAspectRatio] = useState(data.aspectRatio || "1:1");
-  const [selectedSize, setSelectedSize] = useState<string>((data.size as string) || "1K");
+  const [selectedSize, setSelectedSize] = useState<string>(
+    (typeof data.size === 'string' ? data.size : undefined) || "1K"
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");
   const [elapsedTime, setElapsedTime] = useState(0);
