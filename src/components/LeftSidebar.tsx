@@ -181,7 +181,7 @@ export function LeftSidebar({ collapsed, onToggle }: LeftSidebarProps) {
       {/* Footer */}
       <div className="p-3 border-t border-border-dark">
         <div className="text-[9px] text-text-muted text-center font-mono">
-          v1.2.3
+          v1.2.4
         </div>
       </div>
     </div>
