@@ -97,7 +97,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
           data-no-drag="true"
           onMouseDown={(e) => e.stopPropagation()}
           className="h-full px-3 hover:bg-bg-dark transition-colors"
-          title={i18n.language.startsWith('zh') ? 'Switch to English' : '切换到中文'}
+          title={i18n.language.startsWith('zh') ? 'Switch to English' : t('titleBar.switchToChinese')}
         >
           <Languages className="w-4 h-4 text-text-muted" />
         </button>

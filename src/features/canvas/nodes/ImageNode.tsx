@@ -1,89 +1,57 @@
 import { memo, useState, useCallback } from "react";
-import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
+import { Handle, Position, useReactFlow } from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 import { createGenerationTask, pollTaskResult, getModelsByProvider } from "@/services/ai";
 import { useSettingsStore } from "@/stores/settingsStore";
-import type { StoryboardCell } from "@/types/project";
+import { DEFAULT_IMAGE_MODEL_ID } from "@/features/canvas/models";
+import { ModelParamsControls } from "@/features/canvas/ui/ModelParamsControls";
 import type { ProviderId } from "@/types/ai";
 import { NodeHeader } from "../ui/NodeHeader";
 import { CanvasNodeImage } from "../ui/CanvasNodeImage";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
-import { NodePriceBadge } from "../ui/NodePriceBadge";
 
-type AspectRatioIcon = "auto" | "square" | "portrait" | "landscape";
-
-interface AspectRatioOption {
-  value: string;
-  label: string;
-  icon: AspectRatioIcon;
-  width: number;
-  height: number;
+interface ImageNodeData {
+  id?: string;
+  projectId?: string;
+  cellType?: string;
+  prompt?: string;
+  status?: string;
+  imageUrl?: string | null;
+  size?: { width: number; height: number };
+  position?: { x: number; y: number };
+  aiProvider?: string;
+  aiModel?: string;
+  aspectRatio?: string;
+  isGenerating?: boolean;
+  [key: string]: unknown;
 }
 
-const QUICK_ASPECT_RATIOS: AspectRatioOption[] = [
-  { value: "auto", label: "自动", icon: "auto", width: 1024, height: 1024 },
-  { value: "1:1", label: "1:1", icon: "square", width: 1024, height: 1024 },
-  { value: "16:9", label: "16:9", icon: "landscape", width: 1024, height: 576 },
-  { value: "9:16", label: "9:16", icon: "portrait", width: 576, height: 1024 },
-  { value: "4:3", label: "4:3", icon: "landscape", width: 1024, height: 768 },
-  { value: "3:4", label: "3:4", icon: "portrait", width: 768, height: 1024 },
-];
-
-function AspectRatioIconSvg({ type, size = 16 }: { type: AspectRatioIcon; size?: number }) {
-  const color = "var(--text-muted)";
-  const strokeWidth = 1.5;
-
-  if (type === "auto") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-        <path d="M4 6L8 2L12 6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M4 10L8 14L12 10" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-
-  if (type === "square") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-        <rect x="3" y="3" width="10" height="10" rx="1" />
-      </svg>
-    );
-  }
-
-  if (type === "portrait") {
-    return (
-      <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-        <rect x="4" y="2" width="8" height="12" rx="1" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={color} strokeWidth={strokeWidth}>
-      <rect x="2" y="4" width="12" height="8" rx="1" />
-    </svg>
-  );
+interface ImageNodeProps {
+  id: string;
+  data: ImageNodeData;
+  selected?: boolean;
 }
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-function ImageNodeComponent({ id, data, selected }: NodeProps & { data: StoryboardCell }) {
-  const { updateNodeData, addNodes, addEdges } = useReactFlow();
+function ImageNodeComponent({ id, data, selected }: ImageNodeProps) {
+  const { t } = useTranslation();
+  const { updateNodeData } = useReactFlow();
   const { providerConfigs } = useSettingsStore();
 
   const [prompt, setPrompt] = useState(data.prompt || "");
-  const [selectedProvider, setSelectedProvider] = useState<ProviderId>("kie");
-  const [selectedModel, setSelectedModel] = useState("nano-banana-pro");
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState("1:1");
+  const [selectedProvider, setSelectedProvider] = useState<ProviderId>(
+    (data.aiProvider as ProviderId) || "kie"
+  );
+  const [selectedModel, setSelectedModel] = useState(
+    (data.aiModel as string) || DEFAULT_IMAGE_MODEL_ID
+  );
+  const [selectedResolution, setSelectedResolution] = useState("1K");
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState(
+    (data.aspectRatio as string) || "1:1"
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<string>("");
   const [elapsedTime, setElapsedTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
-  const isAI = data.cellType === "ai_image";
-  const models = getModelsByProvider(selectedProvider);
-  const aspectRatio = QUICK_ASPECT_RATIOS.find(r => r.value === selectedAspectRatio) || QUICK_ASPECT_RATIOS[1];
 
   const handlePromptChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     e.stopPropagation();
@@ -97,24 +65,24 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
-      setError("请输入提示词");
+      setError(t('ai.no_prompt'));
       return;
     }
 
     const apiKey = providerConfigs[selectedProvider]?.apiKey;
     if (!apiKey) {
-      setError("请先在设置中配置 API Key");
+      setError(t('ai.no_api_key'));
       return;
     }
 
     setIsGenerating(true);
     setError(null);
-    setGenerationProgress("正在提交任务...");
+    setGenerationProgress(t('ai.generatingProgress'));
     setElapsedTime(0);
-    updateNodeData(id, { prompt });
+    updateNodeData(id, { prompt, isGenerating: true });
 
     const timer = setInterval(() => {
-      setElapsedTime(prev => prev + 1);
+      setElapsedTime((prev) => prev + 1);
     }, 1000);
 
     try {
@@ -122,65 +90,39 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
         provider: selectedProvider,
         model: selectedModel,
         prompt: prompt.trim(),
-        width: aspectRatio.width,
-        height: aspectRatio.height,
+        width: 1024,
+        height: 1024,
         numImages: 1,
         aspectRatio: selectedAspectRatio,
-        resolution: "2K",
+        resolution: selectedResolution,
       });
 
-      setGenerationProgress("任务已提交，等待生成...");
+      setGenerationProgress(t('ai.generatingWaiting'));
 
       const pollResult = await pollTaskResult(selectedProvider, result.task_id, (_status, elapsed) => {
-        setGenerationProgress(`生成中... ${elapsed ? `${elapsed}秒` : ''}`);
+        setGenerationProgress(elapsed ? t('ai.generatingSeconds', { seconds: elapsed }) : t('ai.generating'));
         if (elapsed) setElapsedTime(elapsed);
       });
 
       if (pollResult.images && pollResult.images.length > 0) {
-        const newNodeId = generateId();
-
-        addNodes({
-          id: newNodeId,
-          type: "imageNode",
-          position: {
-            x: (data.position?.x || 0) + (data.size?.width || 380) + 50,
-            y: data.position?.y || 0,
-          },
-          data: {
-            id: newNodeId,
-            projectId: data.projectId,
-            cellType: "upload_image",
-            prompt: prompt,
-            status: "completed",
-            imageUrl: pollResult.images[0].url,
-            size: { width: 320, height: 240 },
-            position: { x: 0, y: 0 },
-          },
-          style: { width: 320, height: 240 },
-        });
-
-        addEdges({
-          id: generateId(),
-          source: id,
-          target: newNodeId,
-          type: "smoothstep",
-          animated: true,
-          style: { stroke: "#3b82f6", strokeWidth: 2 },
+        updateNodeData(id, {
+          imageUrl: pollResult.images[0].url,
+          isGenerating: false,
         });
       }
     } catch (err: any) {
       console.error("Generation failed:", err);
-      setError(err.message || "生成失败，请重试");
+      setError(err.message || t('ai.generation_failed'));
+      updateNodeData(id, { isGenerating: false });
     } finally {
       clearInterval(timer);
       setIsGenerating(false);
       setGenerationProgress("");
       setElapsedTime(0);
     }
-  }, [id, prompt, selectedProvider, selectedModel, aspectRatio, data, providerConfigs, updateNodeData, addNodes, addEdges]);
+  }, [id, prompt, selectedProvider, selectedModel, selectedResolution, selectedAspectRatio, data, providerConfigs, updateNodeData, t]);
 
-
-  if (!isAI && data.imageUrl) {
+  if (data.imageUrl && !isGenerating) {
     return (
       <div
         style={{
@@ -200,7 +142,6 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
         <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
         <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-
         <div style={{ padding: "8px 10px 4px" }}>
           <NodeHeader
             icon={
@@ -210,7 +151,7 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
                 <path d="M1 10l3-3 2 2 3-3 4 4" strokeLinecap="round" />
               </svg>
             }
-            titleText={data.prompt?.slice(0, 25) || "图片"}
+            titleText={data.prompt?.slice(0, 25) || t('ai.imageTitle')}
           />
         </div>
 
@@ -247,7 +188,6 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
       <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
       <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid white" }} />
 
-
       <div style={{ flex: 1, display: "flex", flexDirection: "column", borderRight: "1px solid var(--ui-border-soft)" }}>
         <div style={{ padding: "8px 10px 6px" }}>
           <NodeHeader
@@ -257,8 +197,7 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
                 <circle cx="7" cy="7" r="2" fill="var(--accent)" />
               </svg>
             }
-            titleText="AI 图片"
-            rightSlot={<NodePriceBadge label="¥0.43/次" title="每次生成约0.43元" />}
+            titleText={t('ai.imageTitle')}
           />
         </div>
 
@@ -269,7 +208,7 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            placeholder="输入 AI 提示词..."
+            placeholder={t('ai.promptPlaceholder')}
             style={{
               width: "100%",
               height: "100%",
@@ -306,66 +245,30 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
         )}
 
         <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ display: "flex", gap: "6px" }}>
-            <select
-              value={selectedProvider}
-              onChange={(e) => {
-                setSelectedProvider(e.target.value as ProviderId);
-                const newModels = getModelsByProvider(e.target.value as ProviderId);
-                if (newModels.length > 0) setSelectedModel(newModels[0].id);
+          <div onClick={(e) => e.stopPropagation()}>
+            <ModelParamsControls
+              selectedProvider={selectedProvider}
+              selectedModelId={selectedModel}
+              selectedResolution={selectedResolution}
+              selectedAspectRatio={selectedAspectRatio}
+              onProviderChange={(p) => {
+                setSelectedProvider(p);
+                const newModels = getModelsByProvider(p);
+                if (newModels.length > 0) {
+                  setSelectedModel(newModels[0].id);
+                }
               }}
-              style={{
-                flex: 1, padding: "4px 6px", background: "var(--ui-surface-field)",
-                border: "1px solid var(--ui-border-soft)", borderRadius: "var(--ui-radius-lg)",
-                fontSize: "10px", color: "var(--text-muted)", cursor: "pointer", outline: "none",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <option value="kie">KIE</option>
-              <option value="fal">fal</option>
-            </select>
-
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              style={{
-                flex: 1, padding: "4px 6px", background: "var(--ui-surface-field)",
-                border: "1px solid var(--ui-border-soft)", borderRadius: "var(--ui-radius-lg)",
-                fontSize: "10px", color: "var(--text-muted)", cursor: "pointer", outline: "none",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {models.map((model) => (
-                <option key={model.id} value={model.id}>{model.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }} onClick={(e) => e.stopPropagation()}>
-            {QUICK_ASPECT_RATIOS.map((ratio) => (
-              <button
-                key={ratio.value}
-                onClick={() => setSelectedAspectRatio(ratio.value)}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: "3px",
-                  padding: "4px 8px", borderRadius: "var(--ui-radius-lg)",
-                  border: "1px solid var(--ui-border-soft)",
-                  background: selectedAspectRatio === ratio.value ? "var(--accent)" : "var(--ui-surface-field)",
-                  color: selectedAspectRatio === ratio.value ? "white" : "var(--text-muted)",
-                  cursor: "pointer", transition: "all 0.15s ease", fontSize: "9px", fontWeight: 500,
-                }}
-              >
-                <AspectRatioIconSvg type={ratio.icon} size={10} />
-                {ratio.label}
-              </button>
-            ))}
+              onModelChange={setSelectedModel}
+              onResolutionChange={setSelectedResolution}
+              onAspectRatioChange={setSelectedAspectRatio}
+            />
           </div>
 
           <button
             onClick={(e) => { e.stopPropagation(); handleGenerate(); }}
             disabled={isGenerating || !prompt.trim()}
             style={{
-              width: "100%", padding: "8px", fontSize: "11px", fontWeight: 500, color: "white",
+              width: "100%", padding: "8px", fontSize: "11px", fontWeight: 500, color: "#fff",
               background: isGenerating || !prompt.trim() ? "var(--text-muted)" : "var(--accent)",
               border: "none", borderRadius: "var(--ui-radius-lg)",
               cursor: isGenerating || !prompt.trim() ? "not-allowed" : "pointer",
@@ -373,13 +276,13 @@ function ImageNodeComponent({ id, data, selected }: NodeProps & { data: Storyboa
             }}
           >
             {isGenerating ? (
-              <div style={{ width: "10px", height: "10px", border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+              <div style={{ width: "10px", height: "10px", border: "2px solid rgba(255,255,255,0.8)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
             ) : (
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M5 1L8 8H2L5 1Z" fill="white" />
+                <path d="M5 1L8 8H2L5 1Z" fill="#fff" />
               </svg>
             )}
-            {isGenerating ? `${elapsedTime}s` : "生成"}
+            {isGenerating ? `${elapsedTime}s` : t('canvas.cell.generate')}
           </button>
         </div>
       </div>

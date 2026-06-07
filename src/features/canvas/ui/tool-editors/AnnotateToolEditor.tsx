@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Brush, Circle, Square, Type, Undo2, Trash2 } from 'lucide-react';
 import {
   Arrow,
@@ -53,14 +54,6 @@ interface TextEditorState {
   y: number;
   value: string;
 }
-
-const TOOL_BUTTONS: ToolButton[] = [
-  { type: 'rect', label: '矩形', icon: Square },
-  { type: 'ellipse', label: '圆形', icon: Circle },
-  { type: 'arrow', label: '箭头', icon: ArrowRight },
-  { type: 'pen', label: '画笔', icon: Brush },
-  { type: 'text', label: '文本', icon: Type },
-];
 
 function toNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -196,6 +189,16 @@ function pruneUndefinedToolOptionsPatch(patch: Partial<ToolOptions>): Partial<To
 }
 
 export function AnnotateToolEditor({ options, onOptionsChange, sourceImageUrl }: VisualToolEditorProps) {
+  const { t } = useTranslation();
+
+  const TOOL_BUTTONS: ToolButton[] = [
+    { type: 'rect', label: t('annotateEditor.rect'), icon: Square },
+    { type: 'ellipse', label: t('annotateEditor.ellipse'), icon: Circle },
+    { type: 'arrow', label: t('annotateEditor.arrow'), icon: ArrowRight },
+    { type: 'pen', label: t('annotateEditor.pen'), icon: Brush },
+    { type: 'text', label: t('annotateEditor.text'), icon: Type },
+  ];
+
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [tool, setTool] = useState<AnnotationToolType>('rect');
   const [annotations, setAnnotations] = useState<AnnotationItem[]>(() =>
@@ -1043,7 +1046,7 @@ export function AnnotateToolEditor({ options, onOptionsChange, sourceImageUrl }:
           disabled={undoStack.length === 0}
         >
           <Undo2 className="h-3.5 w-3.5" />
-          撤销
+          {t('annotateEditor.undo')}
         </button>
         <button
           type="button"
@@ -1055,7 +1058,7 @@ export function AnnotateToolEditor({ options, onOptionsChange, sourceImageUrl }:
             <path d="M3 7v6h6" />
             <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
           </svg>
-          重做
+          {t('annotateEditor.redo')}
         </button>
         <button
           type="button"
@@ -1064,7 +1067,7 @@ export function AnnotateToolEditor({ options, onOptionsChange, sourceImageUrl }:
           disabled={!selectedId}
         >
           <Trash2 className="h-3.5 w-3.5" />
-          删除选中
+          {t('annotateEditor.deleteSelected')}
         </button>
         <button
           type="button"
@@ -1078,7 +1081,7 @@ export function AnnotateToolEditor({ options, onOptionsChange, sourceImageUrl }:
           disabled={annotations.length === 0}
         >
           <Trash2 className="h-3.5 w-3.5" />
-          清空
+          {t('annotateEditor.clear')}
         </button>
       </div>
 
@@ -1190,14 +1193,14 @@ export function AnnotateToolEditor({ options, onOptionsChange, sourceImageUrl }:
                   className="rounded border border-[rgba(255,255,255,0.22)] px-2 py-1 text-xs text-text-muted hover:bg-bg-dark"
                   onClick={handleCancelTextEditor}
                 >
-                  取消
+                  {t('annotateEditor.cancel')}
                 </button>
                 <button
                   type="button"
                   className="rounded border border-accent/45 bg-accent/20 px-2 py-1 text-xs text-text-dark hover:bg-accent/30"
                   onClick={handleCommitTextEditor}
                 >
-                  确认
+                  {t('annotateEditor.confirm')}
                 </button>
               </div>
             </div>

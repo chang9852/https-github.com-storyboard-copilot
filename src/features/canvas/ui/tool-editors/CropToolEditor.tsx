@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type { CanvasToolPlugin, ToolExecuteParams } from "../../tools/types";
 
 interface CropToolEditorProps {
@@ -10,6 +11,7 @@ interface CropToolEditorProps {
 }
 
 export function CropToolEditor({ tool, imageUrl, nodeId, onExecute, onClose }: CropToolEditorProps) {
+  const { t } = useTranslation();
   const [fields, setFields] = useState<Record<string, unknown>>(() => {
     const initial: Record<string, unknown> = {};
     for (const schema of tool.fieldSchemas) {
@@ -150,7 +152,7 @@ export function CropToolEditor({ tool, imageUrl, nodeId, onExecute, onClose }: C
                     checked={fields[schema.key] as boolean}
                     onChange={(e) => handleFieldChange(schema.key, e.target.checked)}
                   />
-                  <span style={{ fontSize: "12px", color: "var(--text)" }}>启用</span>
+                  <span style={{ fontSize: "12px", color: "var(--text)" }}>{t('cropEditor.enable')}</span>
                 </label>
               ) : null}
             </div>
@@ -171,7 +173,7 @@ export function CropToolEditor({ tool, imageUrl, nodeId, onExecute, onClose }: C
               cursor: "pointer",
             }}
           >
-            取消
+            {t('cropEditor.cancel')}
           </button>
           <button
             onClick={handleExecute}
@@ -202,7 +204,7 @@ export function CropToolEditor({ tool, imageUrl, nodeId, onExecute, onClose }: C
                 }}
               />
             )}
-            应用
+            {t('cropEditor.apply')}
           </button>
         </div>
 

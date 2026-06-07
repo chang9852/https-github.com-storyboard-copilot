@@ -8,6 +8,7 @@
 import { canvasAiGateway } from '@/features/canvas/application/canvasServices';
 import { listImageModels, listModelProviders } from '@/features/canvas/models/registry';
 import { useSettingsStore } from '@/stores/settingsStore';
+import i18n from '@/i18n';
 import type { ProviderId } from '@/types/ai';
 
 // --- Provider / Model introspection ---
@@ -100,7 +101,7 @@ export async function createGenerationTask(params: {
 }): Promise<GenerateTaskResult> {
   const apiKey = useSettingsStore.getState().getApiKey(params.provider);
   if (!apiKey) {
-    throw new Error('请先在设置中配置 API Key');
+    throw new Error(i18n.t('serviceError.noApiKey'));
   }
 
   // Set the API key via the gateway
@@ -108,14 +109,22 @@ export async function createGenerationTask(params: {
 
   const size = `${params.width}x${params.height}`;
 
-  // Submit through the gateway
-  const jobId = await canvasAiGateway.submitGenerateImageJob({
+  // Build extraParams: merge caller-provided extraParams with negativePrompt
+  const extraParams: Record<string, unknown> = {
+    ...(params.negativePrompt ? { negative_prompt: params.negativePrompt } : {}),
+  };
+
+  const payload = {
     prompt: params.prompt,
     model: params.model,
     size,
     aspectRatio: params.aspectRatio || '1:1',
     referenceImages: params.referenceImages,
-  });
+    extraParams,
+  };
+
+  // Submit through the gateway
+  const jobId = await canvasAiGateway.submitGenerateImageJob(payload);
 
   // Poll for completion
   const startTime = Date.now();
@@ -123,7 +132,7 @@ export async function createGenerationTask(params: {
   while (true) {
     const elapsedMs = Date.now() - startTime;
     if (elapsedMs > MAX_POLL_DURATION_MS) {
-      throw new Error('生成超时（超过6分钟）');
+      throw new Error(i18n.t('serviceError.timeout'));
     }
 
     const status = await canvasAiGateway.getGenerateImageJob(jobId);
@@ -138,11 +147,11 @@ export async function createGenerationTask(params: {
     }
 
     if (status.status === 'failed') {
-      throw new Error(status.error || '生成失败');
+      throw new Error(status.error || i18n.t('serviceError.generationFailed'));
     }
 
     if (status.status === 'not_found') {
-      throw new Error('任务未找到');
+      throw new Error(i18n.t('serviceError.taskNotFound'));
     }
 
     // Wait before polling again
@@ -163,7 +172,7 @@ export async function pollTaskResult(
   while (true) {
     const elapsedMs = Date.now() - startTime;
     if (elapsedMs > MAX_POLL_DURATION_MS) {
-      throw new Error('生成超时（超过6分钟）');
+      throw new Error(i18n.t('serviceError.timeout'));
     }
 
     const status = await canvasAiGateway.getGenerateImageJob(taskId);
@@ -175,15 +184,15 @@ export async function pollTaskResult(
       if (status.result) {
         return { images: [{ url: status.result }] };
       }
-      throw new Error('生成完成但未返回图片');
+      throw new Error(i18n.t('serviceError.noResult'));
     }
 
     if (status.status === 'failed') {
-      throw new Error(status.error || '生成失败');
+      throw new Error(status.error || i18n.t('serviceError.generationFailed'));
     }
 
     if (status.status === 'not_found') {
-      throw new Error('任务未找到');
+      throw new Error(i18n.t('serviceError.taskNotFound'));
     }
 
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));

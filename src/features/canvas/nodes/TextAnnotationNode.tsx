@@ -1,10 +1,12 @@
 import { memo, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { type NodeProps, useReactFlow } from "@xyflow/react";
 import type { TextAnnotationNodeData } from "../domain/canvasNodes";
 import { NodeHeader } from "../ui/NodeHeader";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data: TextAnnotationNodeData }) {
+  const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(data.text);
@@ -50,7 +52,7 @@ function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data:
               <path d="M2 2h8M6 2v8M4 10h4" strokeLinecap="round" />
             </svg>
           }
-          titleText="文本标注"
+          titleText={t('textNode.annotation')}
         />
       </div>
 
@@ -100,7 +102,7 @@ function TextAnnotationNodeComponent({ id, data, selected }: NodeProps & { data:
               borderRadius: "var(--ui-radius-lg)",
             }}
           >
-            {data.text || "双击编辑..."}
+            {data.text && data.text !== 'textNode.dblClickEdit' ? data.text : t('textNode.dblClickEdit')}
           </div>
         )}
       </div>

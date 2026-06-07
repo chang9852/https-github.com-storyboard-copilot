@@ -54,15 +54,15 @@ export function ProjectList() {
               onChange={(e) => setSortField(e.target.value as SortField)}
               className="bg-transparent text-xs text-text-muted outline-none cursor-pointer hover:text-text transition-colors"
             >
-              <option value="updatedAt">最后更新</option>
-              <option value="createdAt">创建日期</option>
-              <option value="name">名称</option>
+              <option value="updatedAt">{t('projectList.lastUpdated')}</option>
+              <option value="createdAt">{t('projectList.createdDate')}</option>
+              <option value="name">{t('projectList.name')}</option>
             </select>
             <div className="w-px h-3 bg-border" />
             <button
               onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
               className="text-text-muted hover:text-text transition-colors"
-              title={sortOrder === "desc" ? "降序" : "升序"}
+              title={sortOrder === "desc" ? t('projectList.desc') : t('projectList.asc')}
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
                 {sortOrder === "desc" ? (
@@ -97,7 +97,7 @@ export function ProjectList() {
               </svg>
             </div>
             <p className="text-sm mb-1">{t("project.empty")}</p>
-            <p className="text-xs opacity-60">点击创建按钮开始</p>
+            <p className="text-xs opacity-60">{t('projectList.clickToCreate')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3">

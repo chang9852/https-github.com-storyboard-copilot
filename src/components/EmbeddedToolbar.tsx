@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface EmbeddedToolbarProps {
   isVisible: boolean;
@@ -14,13 +15,14 @@ interface GenerateParams {
 
 const ASPECT_RATIOS = ['16:9', '9:16', '4:3', '3:4', '1:1'];
 const SHOT_TYPES = [
-  { id: 'close-up', label: '特写', icon: 'CU' },
-  { id: 'wide-shot', label: '全景', icon: 'WS' },
-  { id: 'medium', label: '中景', icon: 'MS' },
-  { id: 'extreme-close', label: '大特写', icon: 'EC' },
+  { id: 'close-up', labelKey: 'toolbar.closeUp', icon: 'CU' },
+  { id: 'wide-shot', labelKey: 'toolbar.wideShot', icon: 'WS' },
+  { id: 'medium', labelKey: 'toolbar.medium', icon: 'MS' },
+  { id: 'extreme-close', labelKey: 'toolbar.extremeClose', icon: 'EC' },
 ];
 
 export function EmbeddedToolbar({ isVisible, onGenerate, onClose: _onClose }: EmbeddedToolbarProps) {
+  const { t } = useTranslation();
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [steps, setSteps] = useState(30);
@@ -55,7 +57,7 @@ export function EmbeddedToolbar({ isVisible, onGenerate, onClose: _onClose }: Em
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="输入 AI 提示词..."
+          placeholder={t('ai.promptPlaceholder')}
           style={{
             width: '100%',
             height: '48px',
@@ -173,7 +175,7 @@ export function EmbeddedToolbar({ isVisible, onGenerate, onClose: _onClose }: Em
             e.currentTarget.style.boxShadow = '0 2px 8px rgba(99, 102, 241, 0.3)';
           }}
         >
-          生成
+          {t('toolbar.generate')}
         </button>
       </div>
 
@@ -182,7 +184,7 @@ export function EmbeddedToolbar({ isVisible, onGenerate, onClose: _onClose }: Em
         {SHOT_TYPES.map((shot) => (
           <button
             key={shot.id}
-            onClick={() => setPrompt((prev) => `${prev} ${shot.label}`)}
+            onClick={() => setPrompt((prev) => `${prev} ${t(shot.labelKey)}`)}
             style={{
               padding: '4px 8px',
               background: 'rgba(255, 255, 255, 0.04)',

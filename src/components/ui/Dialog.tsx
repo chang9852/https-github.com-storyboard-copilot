@@ -1,4 +1,5 @@
 import { useEffect, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "./Button";
 
 interface DialogProps {
@@ -18,10 +19,11 @@ export function Dialog({
   title,
   children,
   onConfirm,
-  confirmText = "确认",
-  cancelText = "取消",
+  confirmText = "common.confirm",
+  cancelText = "common.cancel",
   showFooter = true,
 }: DialogProps) {
+  const { t } = useTranslation();
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -53,11 +55,11 @@ export function Dialog({
         {showFooter && (
           <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
             <Button variant="ghost" onClick={onClose}>
-              {cancelText}
+              {t(cancelText)}
             </Button>
             {onConfirm && (
               <Button variant="primary" onClick={onConfirm}>
-                {confirmText}
+                {t(confirmText)}
               </Button>
             )}
           </div>

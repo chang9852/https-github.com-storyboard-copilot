@@ -1,4 +1,5 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
+import i18n from '@/i18n';
 
 export interface GenerateRequest {
   prompt: string;
@@ -116,7 +117,7 @@ export async function setApiKey(provider: string, apiKey: string): Promise<void>
     tauri: isTauri(),
   });
   if (!isTauri()) {
-    throw new Error('当前不是 Tauri 容器环境，请使用 `npm run tauri dev` 启动');
+    throw new Error(i18n.t('tauriError.notTauriEnv'));
   }
   return await invoke('set_api_key', { provider, apiKey });
 }
@@ -129,7 +130,7 @@ export async function generateImage(request: GenerateRequest): Promise<string> {
   });
 
   if (!isTauri()) {
-    throw new Error('当前不是 Tauri 容器环境，请使用 `npm run tauri dev` 启动');
+    throw new Error(i18n.t('tauriError.notTauriEnv'));
   }
 
   try {
@@ -181,7 +182,7 @@ export async function submitGenerateImageJob(request: GenerateRequest): Promise<
   });
 
   if (!isTauri()) {
-    throw new Error('当前不是 Tauri 容器环境，请使用 `npm run tauri dev` 启动');
+    throw new Error(i18n.t('tauriError.notTauriEnv'));
   }
 
   const jobId = await invoke<string>('submit_generate_image_job', { request });
@@ -193,7 +194,7 @@ export async function submitGenerateImageJob(request: GenerateRequest): Promise<
 
 export async function getGenerateImageJob(jobId: string): Promise<GenerationJobStatus> {
   if (!isTauri()) {
-    throw new Error('当前不是 Tauri 容器环境，请使用 `npm run tauri dev` 启动');
+    throw new Error(i18n.t('tauriError.notTauriEnv'));
   }
 
   const result = await invoke<GenerationJobStatus>('get_generate_image_job', { jobId });

@@ -113,7 +113,7 @@ export function CanvasToolbar() {
     const cellId = generateId();
     addCell({
       id: cellId, projectId: currentProject.id, position: pos,
-      size: { width: 320, height: 280 }, prompt: imagePrompt || "图生图",
+      size: { width: 320, height: 280 }, prompt: imagePrompt || t('toolbar.imageToImage'),
       status: "generating", aiProvider: provider, aiModel: model,
     });
     setTimeout(() => {
@@ -139,8 +139,8 @@ export function CanvasToolbar() {
   };
 
   const tools = [
-    { id: "image" as PanelType, label: "图像生成", desc: "AI 生成图片" },
-    { id: "upload" as PanelType, label: "上传图片", desc: "本地图片上传" },
+    { id: "image" as PanelType, label: t('toolbar.imageGenerate'), desc: t('toolbar.imageGenerateDesc') },
+    { id: "upload" as PanelType, label: t('toolbar.uploadImage'), desc: t('toolbar.uploadImageDesc') },
   ];
 
   return (
@@ -149,8 +149,8 @@ export function CanvasToolbar() {
       {activePanel === "image" && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-96 bg-surface-secondary border border-border rounded-xl p-4 shadow-lg">
           <div className="flex gap-1 p-1 bg-surface-primary rounded-lg mb-3">
-            <button onClick={(e) => { e.stopPropagation(); setImageMode("txt2img"); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${imageMode === "txt2img" ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"}`}>文本生成图片</button>
-            <button onClick={(e) => { e.stopPropagation(); setImageMode("img2img"); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${imageMode === "img2img" ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"}`}>图片生成图片</button>
+            <button onClick={(e) => { e.stopPropagation(); setImageMode("txt2img"); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${imageMode === "txt2img" ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"}`}>{t('toolbar.textToImage')}</button>
+            <button onClick={(e) => { e.stopPropagation(); setImageMode("img2img"); }} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors ${imageMode === "img2img" ? "bg-accent text-white" : "text-text-secondary hover:text-text-primary"}`}>{t('toolbar.imageToImageBtn')}</button>
           </div>
           {/* Provider/Model select */}
           <div className="flex gap-2 mb-3">
@@ -169,21 +169,21 @@ export function CanvasToolbar() {
               ))}
             </select>
           </div>
-          <textarea className="w-full h-16 px-3 py-2 text-sm bg-surface-primary text-text-primary border border-border rounded-lg outline-none focus:border-accent resize-none" placeholder="输入 AI 提示词..." value={imagePrompt} onChange={(e) => setImagePrompt(e.target.value)} onClick={(e) => e.stopPropagation()} />
-          <input type="text" className="w-full mt-2 px-3 py-2 text-sm bg-surface-primary text-text-primary border border-border rounded-lg outline-none focus:border-accent" placeholder="负面提示词（可选）..." value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} onClick={(e) => e.stopPropagation()} />
+          <textarea className="w-full h-16 px-3 py-2 text-sm bg-surface-primary text-text-primary border border-border rounded-lg outline-none focus:border-accent resize-none" placeholder={t('ai.promptPlaceholder')} value={imagePrompt} onChange={(e) => setImagePrompt(e.target.value)} onClick={(e) => e.stopPropagation()} />
+          <input type="text" className="w-full mt-2 px-3 py-2 text-sm bg-surface-primary text-text-primary border border-border rounded-lg outline-none focus:border-accent" placeholder={t('ai.negative_prompt')} value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} onClick={(e) => e.stopPropagation()} />
           {imageMode === "img2img" && (
             <div className="mt-3">
-              <p className="text-xs text-text-secondary mb-2">参考图片</p>
+              <p className="text-xs text-text-secondary mb-2">{t('toolbar.refImages')}</p>
               <div className="flex gap-2">
-                <input type="text" className="flex-1 px-3 py-2 text-sm bg-surface-primary text-text-primary border border-border rounded-lg outline-none focus:border-accent" placeholder="图片 URL..." value={refImageUrl} onChange={(e) => setRefImageUrl(e.target.value)} onClick={(e) => e.stopPropagation()} />
-                <button onClick={(e) => { e.stopPropagation(); refImageInputRef.current?.click(); }} className="px-3 py-2 text-sm bg-surface-tertiary text-text-primary rounded-lg hover:bg-border transition-colors">上传</button>
+                <input type="text" className="flex-1 px-3 py-2 text-sm bg-surface-primary text-text-primary border border-border rounded-lg outline-none focus:border-accent" placeholder={t('toolbar.imageUrlPlaceholder')} value={refImageUrl} onChange={(e) => setRefImageUrl(e.target.value)} onClick={(e) => e.stopPropagation()} />
+                <button onClick={(e) => { e.stopPropagation(); refImageInputRef.current?.click(); }} className="px-3 py-2 text-sm bg-surface-tertiary text-text-primary rounded-lg hover:bg-border transition-colors">{t('toolbar.upload')}</button>
               </div>
               <input ref={refImageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = (ev) => setRefImageUrl(ev.target?.result as string); reader.readAsDataURL(file); } }} />
               {refImageUrl && <div className="mt-2 h-20 bg-surface-tertiary rounded-lg overflow-hidden"><img src={refImageUrl} alt="" className="w-full h-full object-contain" /></div>}
             </div>
           )}
           <button onClick={imageMode === "txt2img" ? handleGenerateImage : handleGenerateFromImage} disabled={isGenerating || (imageMode === "txt2img" ? !imagePrompt.trim() : !refImageUrl.trim())} className="w-full mt-3 py-2.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
-            {isGenerating ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />生成中...</>) : "生成图片"}
+            {isGenerating ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{t('toolbar.generating')}</>) : t('toolbar.generateImage')}
           </button>
         </div>
       )}
@@ -193,7 +193,7 @@ export function CanvasToolbar() {
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-72 bg-surface-secondary border border-border rounded-xl p-4 shadow-lg">
           <div onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="h-28 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-text-muted mb-2"><path d="M12 16V4M8 8l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" /><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" strokeLinecap="round" /></svg>
-            <p className="text-xs text-text-muted">点击上传图片</p>
+            <p className="text-xs text-text-muted">{t('toolbar.clickToUpload')}</p>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileUpload} />
         </div>

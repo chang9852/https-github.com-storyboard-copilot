@@ -1,10 +1,12 @@
 import { memo, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import type { StoryboardCell } from "@/types/project";
 import { NodeHeader } from "../ui/NodeHeader";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 function TextNodeComponent({ id, data, selected }: NodeProps & { data: StoryboardCell }) {
+  const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(data.prompt || "");
@@ -50,7 +52,7 @@ function TextNodeComponent({ id, data, selected }: NodeProps & { data: Storyboar
               <path d="M2 2h8M6 2v8M4 10h4" strokeLinecap="round" />
             </svg>
           }
-          titleText={data.cellType === "text_annotation" ? "文本注释" : "文本块"}
+          titleText={data.cellType === "text_annotation" ? t('textNode.annotation') : t('textNode.textBlock')}
         />
       </div>
 
@@ -83,7 +85,7 @@ function TextNodeComponent({ id, data, selected }: NodeProps & { data: Storyboar
               height: "100%", cursor: "text", padding: "4px", borderRadius: "var(--ui-radius-lg)",
             }}
           >
-            {data.prompt || "双击编辑..."}
+            {data.prompt || t('textNode.dblClickEdit')}
           </div>
         )}
       </div>

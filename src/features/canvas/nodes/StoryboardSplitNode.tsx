@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from "react";
 import { Handle, Position } from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 import type { StoryboardCell } from "@/types/project";
 import { NodeHeader } from "../ui/NodeHeader";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
@@ -10,6 +11,7 @@ interface StoryboardSplitNodeProps {
 }
 
 export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNodeProps) => {
+  const { t } = useTranslation();
   const [exportPanelOpen, setExportPanelOpen] = useState(false);
 
   // 解析网格信息
@@ -53,8 +55,8 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
               <rect x="9" y="9" width="5" height="5" rx="1" />
             </svg>
           }
-          titleText="分镜切割"
-          metaText={`${gridInfo.rows}×${gridInfo.cols} | ${totalFrames}格`}
+          titleText={t('storyboard.splitTitle')}
+          metaText={t('splitEditor.gridInfo', { rows: gridInfo.rows, cols: gridInfo.cols, count: totalFrames })}
         />
       </div>
 
@@ -116,7 +118,7 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
             color: "var(--text-muted)",
             fontSize: "10px",
           }}>
-            等待生成结果...
+            {t('splitEditor.waitingResult')}
           </div>
         )}
       </div>
@@ -137,7 +139,7 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
             cursor: "pointer",
           }}
         >
-          导出设置
+          {t('splitEditor.exportSettings')}
         </button>
         <button
           style={{
@@ -152,7 +154,7 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
             cursor: "pointer",
           }}
         >
-          合并导出
+          {t('splitEditor.mergeExport')}
         </button>
       </div>
 
@@ -167,19 +169,19 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <input type="checkbox" id="showIndex" style={{ width: "12px", height: "12px" }} />
-            <label htmlFor="showIndex" style={{ fontSize: "9px", color: "var(--text-muted)" }}>显示序号</label>
+            <label htmlFor="showIndex" style={{ fontSize: "9px", color: "var(--text-muted)" }}>{t('splitEditor.showIndex')}</label>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <input type="checkbox" id="showNote" style={{ width: "12px", height: "12px" }} />
-            <label htmlFor="showNote" style={{ fontSize: "9px", color: "var(--text-muted)" }}>显示描述</label>
+            <label htmlFor="showNote" style={{ fontSize: "9px", color: "var(--text-muted)" }}>{t('splitEditor.showDesc')}</label>
           </div>
           <div style={{ display: "flex", gap: "4px" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "8px", color: "var(--text-muted)", marginBottom: "2px" }}>间距</div>
+              <div style={{ fontSize: "8px", color: "var(--text-muted)", marginBottom: "2px" }}>{t('splitEditor.gap')}</div>
               <input type="number" defaultValue={8} min={0} max={50} style={{ width: "100%", padding: "4px", fontSize: "9px", background: "var(--ui-surface-field)", border: "1px solid var(--ui-border-soft)", borderRadius: "4px", outline: "none" }} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: "8px", color: "var(--text-muted)", marginBottom: "2px" }}>背景色</div>
+              <div style={{ fontSize: "8px", color: "var(--text-muted)", marginBottom: "2px" }}>{t('splitEditor.bgColor')}</div>
               <input type="color" defaultValue="#0f1115" style={{ width: "100%", height: "24px", padding: "2px", background: "var(--ui-surface-field)", border: "1px solid var(--ui-border-soft)", borderRadius: "4px", cursor: "pointer" }} />
             </div>
           </div>

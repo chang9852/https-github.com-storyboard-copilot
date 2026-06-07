@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, FolderOpen, LayoutGrid } from 'lucide-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { getConfiguredApiKeyCount } from '@/stores/settingsStore';
 import { listModelProviders } from '@/features/canvas/models';
-import { useMemo } from 'react';
 
 interface LeftSidebarProps {
   collapsed: boolean;
@@ -141,7 +140,7 @@ export function LeftSidebar({ collapsed, onToggle }: LeftSidebarProps) {
                   >
                     <div className="text-[12px] text-text-dark truncate">{project.name}</div>
                     <div className="text-[10px] text-text-muted mt-0.5">
-                      {project.cells.length} nodes
+                      {t('project.nodeCount', { count: project.cells.length })}
                     </div>
                   </button>
                 )}
@@ -166,12 +165,12 @@ export function LeftSidebar({ collapsed, onToggle }: LeftSidebarProps) {
                 <div className="w-5 h-5 rounded-md bg-accent/20 flex items-center justify-center">
                   <span className="text-[9px] font-bold text-accent">K</span>
                 </div>
-                <span className="text-[11px] text-text-muted">KIE API</span>
+                <span className="text-[11px] text-text-muted">{t('sidebar.apiStatus')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <div className={`w-1.5 h-1.5 rounded-full ${configuredApiKeyCount > 0 ? 'bg-success shadow-lg shadow-success/50' : 'bg-danger/60'}`} />
                 <span className={`text-[9px] font-medium ${configuredApiKeyCount > 0 ? 'text-success/80' : 'text-danger/80'}`}>
-                  {configuredApiKeyCount > 0 ? 'ON' : 'OFF'}
+                  {configuredApiKeyCount > 0 ? t('sidebar.apiOn') : t('sidebar.apiOff')}
                 </span>
               </div>
             </div>
@@ -182,7 +181,7 @@ export function LeftSidebar({ collapsed, onToggle }: LeftSidebarProps) {
       {/* Footer */}
       <div className="p-3 border-t border-border-dark">
         <div className="text-[9px] text-text-muted text-center font-mono">
-          v1.0.0
+          v1.2.3
         </div>
       </div>
     </div>

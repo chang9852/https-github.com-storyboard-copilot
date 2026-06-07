@@ -1,10 +1,11 @@
 import type { CanvasToolPlugin, ToolFieldSchema } from "./types";
 import { registerTool } from "./registry";
+import i18n from "@/i18n";
 
 // Crop Tool
 const cropToolPlugin: CanvasToolPlugin = {
   type: "crop",
-  label: "裁剪",
+  label: i18n.t('toolDef.crop'),
   icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M4 2v10h10M2 4h10v10" strokeLinecap="round" strokeLinejoin="round" />
@@ -14,11 +15,11 @@ const cropToolPlugin: CanvasToolPlugin = {
   fieldSchemas: [
     {
       key: "aspectRatio",
-      label: "宽高比",
+      label: i18n.t('toolDef.aspectRatio'),
       type: "select",
       defaultValue: "free",
       options: [
-        { value: "free", label: "自由" },
+        { value: "free", label: i18n.t('toolDef.free') },
         { value: "1:1", label: "1:1" },
         { value: "16:9", label: "16:9" },
         { value: "9:16", label: "9:16" },
@@ -28,7 +29,7 @@ const cropToolPlugin: CanvasToolPlugin = {
     },
     {
       key: "quality",
-      label: "质量",
+      label: i18n.t('toolDef.quality'),
       type: "number",
       defaultValue: 90,
       min: 1,
@@ -85,7 +86,7 @@ const cropToolPlugin: CanvasToolPlugin = {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "裁剪失败",
+        error: error instanceof Error ? error.message : i18n.t('toolDef.cropFailed'),
       };
     }
   },
@@ -94,7 +95,7 @@ const cropToolPlugin: CanvasToolPlugin = {
 // Annotate Tool
 const annotateToolPlugin: CanvasToolPlugin = {
   type: "annotate",
-  label: "标注",
+  label: i18n.t('toolDef.annotate'),
   icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M2 14l3-1 8-8-2-2-8 8-1 3z" strokeLinecap="round" strokeLinejoin="round" />
@@ -105,13 +106,13 @@ const annotateToolPlugin: CanvasToolPlugin = {
   fieldSchemas: [
     {
       key: "color",
-      label: "颜色",
+      label: i18n.t('toolDef.color'),
       type: "color",
       defaultValue: "#ff4d4f",
     },
     {
       key: "lineWidthPercent",
-      label: "线宽",
+      label: i18n.t('toolDef.lineWidth'),
       type: "number",
       defaultValue: 0.4,
       min: 0.1,
@@ -120,7 +121,7 @@ const annotateToolPlugin: CanvasToolPlugin = {
     },
     {
       key: "fontSizePercent",
-      label: "字号",
+      label: i18n.t('toolDef.fontSize'),
       type: "number",
       defaultValue: 10,
       min: 1,
@@ -129,7 +130,7 @@ const annotateToolPlugin: CanvasToolPlugin = {
     },
     {
       key: "annotations",
-      label: "标注数据",
+      label: i18n.t('toolDef.annotateData'),
       type: "text",
       defaultValue: "[]",
     },
@@ -144,7 +145,7 @@ const annotateToolPlugin: CanvasToolPlugin = {
 // Split Storyboard Tool
 const splitStoryboardToolPlugin: CanvasToolPlugin = {
   type: "split-storyboard",
-  label: "分镜分割",
+  label: i18n.t('toolDef.storyboardSplit'),
   icon: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="2" y="2" width="12" height="12" rx="1" />
@@ -155,7 +156,7 @@ const splitStoryboardToolPlugin: CanvasToolPlugin = {
   fieldSchemas: [
     {
       key: "rows",
-      label: "行数",
+      label: i18n.t('toolDef.rows'),
       type: "number",
       defaultValue: 2,
       min: 1,
@@ -164,7 +165,7 @@ const splitStoryboardToolPlugin: CanvasToolPlugin = {
     },
     {
       key: "cols",
-      label: "列数",
+      label: i18n.t('toolDef.cols'),
       type: "number",
       defaultValue: 3,
       min: 1,
@@ -173,7 +174,7 @@ const splitStoryboardToolPlugin: CanvasToolPlugin = {
     },
     {
       key: "gap",
-      label: "间距",
+      label: i18n.t('toolDef.gap'),
       type: "number",
       defaultValue: 4,
       min: 0,
@@ -182,7 +183,7 @@ const splitStoryboardToolPlugin: CanvasToolPlugin = {
     },
     {
       key: "backgroundColor",
-      label: "背景色",
+      label: i18n.t('toolDef.bgColor'),
       type: "color",
       defaultValue: "#000000",
     },
@@ -235,7 +236,7 @@ const splitStoryboardToolPlugin: CanvasToolPlugin = {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : "分割失败",
+        error: error instanceof Error ? error.message : i18n.t('toolDef.splitFailed'),
       };
     }
   },

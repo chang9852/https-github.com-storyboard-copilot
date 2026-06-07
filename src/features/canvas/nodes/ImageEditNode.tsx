@@ -1,5 +1,6 @@
 import { memo, useState, useCallback } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 import { createGenerationTask, pollTaskResult } from "@/services/ai";
 import { useSettingsStore } from "@/stores/settingsStore";
 import type { ImageEditNodeData } from "../domain/canvasNodes";
@@ -36,6 +37,7 @@ function generateId(): string {
 }
 
 function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: ImageEditNodeData }) {
+  const { t } = useTranslation();
   const { updateNodeData, addNodes, addEdges } = useReactFlow();
   const { providerConfigs } = useSettingsStore();
 
@@ -65,19 +67,19 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
-      setError("请输入提示词");
+      setError(t('ai.no_prompt'));
       return;
     }
 
     const apiKey = providerConfigs[selectedProvider]?.apiKey;
     if (!apiKey) {
-      setError("请先在设置中配置 API Key");
+      setError(t('ai.no_api_key'));
       return;
     }
 
     setIsGenerating(true);
     setError(null);
-    setGenerationProgress("正在提交任务...");
+    setGenerationProgress(t('ai.generatingProgress'));
     setElapsedTime(0);
     updateNodeData(id, { prompt, isGenerating: true });
 
@@ -97,10 +99,10 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
         resolution: "2K",
       });
 
-      setGenerationProgress("任务已提交，等待生成...");
+      setGenerationProgress(t('ai.generatingWaiting'));
 
       const pollResult = await pollTaskResult(selectedProvider, result.task_id, (_status, elapsed) => {
-        setGenerationProgress(`生成中... ${elapsed ? `${elapsed}秒` : ""}`);
+        setGenerationProgress(t('ai.generatingSeconds', { seconds: elapsed }));
         if (elapsed) setElapsedTime(elapsed);
       });
 
@@ -133,7 +135,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       }
     } catch (err: any) {
       console.error("Generation failed:", err);
-      setError(err.message || "生成失败，请重试");
+      setError(err.message || t('ai.generation_failed'));
       updateNodeData(id, { isGenerating: false });
     } finally {
       clearInterval(timer);
@@ -141,7 +143,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       setGenerationProgress("");
       setElapsedTime(0);
     }
-  }, [id, prompt, selectedProvider, selectedModel, aspectDims, selectedAspectRatio, data, providerConfigs, updateNodeData, addNodes, addEdges]);
+  }, [id, prompt, selectedProvider, selectedModel, aspectDims, selectedAspectRatio, data, providerConfigs, updateNodeData, addNodes, addEdges, t]);
 
 
   if (data.imageUrl && !isGenerating) {
@@ -173,7 +175,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
                 <circle cx="7" cy="7" r="2" fill="var(--accent)" />
               </svg>
             }
-            titleText={prompt.slice(0, 25) || "AI 生成"}
+            titleText={prompt.slice(0, 25) || t('ai.imageGen')}
             rightSlot={
               <button
                 onClick={(e) => {
@@ -237,7 +239,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
                 <circle cx="7" cy="7" r="2" fill="var(--accent)" />
               </svg>
             }
-            titleText="AI 图片"
+            titleText={t('ai.imageTitle')}
           />
         </div>
 
@@ -248,7 +250,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
-            placeholder="输入 AI 提示词..."
+            placeholder={t('ai.promptPlaceholder')}
             style={{
               width: "100%", height: "100%", minHeight: "80px", padding: "8px",
               fontSize: "11px", lineHeight: "1.5", color: "var(--text)",
@@ -307,7 +309,7 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
                 <path d="M5 1L8 8H2L5 1Z" fill="#fff" />
               </svg>
             )}
-            {isGenerating ? `${elapsedTime}s` : "生成"}
+            {isGenerating ? `${elapsedTime}s` : t('canvas.cell.generate')}
           </button>
         </div>
       </div>

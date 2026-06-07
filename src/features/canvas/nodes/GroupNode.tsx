@@ -1,10 +1,12 @@
 import { memo } from "react";
 import { type NodeProps } from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 import type { GroupNodeData } from "../domain/canvasNodes";
 import { NodeHeader } from "../ui/NodeHeader";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 function GroupNodeComponent({ data, selected }: NodeProps & { data: GroupNodeData }) {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -32,13 +34,13 @@ function GroupNodeComponent({ data, selected }: NodeProps & { data: GroupNodeDat
             </svg>
           }
           titleText={data.label}
-          metaText={`${data.childNodeIds.length} 个节点`}
+          metaText={t('group.nodeCount', { count: data.childNodeIds.length })}
         />
       </div>
 
       <div style={{ flex: 1, padding: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <span style={{ fontSize: "11px", color: "var(--text-muted)", fontStyle: "italic" }}>
-          将节点拖入此区域进行分组
+          {t('group.dragToGroup')}
         </span>
       </div>
 

@@ -1,5 +1,6 @@
 import { memo, useState, useCallback, useEffect, useMemo } from "react";
 import { Handle, Position, useReactFlow, useNodes, useEdges } from "@xyflow/react";
+import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useProjectStore } from "@/stores/projectStore";
 import { createGenerationTask, pollTaskResult, getModelsByProvider } from "@/services/ai";
@@ -106,6 +107,7 @@ function generateGridImageDataUrl(
 }
 
 export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNodeProps) => {
+  const { t } = useTranslation();
   const { addNodes, addEdges } = useReactFlow();
   const { providerConfigs } = useSettingsStore();
   const { updateCell } = useProjectStore();
@@ -225,13 +227,13 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
   // 生成分镜
   const handleGenerate = useCallback(async () => {
     if (frames.every((f) => !f.description.trim())) {
-      setError("请填写至少一个分镜描述");
+      setError(t('storyboard.mustFillOne'));
       return;
     }
 
     const apiKey = providerConfigs[selectedProvider]?.apiKey;
     if (!apiKey) {
-      setError("请先在设置中配置 API Key");
+      setError(t('ai.no_api_key'));
       return;
     }
 
@@ -341,7 +343,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
     } catch (err) {
       console.error("Storyboard generation failed:", err);
       updateCell(id, { status: "error" });
-      setError(err instanceof Error ? err.message : "生成失败");
+      setError(err instanceof Error ? err.message : t('ai.generation_failed'));
     } finally {
       setIsGenerating(false);
     }
@@ -378,12 +380,12 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
               <rect x="9" y="9" width="5" height="5" rx="1" />
             </svg>
           }
-          titleText="分镜生成"
+          titleText={t('storyboard.genTitle')}
           rightSlot={
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               {incomingImages.length > 0 && (
                 <span style={{ fontSize: "10px", color: "var(--accent)", padding: "2px 6px", background: "rgba(var(--accent-rgb), 0.1)", borderRadius: "4px" }}>
-                  {incomingImages.length}张参考图
+                  {t('storyboard.refImages', { count: incomingImages.length })}
                 </span>
               )}
               <NodePriceBadge label="¥0.43/次" title="每次生成约0.43元" />
@@ -397,7 +399,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {/* Rows */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>行</span>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t('storyboard.gridRows')}</span>
             <button onClick={() => setGridRows(Math.max(1, gridRows - 1))} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "1px solid var(--ui-border-soft)", background: "var(--ui-surface-field)", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>-</button>
             <span style={{ fontSize: "13px", fontWeight: 500, minWidth: "20px", textAlign: "center" }}>{gridRows}</span>
             <button onClick={() => setGridRows(Math.min(6, gridRows + 1))} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "1px solid var(--ui-border-soft)", background: "var(--ui-surface-field)", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
@@ -405,14 +407,14 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
 
           {/* Cols */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>列</span>
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t('storyboard.gridCols')}</span>
             <button onClick={() => setGridCols(Math.max(1, gridCols - 1))} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "1px solid var(--ui-border-soft)", background: "var(--ui-surface-field)", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>-</button>
             <span style={{ fontSize: "13px", fontWeight: 500, minWidth: "20px", textAlign: "center" }}>{gridCols}</span>
             <button onClick={() => setGridCols(Math.min(6, gridCols + 1))} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "1px solid var(--ui-border-soft)", background: "var(--ui-surface-field)", cursor: "pointer", fontSize: "12px", color: "var(--text-muted)", display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
           </div>
         </div>
 
-        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{totalFrames}格</span>
+        <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t('storyboard.gridCells', { count: totalFrames })}</span>
       </div>
 
       {/* Frame Grid */}
@@ -451,7 +453,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
                     setFrames(newFrames);
                   }}
                   onKeyDown={(e) => handleFrameKeyDown(index, e)}
-                  placeholder={`分镜 ${String(index + 1).padStart(2, "0")} 描述`}
+                  placeholder={t('storyboard.frameDesc', { index: String(index + 1).padStart(2, "0") })}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -487,7 +489,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
           }}
         >
           <div style={{ padding: "6px 10px", fontSize: "10px", color: "var(--text-muted)", borderBottom: "1px solid var(--ui-border-soft)" }}>
-            选择参考图
+            {t('storyboard.selectRefImage')}
           </div>
           {incomingImages.map((img, index) => (
             <button
@@ -511,7 +513,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
             </button>
           ))}
           <div style={{ padding: "6px 10px", fontSize: "10px", color: "var(--text-muted)", borderTop: "1px solid var(--ui-border-soft)" }}>
-            Esc 关闭
+            {t('storyboard.escClose')}
           </div>
         </div>
       )}
@@ -566,7 +568,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
               <circle cx="8" cy="9" r="2" fill="#fff" />
             </svg>
           )}
-          {isGenerating ? "生成中..." : "生成"}
+          {isGenerating ? t('ai.generating') : t('canvas.cell.generate')}
         </button>
       </div>
 

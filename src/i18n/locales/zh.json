@@ -43,7 +43,8 @@
     "sortByCreatedAt": "按创建日期",
     "sortByUpdatedAt": "按修改日期",
     "sortAsc": "升序",
-    "sortDesc": "降序"
+    "sortDesc": "降序",
+    "nodeCount": "{{count}} 个节点"
   },
   "canvas": {
     "toolbar": {
@@ -72,17 +73,25 @@
   },
   "ai": {
     "title": "AI 生成",
+    "imageTitle": "AI 图片",
+    "imageGen": "AI 生成",
     "provider": "供应商",
     "model": "模型",
     "prompt": "提示词",
+    "promptPlaceholder": "输入 AI 提示词...",
     "negative_prompt": "负面提示词",
     "generate": "生成图片",
     "generating": "生成中...",
+    "generatingProgress": "正在提交任务...",
+    "generatingWaiting": "任务已提交，等待生成...",
+    "generatingSeconds": "生成中... {{seconds}}秒",
+    "no_api_key": "请先在设置中配置 API 密钥",
+    "no_prompt": "请输入提示词",
+    "generation_failed": "生成失败，请重试",
     "grid_layout": "宫格布局",
     "grid_2x2": "2x2 四宫格",
     "grid_3x3": "3x3 九宫格",
     "grid_custom": "自定义",
-    "no_api_key": "请先在设置中配置 API 密钥",
     "outputSize": "输出尺寸"
   },
   "settings": {
@@ -255,6 +264,7 @@
     "model": "模型",
     "quality": "画质",
     "aspectRatio": "比例",
+    "aspectRatioAuto": "自动",
     "otherParams": "其他参数",
     "thinkingLevel": "思考等级",
     "thinkingDisabled": "关闭",
@@ -283,5 +293,174 @@
     "crop": "裁剪",
     "annotate": "标注",
     "split": "切割"
+  },
+  "sidebar": {
+    "apiStatus": "API",
+    "apiOn": "已配置",
+    "apiOff": "未配置",
+    "version": "版本"
+  },
+  "storyboard": {
+    "genTitle": "分镜生成",
+    "splitTitle": "分镜切割",
+    "gridRows": "行",
+    "gridCols": "列",
+    "gridCells": "{{count}}格",
+    "expand": "展开",
+    "collapse": "收起",
+    "export": "导出",
+    "exporting": "导出中...",
+    "noExportableImages": "没有可导出的分镜图片",
+    "exportedTo": "分镜图已导出到: {{path}}",
+    "exportFailed": "导出失败，请重试",
+    "frameDesc": "分镜 {{index}} 描述",
+    "frameNote": "分镜 {{index}} 备注",
+    "selectRefImage": "选择参考图",
+    "escClose": "Esc 关闭",
+    "refImages": "{{count}}张参考图",
+    "mustFillOne": "请填写至少一个分镜描述",
+    "imageCount": "1张参考图"
+  },
+  "node": {
+    "menu": {
+      "uploadImage": "上传图片",
+      "aiImageGeneration": "AI 图片生成",
+      "storyboard": "分镜",
+      "textAnnotation": "文本标注",
+      "storyboardGen": "分镜生成"
+    },
+    "name": {
+      "uploadImage": "上传图片",
+      "aiGenerate": "AI 生成",
+      "exportImage": "导出图片",
+      "textAnnotation": "文本标注",
+      "group": "分组",
+      "storyboardSplit": "分镜切割",
+      "storyboardGen": "分镜生成"
+    }
+  },
+  "canvasMenu": {
+    "aiGenerate": "AI 生成",
+    "upload": "上传",
+    "text": "文本",
+    "storyboard": "分镜",
+    "dblClickToAdd": "双击添加节点",
+    "dragToMove": "拖拽移动画布 · 滚轮缩放",
+    "export": "导出"
+  },
+  "gridExport": {
+    "title": "分镜网格导出",
+    "cellRatio": "单元格比例",
+    "gridSettings": "行列设置",
+    "cellSize": "单元格尺寸: {{size}}px",
+    "lineThickness": "线条粗细: {{thickness}}px",
+    "colorSettings": "颜色设置",
+    "background": "背景",
+    "line": "线条",
+    "downloadImage": "下载图片",
+    "status": "{{ratioW}}:{{ratioH}} 比例 · {{rows}}x{{cols}} 网格 · {{thickness}}px 线条"
+  },
+  "upload": {
+    "selectImage": "请选择图片文件",
+    "uploadImage": "上传图片",
+    "clickOrDrag": "点击或拖拽上传",
+    "supportedFormats": "支持 JPG、PNG、WebP"
+  },
+  "group": {
+    "nodeCount": "{{count}} 个节点",
+    "dragToGroup": "将节点拖入此区域进行分组"
+  },
+  "textNode": {
+    "annotation": "文本标注",
+    "textBlock": "文本块",
+    "dblClickEdit": "双击编辑..."
+  },
+  "splitEditor": {
+    "gridInfo": "{{rows}} x {{cols}} = {{count}} 格",
+    "waitingResult": "等待生成结果...",
+    "exportSettings": "导出设置",
+    "mergeExport": "合并导出",
+    "showIndex": "显示序号",
+    "showDesc": "显示描述",
+    "gap": "间距",
+    "bgColor": "背景色"
+  },
+  "cropEditor": {
+    "enable": "启用",
+    "cancel": "取消",
+    "apply": "应用"
+  },
+  "annotateEditor": {
+    "rect": "矩形",
+    "ellipse": "圆形",
+    "arrow": "箭头",
+    "pen": "画笔",
+    "text": "文本",
+    "undo": "撤销",
+    "redo": "重做",
+    "deleteSelected": "删除选中",
+    "clear": "清空",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "splitToolEditor": {
+    "cancel": "取消",
+    "split": "分割"
+  },
+  "toolbar": {
+    "closeUp": "特写",
+    "wideShot": "全景",
+    "medium": "中景",
+    "extremeClose": "大特写",
+    "generate": "生成",
+    "imageToImage": "图生图",
+    "textToImage": "文本生成图片",
+    "imageToImageBtn": "图片生成图片",
+    "imageGenerate": "图像生成",
+    "imageGenerateDesc": "AI 生成图片",
+    "uploadImage": "上传图片",
+    "uploadImageDesc": "本地图片上传",
+    "refImages": "参考图片",
+    "imageUrlPlaceholder": "图片 URL...",
+    "upload": "上传",
+    "generating": "生成中...",
+    "generateImage": "生成图片",
+    "clickToUpload": "点击上传图片"
+  },
+  "projectList": {
+    "lastUpdated": "最后更新",
+    "createdDate": "创建日期",
+    "name": "名称",
+    "desc": "降序",
+    "asc": "升序",
+    "clickToCreate": "点击创建按钮开始"
+  },
+  "toolDef": {
+    "crop": "裁剪",
+    "aspectRatio": "宽高比",
+    "free": "自由",
+    "quality": "质量",
+    "cropFailed": "裁剪失败",
+    "annotate": "标注",
+    "color": "颜色",
+    "lineWidth": "线宽",
+    "fontSize": "字号",
+    "annotateData": "标注数据",
+    "storyboardSplit": "分镜分割",
+    "rows": "行数",
+    "cols": "列数",
+    "gap": "间距",
+    "bgColor": "背景色",
+    "splitFailed": "分割失败"
+  },
+  "serviceError": {
+    "noApiKey": "请先在设置中配置 API Key",
+    "timeout": "生成超时（超过6分钟）",
+    "generationFailed": "生成失败",
+    "taskNotFound": "任务未找到",
+    "noResult": "生成完成但未返回图片"
+  },
+  "tauriError": {
+    "notTauriEnv": "当前不是 Tauri 容器环境，请使用 `npm run tauri dev` 启动"
   }
 }

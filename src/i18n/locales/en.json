@@ -43,7 +43,8 @@
     "sortByCreatedAt": "Creation date",
     "sortByUpdatedAt": "Modified date",
     "sortAsc": "Ascending",
-    "sortDesc": "Descending"
+    "sortDesc": "Descending",
+    "nodeCount": "{{count}} nodes"
   },
   "canvas": {
     "toolbar": {
@@ -72,17 +73,25 @@
   },
   "ai": {
     "title": "AI Generate",
+    "imageTitle": "AI Image",
+    "imageGen": "AI Generate",
     "provider": "Provider",
     "model": "Model",
     "prompt": "Prompt",
+    "promptPlaceholder": "Enter AI prompt...",
     "negative_prompt": "Negative Prompt",
     "generate": "Generate",
     "generating": "Generating...",
+    "generatingProgress": "Submitting task...",
+    "generatingWaiting": "Task submitted, waiting for generation...",
+    "generatingSeconds": "Generating... {{seconds}}s",
+    "no_api_key": "Please configure your API key in Settings first",
+    "no_prompt": "Please enter a prompt",
+    "generation_failed": "Generation failed, please retry",
     "grid_layout": "Grid Layout",
     "grid_2x2": "2x2 Grid",
     "grid_3x3": "3x3 Grid",
     "grid_custom": "Custom",
-    "no_api_key": "Please configure your API key in Settings first",
     "outputSize": "Output size"
   },
   "settings": {
@@ -255,6 +264,7 @@
     "model": "Model",
     "quality": "Quality",
     "aspectRatio": "Aspect Ratio",
+    "aspectRatioAuto": "Auto",
     "otherParams": "Other Params",
     "thinkingLevel": "Thinking level",
     "thinkingDisabled": "Off",
@@ -283,5 +293,174 @@
     "crop": "Crop",
     "annotate": "Annotate",
     "split": "Split"
+  },
+  "sidebar": {
+    "apiStatus": "API",
+    "apiOn": "ON",
+    "apiOff": "OFF",
+    "version": "Version"
+  },
+  "storyboard": {
+    "genTitle": "Storyboard Gen",
+    "splitTitle": "Storyboard Split",
+    "gridRows": "Rows",
+    "gridCols": "Cols",
+    "gridCells": "{{count}} cells",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "export": "Export",
+    "exporting": "Exporting...",
+    "noExportableImages": "No exportable storyboard images",
+    "exportedTo": "Storyboard exported to: {{path}}",
+    "exportFailed": "Export failed, please retry",
+    "frameDesc": "Frame {{index}} description",
+    "frameNote": "Frame {{index}} note",
+    "selectRefImage": "Select reference image",
+    "escClose": "Esc to close",
+    "refImages": "{{count}} ref images",
+    "mustFillOne": "Please fill in at least one frame",
+    "imageCount": "1 ref image"
+  },
+  "node": {
+    "menu": {
+      "uploadImage": "Upload Image",
+      "aiImageGeneration": "AI Image Generation",
+      "storyboard": "Storyboard",
+      "textAnnotation": "Text Annotation",
+      "storyboardGen": "Storyboard Gen"
+    },
+    "name": {
+      "uploadImage": "Upload Image",
+      "aiGenerate": "AI Generate",
+      "exportImage": "Export Image",
+      "textAnnotation": "Text Annotation",
+      "group": "Group",
+      "storyboardSplit": "Storyboard Split",
+      "storyboardGen": "Storyboard Gen"
+    }
+  },
+  "canvasMenu": {
+    "aiGenerate": "AI Generate",
+    "upload": "Upload",
+    "text": "Text",
+    "storyboard": "Storyboard",
+    "dblClickToAdd": "Double-click to add node",
+    "dragToMove": "Drag to move · Scroll to zoom",
+    "export": "Export"
+  },
+  "gridExport": {
+    "title": "Storyboard Grid Export",
+    "cellRatio": "Cell Ratio",
+    "gridSettings": "Grid Settings",
+    "cellSize": "Cell size: {{size}}px",
+    "lineThickness": "Line thickness: {{thickness}}px",
+    "colorSettings": "Color Settings",
+    "background": "Background",
+    "line": "Line",
+    "downloadImage": "Download Image",
+    "status": "{{ratioW}}:{{ratioH}} ratio · {{rows}}x{{cols}} grid · {{thickness}}px lines"
+  },
+  "upload": {
+    "selectImage": "Please select an image file",
+    "uploadImage": "Upload Image",
+    "clickOrDrag": "Click or drag to upload",
+    "supportedFormats": "Supports JPG, PNG, WebP"
+  },
+  "group": {
+    "nodeCount": "{{count}} nodes",
+    "dragToGroup": "Drag nodes here to group"
+  },
+  "textNode": {
+    "annotation": "Text Annotation",
+    "textBlock": "Text Block",
+    "dblClickEdit": "Double-click to edit..."
+  },
+  "splitEditor": {
+    "gridInfo": "{{rows}} x {{cols}} = {{count}} cells",
+    "waitingResult": "Waiting for generation result...",
+    "exportSettings": "Export Settings",
+    "mergeExport": "Merge Export",
+    "showIndex": "Show Index",
+    "showDesc": "Show Description",
+    "gap": "Gap",
+    "bgColor": "Background"
+  },
+  "cropEditor": {
+    "enable": "Enable",
+    "cancel": "Cancel",
+    "apply": "Apply"
+  },
+  "annotateEditor": {
+    "rect": "Rectangle",
+    "ellipse": "Circle",
+    "arrow": "Arrow",
+    "pen": "Pen",
+    "text": "Text",
+    "undo": "Undo",
+    "redo": "Redo",
+    "deleteSelected": "Delete Selected",
+    "clear": "Clear",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "splitToolEditor": {
+    "cancel": "Cancel",
+    "split": "Split"
+  },
+  "toolbar": {
+    "closeUp": "Close-up",
+    "wideShot": "Wide Shot",
+    "medium": "Medium",
+    "extremeClose": "Extreme Close",
+    "generate": "Generate",
+    "imageToImage": "Image to Image",
+    "textToImage": "Text to Image",
+    "imageToImageBtn": "Image to Image",
+    "imageGenerate": "Image Generation",
+    "imageGenerateDesc": "AI Image Generation",
+    "uploadImage": "Upload Image",
+    "uploadImageDesc": "Upload local image",
+    "refImages": "Reference Images",
+    "imageUrlPlaceholder": "Image URL...",
+    "upload": "Upload",
+    "generating": "Generating...",
+    "generateImage": "Generate Image",
+    "clickToUpload": "Click to upload image"
+  },
+  "projectList": {
+    "lastUpdated": "Last Updated",
+    "createdDate": "Created Date",
+    "name": "Name",
+    "desc": "Descending",
+    "asc": "Ascending",
+    "clickToCreate": "Click create button to start"
+  },
+  "toolDef": {
+    "crop": "Crop",
+    "aspectRatio": "Aspect Ratio",
+    "free": "Free",
+    "quality": "Quality",
+    "cropFailed": "Crop failed",
+    "annotate": "Annotate",
+    "color": "Color",
+    "lineWidth": "Line Width",
+    "fontSize": "Font Size",
+    "annotateData": "Annotation Data",
+    "storyboardSplit": "Storyboard Split",
+    "rows": "Rows",
+    "cols": "Cols",
+    "gap": "Gap",
+    "bgColor": "Background",
+    "splitFailed": "Split failed"
+  },
+  "serviceError": {
+    "noApiKey": "Please configure your API key in Settings first",
+    "timeout": "Generation timed out (exceeded 6 minutes)",
+    "generationFailed": "Generation failed",
+    "taskNotFound": "Task not found",
+    "noResult": "Generation succeeded but returned no image"
+  },
+  "tauriError": {
+    "notTauriEnv": "Not in Tauri environment. Please use `npm run tauri dev` to start"
   }
 }

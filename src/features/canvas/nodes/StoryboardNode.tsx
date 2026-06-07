@@ -1,6 +1,7 @@
 import { memo, useMemo, useState, useCallback } from 'react';
 import { Handle, Position, useReactFlow } from '@xyflow/react';
 import { Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { StoryboardCell, StoryboardSplitFrame } from '@/types/project';
 import { mergeStoryboardImages, saveImageSourceToDownloads } from '@/commands/image';
 import { NodeHeader } from '../ui/NodeHeader';
@@ -17,6 +18,7 @@ function generateFrameId(): string {
 }
 
 export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps) => {
+  const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
 
   const frames = (data.frames as StoryboardSplitFrame[] | undefined) || [];
@@ -66,7 +68,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
       .filter((url: string | null): url is string => Boolean(url));
 
     if (frameSources.length === 0) {
-      alert('没有可导出的分镜图片');
+      alert(t('storyboard.noExportableImages'));
       return;
     }
 
@@ -89,10 +91,10 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
         result.imagePath,
         `storyboard-${gridRows}x${gridCols}`
       );
-      alert(`分镜图已导出到: ${savedPath}`);
+      alert(t('storyboard.exportedTo', { path: savedPath }));
     } catch (err) {
       console.error('Export failed:', err);
-      alert('导出失败，请重试');
+      alert(t('storyboard.exportFailed'));
     } finally {
       setIsExporting(false);
     }
@@ -135,7 +137,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
               <rect x="9" y="9" width="5" height="5" rx="1" />
             </svg>
           }
-          titleText="分镜切割"
+          titleText={t('storyboard.splitTitle')}
           rightSlot={
             <button
               onClick={() => setIsExpanded(!isExpanded)}
@@ -145,7 +147,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
                 borderRadius: '4px', cursor: 'pointer',
               }}
             >
-              {isExpanded ? '收起' : '展开'}
+              {isExpanded ? t('storyboard.collapse') : t('storyboard.expand')}
             </button>
           }
         />
@@ -156,7 +158,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Rows */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>行</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('storyboard.gridRows')}</span>
             <button onClick={() => updateGrid(Math.max(1, gridRows - 1), gridCols)} style={{ width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--ui-border-soft)', background: 'var(--ui-surface-field)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
             <span style={{ fontSize: '13px', fontWeight: 500, minWidth: '20px', textAlign: 'center' }}>{gridRows}</span>
             <button onClick={() => updateGrid(Math.min(6, gridRows + 1), gridCols)} style={{ width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--ui-border-soft)', background: 'var(--ui-surface-field)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
@@ -164,14 +166,14 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
 
           {/* Cols */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>列</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('storyboard.gridCols')}</span>
             <button onClick={() => updateGrid(gridRows, Math.max(1, gridCols - 1))} style={{ width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--ui-border-soft)', background: 'var(--ui-surface-field)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
             <span style={{ fontSize: '13px', fontWeight: 500, minWidth: '20px', textAlign: 'center' }}>{gridCols}</span>
             <button onClick={() => updateGrid(gridRows, Math.min(6, gridCols + 1))} style={{ width: '20px', height: '20px', borderRadius: '4px', border: '1px solid var(--ui-border-soft)', background: 'var(--ui-surface-field)', cursor: 'pointer', fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
           </div>
         </div>
 
-        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{totalFrames}格</span>
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('storyboard.gridCells', { count: totalFrames })}</span>
       </div>
 
       {/* Frame Grid */}
@@ -232,7 +234,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
                 <textarea
                   value={frame.note || ''}
                   onChange={(e) => updateFrame(index, { note: e.target.value })}
-                  placeholder={`分镜 ${index + 1} 备注`}
+                  placeholder={t('storyboard.frameNote', { index: index + 1 })}
                   style={{
                     position: 'absolute',
                     bottom: '4px',
@@ -305,7 +307,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
           ) : (
             <Download size={12} />
           )}
-          {isExporting ? '导出中...' : '导出'}
+          {isExporting ? t('storyboard.exporting') : t('storyboard.export')}
         </button>
       </div>
 

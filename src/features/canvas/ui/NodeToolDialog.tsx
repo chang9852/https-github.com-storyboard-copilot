@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { getTool } from "../tools/registry";
 import type { NodeToolType } from "../domain/canvasNodes";
 import type { ToolExecuteParams } from "../tools/types";
@@ -73,6 +74,7 @@ function GenericToolEditor({
   onExecute: (params: ToolExecuteParams) => Promise<void>;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [fields, setFields] = useState<Record<string, unknown>>(() => {
     const initial: Record<string, unknown> = {};
     if (tool) {
@@ -217,7 +219,7 @@ function GenericToolEditor({
                     checked={fields[schema.key] as boolean}
                     onChange={(e) => handleFieldChange(schema.key, e.target.checked)}
                   />
-                  <span style={{ fontSize: "12px", color: "var(--text)" }}>启用</span>
+                  <span style={{ fontSize: "12px", color: "var(--text)" }}>{t('cropEditor.enable')}</span>
                 </label>
               ) : schema.type === "color" ? (
                 <input
@@ -253,7 +255,7 @@ function GenericToolEditor({
               cursor: "pointer",
             }}
           >
-            取消
+            {t('cropEditor.cancel')}
           </button>
           <button
             onClick={handleExecute}
@@ -284,7 +286,7 @@ function GenericToolEditor({
                 }}
               />
             )}
-            应用
+            {t('cropEditor.apply')}
           </button>
         </div>
 

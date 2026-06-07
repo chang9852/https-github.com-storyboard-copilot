@@ -190,7 +190,7 @@ const textAnnotationNodeDefinition: CanvasNodeDefinition<TextAnnotationNodeData>
   },
   createDefaultData: () => ({
     displayName: DEFAULT_NODE_DISPLAY_NAME[CANVAS_NODE_TYPES.textAnnotation],
-    text: '双击编辑文本',
+    text: 'textNode.dblClickEdit',
     fontSize: 14,
     color: '#ffffff',
     backgroundColor: undefined,

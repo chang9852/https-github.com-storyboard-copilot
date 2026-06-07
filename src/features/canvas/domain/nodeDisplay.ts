@@ -1,13 +1,13 @@
 import { CANVAS_NODE_TYPES } from './canvasNodes';
 
 export const DEFAULT_NODE_DISPLAY_NAME: Record<string, string> = {
-  [CANVAS_NODE_TYPES.upload]: '上传图片',
-  [CANVAS_NODE_TYPES.imageEdit]: 'AI 生成',
-  [CANVAS_NODE_TYPES.exportImage]: '导出图片',
-  [CANVAS_NODE_TYPES.textAnnotation]: '文本标注',
-  [CANVAS_NODE_TYPES.group]: '分组',
-  [CANVAS_NODE_TYPES.storyboardSplit]: '分镜切割',
-  [CANVAS_NODE_TYPES.storyboardGen]: '分镜生成',
+  [CANVAS_NODE_TYPES.upload]: 'node.name.uploadImage',
+  [CANVAS_NODE_TYPES.imageEdit]: 'node.name.aiGenerate',
+  [CANVAS_NODE_TYPES.exportImage]: 'node.name.exportImage',
+  [CANVAS_NODE_TYPES.textAnnotation]: 'node.name.textAnnotation',
+  [CANVAS_NODE_TYPES.group]: 'node.name.group',
+  [CANVAS_NODE_TYPES.storyboardSplit]: 'node.name.storyboardSplit',
+  [CANVAS_NODE_TYPES.storyboardGen]: 'node.name.storyboardGen',
 };
 
 export const NODE_ICONS: Record<string, string> = {

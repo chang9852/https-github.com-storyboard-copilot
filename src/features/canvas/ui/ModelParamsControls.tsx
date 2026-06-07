@@ -66,6 +66,8 @@ export const ModelParamsControls = memo(({
   const { i18n } = useTranslation();
   const isZh = i18n.language?.startsWith('zh');
   const containerRef = useRef<HTMLDivElement>(null);
+  const modelPanelRef = useRef<HTMLDivElement>(null);
+  const paramsPanelRef = useRef<HTMLDivElement>(null);
   const [openPanel, setOpenPanel] = useState<'model' | 'params' | null>(null);
 
   const providerDefs = useMemo(() => listModelProviders(), []);
@@ -115,6 +117,8 @@ export const ModelParamsControls = memo(({
     const handleOutside = (event: MouseEvent) => {
       const target = event.target as globalThis.Node;
       if (containerRef.current?.contains(target)) return;
+      if (modelPanelRef.current?.contains(target)) return;
+      if (paramsPanelRef.current?.contains(target)) return;
       setOpenPanel(null);
     };
     document.addEventListener('mousedown', handleOutside, true);
@@ -138,6 +142,7 @@ export const ModelParamsControls = memo(({
 
         {openPanel === 'model' && createPortal(
           <div
+            ref={modelPanelRef}
             className="fixed z-[80] min-w-[320px] rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-panel)] p-3 shadow-2xl backdrop-blur-sm"
             style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
           >
@@ -220,6 +225,7 @@ export const ModelParamsControls = memo(({
 
         {openPanel === 'params' && createPortal(
           <div
+            ref={paramsPanelRef}
             className="fixed z-[80] min-w-[320px] rounded-xl border border-[var(--ui-border-soft)] bg-[var(--ui-surface-panel)] p-3 shadow-2xl backdrop-blur-sm"
             style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
           >

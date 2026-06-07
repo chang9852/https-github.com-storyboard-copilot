@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 interface GridExportProps {
   onClose: () => void;
 }
 
 export function GridExport({ onClose }: GridExportProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [ratioW, setRatioW] = useState(16);
@@ -98,7 +100,7 @@ export function GridExport({ onClose }: GridExportProps) {
       }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>分镜网格导出</h2>
+          <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#333" }}>{t('gridExport.title')}</h2>
           <button
             onClick={onClose}
             style={{
@@ -125,7 +127,7 @@ export function GridExport({ onClose }: GridExportProps) {
             {/* Aspect Ratio */}
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#666", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                单元格比例
+                {t('gridExport.cellRatio')}
               </label>
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
@@ -161,7 +163,7 @@ export function GridExport({ onClose }: GridExportProps) {
             {/* Rows & Cols */}
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#666", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                行列设置
+                {t('gridExport.gridSettings')}
               </label>
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
@@ -201,7 +203,7 @@ export function GridExport({ onClose }: GridExportProps) {
             {/* Cell Size */}
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#666", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                单元格尺寸: {cellSize}px
+                {t('gridExport.cellSize', { size: cellSize })}
               </label>
               <input
                 type="range"
@@ -216,7 +218,7 @@ export function GridExport({ onClose }: GridExportProps) {
             {/* Thickness */}
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#666", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                线条粗细: {thickness}px
+                {t('gridExport.lineThickness', { thickness })}
               </label>
               <input
                 type="range"
@@ -231,11 +233,11 @@ export function GridExport({ onClose }: GridExportProps) {
             {/* Colors */}
             <div style={{ marginBottom: "20px" }}>
               <label style={{ display: "block", fontSize: "11px", fontWeight: 600, color: "#666", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                颜色设置
+                {t('gridExport.colorSettings')}
               </label>
               <div style={{ display: "flex", gap: "12px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "12px", color: "#666" }}>背景</span>
+                  <span style={{ fontSize: "12px", color: "#666" }}>{t('gridExport.background')}</span>
                   <input
                     type="color"
                     value={bgColor}
@@ -244,7 +246,7 @@ export function GridExport({ onClose }: GridExportProps) {
                   />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "12px", color: "#666" }}>线条</span>
+                  <span style={{ fontSize: "12px", color: "#666" }}>{t('gridExport.line')}</span>
                   <input
                     type="color"
                     value={lineColor}
@@ -271,7 +273,7 @@ export function GridExport({ onClose }: GridExportProps) {
                 boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)",
               }}
             >
-              下载图片
+              {t('gridExport.downloadImage')}
             </button>
           </div>
 
@@ -299,7 +301,7 @@ export function GridExport({ onClose }: GridExportProps) {
 
         {/* Info */}
         <div style={{ marginTop: "16px", textAlign: "center", fontSize: "12px", color: "#999" }}>
-          {ratioW}:{ratioH} 比例 · {rows}×{cols} 网格 · {thickness}px 线条
+          {t('gridExport.status', { ratioW, ratioH, rows, cols, thickness })}
         </div>
       </div>
     </div>

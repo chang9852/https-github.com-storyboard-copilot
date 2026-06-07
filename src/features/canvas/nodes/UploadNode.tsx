@@ -1,4 +1,5 @@
 import { memo, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import type { UploadImageNodeData } from "../domain/canvasNodes";
 import { NodeHeader } from "../ui/NodeHeader";
@@ -6,6 +7,7 @@ import { CanvasNodeImage } from "../ui/CanvasNodeImage";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
 function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadImageNodeData }) {
+  const { t } = useTranslation();
   const { updateNodeData } = useReactFlow();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -14,7 +16,7 @@ function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadI
       const file = e.target.files?.[0];
       if (!file) return;
       if (!file.type.startsWith("image/")) {
-        alert("请选择图片文件");
+        alert(t('upload.selectImage'));
         return;
       }
       const reader = new FileReader();
@@ -82,7 +84,7 @@ function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadI
                 <path d="M1 10l3-3 2 2 3-3 4 4" strokeLinecap="round" />
               </svg>
             }
-            titleText={data.sourceFileName || "上传图片"}
+            titleText={data.sourceFileName || t('upload.uploadImage')}
           />
         </div>
 
@@ -148,8 +150,8 @@ function UploadNodeComponent({ id, data, selected }: NodeProps & { data: UploadI
         </svg>
       </div>
 
-      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>点击或拖拽上传</span>
-      <span style={{ fontSize: "9px", color: "var(--text-muted)", marginTop: "4px" }}>支持 JPG、PNG、WebP</span>
+      <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>{t('upload.clickOrDrag')}</span>
+      <span style={{ fontSize: "9px", color: "var(--text-muted)", marginTop: "4px" }}>{t('upload.supportedFormats')}</span>
     </div>
   );
 }

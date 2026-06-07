@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import type { CanvasToolPlugin, ToolExecuteParams } from "../../tools/types";
 
 interface SplitStoryboardToolEditorProps {
@@ -16,6 +17,7 @@ export function SplitStoryboardToolEditor({
   onExecute,
   onClose,
 }: SplitStoryboardToolEditorProps) {
+  const { t } = useTranslation();
   const [fields, setFields] = useState<Record<string, unknown>>(() => {
     const initial: Record<string, unknown> = {};
     for (const schema of tool.fieldSchemas) {
@@ -131,7 +133,7 @@ export function SplitStoryboardToolEditor({
             ))}
           </div>
           <div style={{ textAlign: "center", marginTop: "8px", fontSize: "12px", color: "var(--text-muted)" }}>
-            {rows} x {cols} = {totalFrames} 格
+            {t('splitEditor.gridInfo', { rows, cols, count: totalFrames })}
           </div>
         </div>
 
@@ -227,7 +229,7 @@ export function SplitStoryboardToolEditor({
               cursor: "pointer",
             }}
           >
-            取消
+            {t('splitToolEditor.cancel')}
           </button>
           <button
             onClick={handleExecute}
@@ -258,7 +260,7 @@ export function SplitStoryboardToolEditor({
                 }}
               />
             )}
-            分割
+            {t('splitToolEditor.split')}
           </button>
         </div>
 

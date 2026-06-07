@@ -1,4 +1,5 @@
 import { useCallback, useRef, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ReactFlow,
   Background,
@@ -53,6 +54,7 @@ interface MenuPosition {
 }
 
 export function Canvas() {
+  const { t } = useTranslation();
   const { currentProject, addCell } = useProjectStore();
   const reactFlowInstance = useReactFlow();
 
@@ -333,7 +335,7 @@ export function Canvas() {
               }}
             >
               <CreateMenuButton
-                label="AI 生成"
+                label={t('canvasMenu.aiGenerate')}
                 gradient="linear-gradient(135deg, #6366f1, #4f46e5)"
                 bg="rgba(99, 102, 241, 0.08)"
                 bgHover="rgba(99, 102, 241, 0.15)"
@@ -348,7 +350,7 @@ export function Canvas() {
                 }
               />
               <CreateMenuButton
-                label="上传"
+                label={t('canvasMenu.upload')}
                 gradient="linear-gradient(135deg, #22c55e, #16a34a)"
                 bg="rgba(34, 197, 94, 0.08)"
                 bgHover="rgba(34, 197, 94, 0.15)"
@@ -377,7 +379,7 @@ export function Canvas() {
                 }
               />
               <CreateMenuButton
-                label="文本"
+                label={t('canvasMenu.text')}
                 gradient="linear-gradient(135deg, #a855f7, #9333ea)"
                 bg="rgba(168, 85, 247, 0.08)"
                 bgHover="rgba(168, 85, 247, 0.15)"
@@ -398,7 +400,7 @@ export function Canvas() {
                 }
               />
               <CreateMenuButton
-                label="分镜"
+                label={t('canvasMenu.storyboard')}
                 gradient="linear-gradient(135deg, #ec4899, #db2777)"
                 bg="rgba(236, 72, 153, 0.08)"
                 bgHover="rgba(236, 72, 153, 0.15)"
@@ -480,10 +482,10 @@ export function Canvas() {
               marginBottom: "6px",
             }}
           >
-            双击添加节点
+            {t('canvasMenu.dblClickToAdd')}
           </p>
           <p style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.3)" }}>
-            拖拽移动画布 · 滚轮缩放
+            {t('canvasMenu.dragToMove')}
           </p>
         </div>
       )}
@@ -532,7 +534,7 @@ export function Canvas() {
           <rect x="1" y="8" width="5" height="5" rx="1" />
           <rect x="8" y="8" width="5" height="5" rx="1" />
         </svg>
-        导出
+        {t('canvasMenu.export')}
       </button>
 
       {/* Grid export modal */}
