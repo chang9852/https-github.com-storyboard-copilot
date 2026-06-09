@@ -103,17 +103,25 @@ export async function createGenerationTask(params: {
   const settingsState = useSettingsStore.getState();
   if (!settingsState.isHydrated) {
     await new Promise<void>((resolve) => {
-      const unsub = useSettingsStore.subscribe((state) => {
-        if (state.isHydrated) {
-          unsub();
+      let resolved = false;
+      const done = () => {
+        if (!resolved) {
+          resolved = true;
           resolve();
+        }
+      };
+      useSettingsStore.subscribe((state) => {
+        if (state.isHydrated) {
+          done();
         }
       });
       // Also check immediately in case hydration completed between the check and subscribe
       if (useSettingsStore.getState().isHydrated) {
-        unsub();
-        resolve();
+        done();
       }
+      // Safety timeout: if hydration doesn't complete within 5s, proceed anyway
+      // (getApiKey will return empty string and the user will see a clear error)
+      setTimeout(done, 5000);
     });
   }
 
