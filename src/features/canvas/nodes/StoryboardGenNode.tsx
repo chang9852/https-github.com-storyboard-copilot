@@ -343,7 +343,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
     } catch (err) {
       console.error("Storyboard generation failed:", err);
       updateCell(id, { status: "error" });
-      setError(err instanceof Error ? err.message : t('ai.generation_failed'));
+      setError(err instanceof Error ? err.message : (typeof err === 'string' ? err : (err as any)?.details || (err as any)?.message || t('ai.generation_failed')));
     } finally {
       setIsGenerating(false);
     }

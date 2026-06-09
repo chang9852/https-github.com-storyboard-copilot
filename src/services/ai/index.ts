@@ -99,9 +99,17 @@ export async function createGenerationTask(params: {
   resolution?: string;
   referenceImages?: string[];
 }): Promise<GenerateTaskResult> {
+  console.info('[AI Service] createGenerationTask starting', {
+    provider: params.provider,
+    model: params.model,
+    promptLength: params.prompt.length,
+    aspectRatio: params.aspectRatio,
+  });
+
   // Wait for settings hydration to complete so API keys are loaded from localStorage
   const settingsState = useSettingsStore.getState();
   if (!settingsState.isHydrated) {
+    console.warn('[AI Service] settings not yet hydrated, waiting up to 5s...');
     await new Promise<void>((resolve) => {
       let resolved = false;
       const done = () => {
@@ -127,8 +135,11 @@ export async function createGenerationTask(params: {
 
   const apiKey = useSettingsStore.getState().getApiKey(params.provider);
   if (!apiKey) {
+    console.error('[AI Service] no API key found for provider', params.provider);
     throw new Error(i18n.t('serviceError.noApiKey'));
   }
+
+  console.info('[AI Service] setting API key for provider', params.provider, 'key length:', apiKey.length);
 
   // Set the API key via the gateway
   await canvasAiGateway.setApiKey(params.provider, apiKey);
@@ -149,8 +160,21 @@ export async function createGenerationTask(params: {
     extraParams,
   };
 
+  console.info('[AI Service] submitting generation job', {
+    model: payload.model,
+    size: payload.size,
+    aspectRatio: payload.aspectRatio,
+  });
+
   // Submit through the gateway
-  const jobId = await canvasAiGateway.submitGenerateImageJob(payload);
+  let jobId: string;
+  try {
+    jobId = await canvasAiGateway.submitGenerateImageJob(payload);
+    console.info('[AI Service] job submitted, jobId:', jobId);
+  } catch (submitError) {
+    console.error('[AI Service] submitGenerateImageJob failed', submitError);
+    throw submitError;
+  }
 
   // Poll for completion
   const startTime = Date.now();
@@ -158,12 +182,21 @@ export async function createGenerationTask(params: {
   while (true) {
     const elapsedMs = Date.now() - startTime;
     if (elapsedMs > MAX_POLL_DURATION_MS) {
+      console.error('[AI Service] polling timed out after', MAX_POLL_DURATION_MS, 'ms');
       throw new Error(i18n.t('serviceError.timeout'));
     }
 
-    const status = await canvasAiGateway.getGenerateImageJob(jobId);
+    let status;
+    try {
+      status = await canvasAiGateway.getGenerateImageJob(jobId);
+    } catch (pollError) {
+      console.error('[AI Service] getGenerateImageJob failed, retrying...', pollError);
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      continue;
+    }
 
     if (status.status === 'succeeded') {
+      console.info('[AI Service] job succeeded, result:', status.result?.slice(0, 100));
       return {
         task_id: jobId,
         provider: params.provider,
@@ -173,10 +206,12 @@ export async function createGenerationTask(params: {
     }
 
     if (status.status === 'failed') {
+      console.error('[AI Service] job failed:', status.error);
       throw new Error(status.error || i18n.t('serviceError.generationFailed'));
     }
 
     if (status.status === 'not_found') {
+      console.error('[AI Service] job not found:', jobId);
       throw new Error(i18n.t('serviceError.taskNotFound'));
     }
 

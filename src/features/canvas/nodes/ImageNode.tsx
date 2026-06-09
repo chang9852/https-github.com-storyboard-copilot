@@ -112,7 +112,8 @@ function ImageNodeComponent({ id, data, selected }: ImageNodeProps) {
       }
     } catch (err: any) {
       console.error("Generation failed:", err);
-      setError(err.message || t('ai.generation_failed'));
+      const errMsg = err?.message || err?.details || String(err) || t('ai.generation_failed');
+      setError(errMsg);
       updateNodeData(id, { isGenerating: false });
     } finally {
       clearInterval(timer);
