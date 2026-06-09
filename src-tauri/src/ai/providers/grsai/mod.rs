@@ -54,7 +54,7 @@ pub struct GrsaiProvider {
 impl GrsaiProvider {
     pub fn new() -> Self {
         Self {
-            client: Client::new(),
+            client: super::build_http_client(),
             api_key: Arc::new(RwLock::new(None)),
             base_url: DEFAULT_BASE_URL.to_string(),
         }

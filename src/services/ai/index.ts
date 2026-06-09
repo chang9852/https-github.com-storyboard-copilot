@@ -99,6 +99,24 @@ export async function createGenerationTask(params: {
   resolution?: string;
   referenceImages?: string[];
 }): Promise<GenerateTaskResult> {
+  // Wait for settings hydration to complete so API keys are loaded from localStorage
+  const settingsState = useSettingsStore.getState();
+  if (!settingsState.isHydrated) {
+    await new Promise<void>((resolve) => {
+      const unsub = useSettingsStore.subscribe((state) => {
+        if (state.isHydrated) {
+          unsub();
+          resolve();
+        }
+      });
+      // Also check immediately in case hydration completed between the check and subscribe
+      if (useSettingsStore.getState().isHydrated) {
+        unsub();
+        resolve();
+      }
+    });
+  }
+
   const apiKey = useSettingsStore.getState().getApiKey(params.provider);
   if (!apiKey) {
     throw new Error(i18n.t('serviceError.noApiKey'));
