@@ -478,13 +478,13 @@ export function Canvas() {
             style={{
               fontSize: "14px",
               fontWeight: 500,
-              color: "rgba(255, 255, 255, 0.6)",
+              color: "var(--text)",
               marginBottom: "6px",
             }}
           >
             {t('canvasMenu.dblClickToAdd')}
           </p>
-          <p style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.3)" }}>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
             {t('canvasMenu.dragToMove')}
           </p>
         </div>
@@ -493,6 +493,7 @@ export function Canvas() {
       {/* Grid export button */}
       <button
         onClick={() => setShowGridExport(true)}
+        className="ui-glass-panel"
         style={{
           position: "absolute",
           bottom: "20px",
@@ -500,25 +501,17 @@ export function Canvas() {
           padding: "10px 16px",
           fontSize: "11px",
           fontWeight: 500,
-          color: "rgba(255, 255, 255, 0.7)",
-          background: "rgba(17, 17, 24, 0.8)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: "10px",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           gap: "6px",
-          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
           transition: "all 0.2s ease",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(99, 102, 241, 0.2)";
-          e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+          e.currentTarget.style.background = "var(--ui-glass-bg-hover)";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(17, 17, 24, 0.8)";
-          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+          e.currentTarget.style.background = "var(--ui-glass-bg)";
         }}
       >
         <svg

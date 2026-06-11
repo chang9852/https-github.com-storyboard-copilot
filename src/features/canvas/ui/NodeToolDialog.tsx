@@ -5,6 +5,7 @@ import type { NodeToolType } from "../domain/canvasNodes";
 import type { ToolExecuteParams } from "../tools/types";
 import { CropToolEditor } from "./tool-editors/CropToolEditor";
 import { SplitStoryboardToolEditor } from "./tool-editors/SplitStoryboardToolEditor";
+import { AnnotateToolEditor } from "./tool-editors/AnnotateToolEditor";
 
 interface NodeToolDialogProps {
   toolType: NodeToolType;
@@ -44,6 +45,17 @@ export function NodeToolDialog({ toolType, imageUrl, nodeId, onExecute, onClose 
         nodeId={nodeId}
         onExecute={onExecute}
         onClose={onClose}
+      />
+    );
+  }
+
+  if (toolType === "annotate") {
+    return (
+      <AnnotateToolEditor
+        plugin={tool}
+        options={{}}
+        onOptionsChange={() => {}}
+        sourceImageUrl={imageUrl}
       />
     );
   }

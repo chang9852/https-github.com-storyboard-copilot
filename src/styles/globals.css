@@ -25,6 +25,10 @@
   --ui-border-soft: rgba(15, 23, 42, 0.12);
   --ui-border-strong: rgba(15, 23, 42, 0.2);
   --ui-shadow-panel: 0 14px 34px rgba(15, 23, 42, 0.18);
+  --ui-glass-bg: rgba(255, 255, 255, 0.72);
+  --ui-glass-border: rgba(15, 23, 42, 0.06);
+  --ui-glass-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --ui-glass-bg-hover: rgba(255, 255, 255, 0.92);
   --group-node-bg: color-mix(in srgb, rgb(var(--accent-rgb) / 0.2) 26%, rgb(var(--surface-rgb)));
   --ui-radius-lg: 12px;
   --ui-radius-xl: 16px;
@@ -50,6 +54,10 @@
   --ui-border-soft: rgba(255, 255, 255, 0.14);
   --ui-border-strong: rgba(255, 255, 255, 0.24);
   --ui-shadow-panel: 0 14px 34px rgba(0, 0, 0, 0.38);
+  --ui-glass-bg: rgba(28, 28, 30, 0.72);
+  --ui-glass-border: rgba(255, 255, 255, 0.08);
+  --ui-glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --ui-glass-bg-hover: rgba(40, 40, 44, 0.92);
   --group-node-bg: color-mix(in srgb, rgb(var(--accent-rgb) / 0.3) 30%, black);
   --ui-radius-lg: 12px;
   --ui-radius-xl: 16px;
@@ -189,6 +197,16 @@ html[data-platform='macos'] #root {
   background: var(--ui-surface-field);
   border-color: var(--ui-border-soft);
   border-radius: var(--ui-radius-lg);
+}
+
+.ui-glass-panel {
+  background: var(--ui-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--ui-glass-border);
+  border-radius: 12px;
+  box-shadow: var(--ui-glass-shadow);
+  color: var(--text);
 }
 
 /* Panel animations */
