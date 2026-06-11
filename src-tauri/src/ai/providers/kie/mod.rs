@@ -95,16 +95,6 @@ impl KieProvider {
             .unwrap_or_else(|| model.to_string())
     }
 
-    fn normalize_resolution(size: &str) -> String {
-        match size {
-            "0.5K" => "512".to_string(),
-            "1K" => "1024".to_string(),
-            "2K" => "2048".to_string(),
-            "4K" => "4096".to_string(),
-            s => s.to_string(),
-        }
-    }
-
     fn max_reference_count_for_model(model: &str) -> usize {
         if model == "nano-banana-pro" {
             8
@@ -304,7 +294,7 @@ impl KieProvider {
         let mut input = json!({
             "prompt": request.prompt,
             "aspect_ratio": request.aspect_ratio,
-            "resolution": Self::normalize_resolution(&request.size),
+            "resolution": super::normalize_resolution(&request.size),
             "output_format": "png",
             "image_input": uploaded_images
         });

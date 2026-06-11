@@ -206,7 +206,7 @@ impl AIProvider for FalProvider {
             "aspect_ratio": request.aspect_ratio,
             "output_format": "png",
             "safety_tolerance": 6,
-            "resolution": request.size,
+            "resolution": super::normalize_resolution(&request.size),
             "limit_generations": true,
             "enable_web_search": enable_web_search
         });

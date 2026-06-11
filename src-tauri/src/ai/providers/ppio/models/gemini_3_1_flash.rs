@@ -125,7 +125,7 @@ impl PPIOModelAdapter for Gemini31FlashAdapter {
 
             let body = ImageEditRequest {
                 prompt: request.prompt.clone(),
-                size: Some(request.size.clone()),
+                size: Some(crate::ai::providers::normalize_resolution(&request.size)),
                 aspect_ratio: Some(request.aspect_ratio.clone()),
                 image_base64s: Some(image_base64s.clone()),
                 output_format: Some("image/png".to_string()),
@@ -134,7 +134,7 @@ impl PPIOModelAdapter for Gemini31FlashAdapter {
             let summary = format!(
                 "model: ppio/gemini-3.1-flash, mode: edit, images: {}, size: {}, aspect_ratio: {}, prompt: {}",
                 image_base64s.len(),
-                request.size,
+                crate::ai::providers::normalize_resolution(&request.size),
                 request.aspect_ratio,
                 truncate_for_log(&request.prompt, 100)
             );
@@ -147,14 +147,14 @@ impl PPIOModelAdapter for Gemini31FlashAdapter {
         } else {
             let body = TextToImageRequest {
                 prompt: request.prompt.clone(),
-                size: Some(request.size.clone()),
+                size: Some(crate::ai::providers::normalize_resolution(&request.size)),
                 aspect_ratio: Some(request.aspect_ratio.clone()),
                 output_format: Some("image/png".to_string()),
             };
 
             let summary = format!(
                 "model: ppio/gemini-3.1-flash, mode: generate, size: {}, aspect_ratio: {}, prompt: {}",
-                request.size,
+                crate::ai::providers::normalize_resolution(&request.size),
                 request.aspect_ratio,
                 truncate_for_log(&request.prompt, 100)
             );

@@ -184,7 +184,7 @@ impl AIProvider for GrsaiProvider {
             "model": model,
             "prompt": request.prompt,
             "aspect_ratio": request.aspect_ratio,
-            "resolution": request.size,
+            "resolution": super::normalize_resolution(&request.size),
             "reference_images": reference_images,
         });
 
