@@ -294,7 +294,6 @@ impl KieProvider {
         let mut input = json!({
             "prompt": request.prompt,
             "aspect_ratio": request.aspect_ratio,
-            "resolution": super::normalize_resolution(&request.size),
             "output_format": "png",
             "image_input": uploaded_images
         });
