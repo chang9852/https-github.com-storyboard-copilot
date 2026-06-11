@@ -89,7 +89,7 @@ export function SettingsDialog({
                     }
                   `}
                 >
-                  <span className="text-sm">{t(`settings.${key}`)}</span>
+                  <span className="text-sm">{t(`settings.sections.${key}`)}</span>
                 </button>
               ))}
             </nav>

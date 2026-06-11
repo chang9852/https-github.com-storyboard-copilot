@@ -191,8 +191,8 @@
     "checkUpdateUpToDate": "You are on the latest version.",
     "checkUpdateFailed": "Update check failed. Please try again later.",
     "sections": {
-      "general": "General",
-      "keys": "API Keys",
+      "generation": "Generation",
+      "providers": "API Keys",
       "appearance": "Appearance",
       "pricing": "Pricing",
       "about": "About"

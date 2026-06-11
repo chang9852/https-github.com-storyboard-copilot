@@ -191,8 +191,8 @@
     "checkUpdateUpToDate": "当前已是最新版本。",
     "checkUpdateFailed": "检查更新失败，请稍后重试。",
     "sections": {
-      "general": "通用",
-      "keys": "密钥",
+      "generation": "生成",
+      "providers": "密钥",
       "appearance": "外观",
       "pricing": "价格",
       "about": "关于"
