@@ -96,7 +96,6 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
         height: aspectDims.height,
         numImages: 1,
         aspectRatio: selectedAspectRatio,
-        resolution: "2K",
       });
 
       setGenerationProgress(t('ai.generatingWaiting'));
