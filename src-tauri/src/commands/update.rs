@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tracing::info;
 
 const GITHUB_LATEST_RELEASE_API: &str =
-    "https://api.github.com/repos/henjicc/Storyboard-Copilot/releases/latest";
+    "https://api.github.com/repos/chang9852/https-github.com-storyboard-copilot/releases/latest";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateInfo {

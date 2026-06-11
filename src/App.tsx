@@ -6,8 +6,10 @@ import { Canvas } from '@/features/canvas/Canvas';
 import { ProjectManager } from '@/features/project/ProjectManager';
 import { TitleBar } from '@/components/TitleBar';
 import { SettingsDialog } from '@/features/settings/SettingsDialog';
+import { UpdateAvailableDialog } from '@/components/UpdateAvailableDialog';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { subscribeOpenSettingsDialog, type SettingsCategory } from '@/features/settings/settingsEvents';
+import { checkForUpdate } from '@/features/update/application/checkForUpdate';
 import '@/features/canvas/tools/builtInTools';
 
 function toRgbCssValue(hexColor: string): string {
@@ -28,8 +30,11 @@ export default function App() {
   const uiRadiusPreset = useSettingsStore((state) => state.uiRadiusPreset);
   const themeTonePreset = useSettingsStore((state) => state.themeTonePreset);
   const accentColor = useSettingsStore((state) => state.accentColor);
+  const autoCheckUpdate = useSettingsStore((state) => state.autoCheckAppUpdateOnLaunch);
+  const enableUpdateDialog = useSettingsStore((state) => state.enableUpdateDialog);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialCategory, setSettingsInitialCategory] = useState<SettingsCategory>('generation');
+  const [updateInfo, setUpdateInfo] = useState<{ currentVersion?: string; latestVersion?: string } | null>(null);
 
   useEffect(() => {
     hydrate();
@@ -38,6 +43,21 @@ export default function App() {
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  // Auto-check for updates on launch
+  useEffect(() => {
+    if (!autoCheckUpdate) return;
+    const timer = setTimeout(async () => {
+      const result = await checkForUpdate();
+      if (result.hasUpdate && enableUpdateDialog) {
+        setUpdateInfo({
+          currentVersion: result.currentVersion,
+          latestVersion: result.latestVersion!,
+        });
+      }
+    }, 3000); // Delay 3s to let app fully load
+    return () => clearTimeout(timer);
+  }, [autoCheckUpdate, enableUpdateDialog]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -80,6 +100,21 @@ export default function App() {
     closeProject();
   };
 
+  const handleCheckUpdate = async (): Promise<'has-update' | 'up-to-date' | 'failed'> => {
+    const result = await checkForUpdate();
+    if (result.hasUpdate) {
+      if (enableUpdateDialog) {
+        setUpdateInfo({
+          currentVersion: result.currentVersion,
+          latestVersion: result.latestVersion!,
+        });
+      }
+      return 'has-update';
+    }
+    if (result.error) return 'failed';
+    return 'up-to-date';
+  };
+
   return (
     <ReactFlowProvider>
       <ErrorBoundary>
@@ -101,7 +136,17 @@ export default function App() {
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}
             initialCategory={settingsInitialCategory}
+            onCheckUpdate={handleCheckUpdate}
           />
+
+          {updateInfo && (
+            <UpdateAvailableDialog
+              isOpen={true}
+              onClose={() => setUpdateInfo(null)}
+              currentVersion={updateInfo.currentVersion}
+              latestVersion={updateInfo.latestVersion}
+            />
+          )}
         </div>
       </ErrorBoundary>
     </ReactFlowProvider>
