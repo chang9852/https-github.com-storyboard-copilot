@@ -137,7 +137,6 @@ impl AIProvider for GrsaiProvider {
         let sanitized = Self::sanitize_model(model);
         sanitized == "nano-banana-2"
             || sanitized == "nano-banana-pro"
-            || sanitized.starts_with("nano-banana")
     }
 
     fn list_models(&self) -> Vec<String> {
@@ -184,7 +183,6 @@ impl AIProvider for GrsaiProvider {
             "model": model,
             "prompt": request.prompt,
             "aspect_ratio": request.aspect_ratio,
-            "resolution": super::normalize_resolution(&request.size),
             "reference_images": reference_images,
         });
 

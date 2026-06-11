@@ -15,27 +15,6 @@ pub use grsai::GrsaiProvider;
 pub use kie::KieProvider;
 pub use ppio::PPIOProvider;
 
-/// Normalize a resolution string to a pixel width that AI provider APIs accept.
-///
-/// Shorthand labels ("1K", "2K", "4K") are mapped to their target widths.
-/// Dimension strings ("1024x1024") have their width extracted.
-/// Everything else is passed through as-is.
-pub fn normalize_resolution(size: &str) -> String {
-    // Shorthand labels
-    match size {
-        "0.5K" => return "512".to_string(),
-        "1K" => return "1024".to_string(),
-        "2K" => return "2048".to_string(),
-        "4K" => return "4096".to_string(),
-        _ => {}
-    }
-    // "WxH" format → extract width
-    if let Some((w, _)) = size.split_once('x') {
-        return w.to_string();
-    }
-    size.to_string()
-}
-
 /// Build a reqwest Client with proper TLS and timeout defaults for AI provider HTTP calls.
 ///
 /// - Connect timeout: 15s (avoid hanging on unreachable hosts)

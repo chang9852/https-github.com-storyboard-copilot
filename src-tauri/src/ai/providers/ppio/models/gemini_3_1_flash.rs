@@ -49,16 +49,26 @@ fn decode_file_url_path(value: &str) -> String {
     normalized.to_string()
 }
 
-fn resolve_image_base64_payload(source: &str) -> Option<String> {
+fn resolve_image_base64_payload(source: &str) -> Result<String, AIError> {
     let trimmed = source.trim();
     if trimmed.is_empty() {
-        return None;
+        return Err(AIError::InvalidRequest("Reference image source is empty".to_string()));
     }
 
     if let Some((meta, payload)) = trimmed.split_once(',') {
         if meta.starts_with("data:") && meta.ends_with(";base64") && !payload.is_empty() {
-            return Some(payload.to_string());
+            return Ok(payload.to_string());
         }
+    }
+
+    if trimmed.starts_with("asset://")
+        || trimmed.starts_with("tauri://")
+        || trimmed.starts_with("app://")
+    {
+        return Err(AIError::InvalidRequest(format!(
+            "Unsupported local protocol source for PPIO: {}",
+            trimmed
+        )));
     }
 
     let path = if trimmed.starts_with("file://") {
@@ -67,8 +77,14 @@ fn resolve_image_base64_payload(source: &str) -> Option<String> {
         PathBuf::from(trimmed)
     };
 
-    let bytes = std::fs::read(path).ok()?;
-    Some(STANDARD.encode(bytes))
+    let bytes = std::fs::read(&path).map_err(|err| {
+        AIError::InvalidRequest(format!(
+            "Failed to read reference image path \"{}\": {}",
+            path.to_string_lossy(),
+            err
+        ))
+    })?;
+    Ok(STANDARD.encode(bytes))
 }
 
 fn truncate_for_log(input: &str, max_chars: usize) -> String {
@@ -105,16 +121,12 @@ impl PPIOModelAdapter for Gemini31FlashAdapter {
             .unwrap_or(false);
 
         if has_reference_images {
-            let image_base64s = request
-                .reference_images
-                .as_ref()
-                .map(|images| {
-                    images
-                        .iter()
-                        .filter_map(|image| resolve_image_base64_payload(image))
-                        .collect::<Vec<String>>()
-                })
-                .unwrap_or_default();
+            let mut image_base64s = Vec::new();
+            if let Some(images) = request.reference_images.as_ref() {
+                for image in images {
+                    image_base64s.push(resolve_image_base64_payload(image)?);
+                }
+            }
 
             if image_base64s.is_empty() {
                 return Err(AIError::InvalidRequest(
@@ -125,16 +137,15 @@ impl PPIOModelAdapter for Gemini31FlashAdapter {
 
             let body = ImageEditRequest {
                 prompt: request.prompt.clone(),
-                size: Some(crate::ai::providers::normalize_resolution(&request.size)),
+                size: None,
                 aspect_ratio: Some(request.aspect_ratio.clone()),
                 image_base64s: Some(image_base64s.clone()),
                 output_format: Some("image/png".to_string()),
             };
 
             let summary = format!(
-                "model: ppio/gemini-3.1-flash, mode: edit, images: {}, size: {}, aspect_ratio: {}, prompt: {}",
+                "model: ppio/gemini-3.1-flash, mode: edit, images: {}, aspect_ratio: {}, prompt: {}",
                 image_base64s.len(),
-                crate::ai::providers::normalize_resolution(&request.size),
                 request.aspect_ratio,
                 truncate_for_log(&request.prompt, 100)
             );
@@ -147,14 +158,13 @@ impl PPIOModelAdapter for Gemini31FlashAdapter {
         } else {
             let body = TextToImageRequest {
                 prompt: request.prompt.clone(),
-                size: Some(crate::ai::providers::normalize_resolution(&request.size)),
+                size: None,
                 aspect_ratio: Some(request.aspect_ratio.clone()),
                 output_format: Some("image/png".to_string()),
             };
 
             let summary = format!(
-                "model: ppio/gemini-3.1-flash, mode: generate, size: {}, aspect_ratio: {}, prompt: {}",
-                crate::ai::providers::normalize_resolution(&request.size),
+                "model: ppio/gemini-3.1-flash, mode: generate, aspect_ratio: {}, prompt: {}",
                 request.aspect_ratio,
                 truncate_for_log(&request.prompt, 100)
             );

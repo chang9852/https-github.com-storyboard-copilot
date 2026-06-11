@@ -21,6 +21,7 @@ pub struct PPIOProvider {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ImageResponse {
     image_urls: Vec<String>,
 }
