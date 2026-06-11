@@ -144,7 +144,7 @@ export async function createGenerationTask(params: {
   // Set the API key via the gateway
   await canvasAiGateway.setApiKey(params.provider, apiKey);
 
-  const size = `${params.width}x${params.height}`;
+  const size = params.resolution || `${params.width}x${params.height}`;
 
   // Build extraParams: merge caller-provided extraParams with negativePrompt
   const extraParams: Record<string, unknown> = {
