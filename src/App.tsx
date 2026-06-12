@@ -118,7 +118,7 @@ export default function App() {
   return (
     <ReactFlowProvider>
       <ErrorBoundary>
-        <div className="w-full h-full flex flex-col bg-bg-dark">
+        <div className="w-full h-full flex flex-col app-layout">
           <TitleBar
             onSettingsClick={() => {
               setSettingsInitialCategory('generation');

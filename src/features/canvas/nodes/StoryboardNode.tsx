@@ -112,11 +112,11 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
         width: '100%',
         height: '100%',
         borderRadius: 'var(--node-radius)',
-        background: 'var(--ui-surface-panel)',
+        background: 'rgba(255, 255, 255, 0.75)',
         border: `1px solid ${selected ? 'var(--accent)' : 'var(--ui-border-soft)'}`,
         boxShadow: selected
-          ? '0 0 0 2px rgba(var(--accent-rgb), 0.2), 0 4px 12px rgba(0,0,0,0.1)'
-          : '0 2px 6px rgba(0,0,0,0.06)',
+          ? '0 0 0 2px rgba(99, 102, 241, 0.2), 0 0 25px rgba(99, 102, 241, 0.25), 0 4px 12px rgba(0,0,0,0.1)'
+          : '0 2px 8px rgba(31, 38, 135, 0.06)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -193,7 +193,7 @@ export const StoryboardNode = memo(({ id, data, selected }: StoryboardNodeProps)
               key={frame.id}
               style={{
                 aspectRatio: cssAspectRatio,
-                background: 'var(--ui-surface-panel)',
+                background: 'rgba(255, 255, 255, 0.75)',
                 borderRadius: '6px',
                 padding: '8px',
                 display: 'flex',

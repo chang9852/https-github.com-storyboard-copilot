@@ -5,6 +5,7 @@ import {
   Position,
   type EdgeProps,
 } from '@xyflow/react';
+import { useCanvasStore } from '@/stores/canvasStore';
 import { buildOrthogonalRoute } from './edgeRouting';
 
 const DisconnectableEdge = memo(function DisconnectableEdge(props: EdgeProps) {
@@ -22,6 +23,25 @@ const DisconnectableEdge = memo(function DisconnectableEdge(props: EdgeProps) {
     markerEnd,
     style,
   } = props;
+
+  const nodes = useCanvasStore((s) => s.nodes);
+
+  const isProcessingEdge = useMemo(() => {
+    const sourceNode = nodes.find((n) => n.id === source);
+    const targetNode = nodes.find((n) => n.id === target);
+    if (!sourceNode || !targetNode) return false;
+    // 场景1: exportImage 节点正在生成（source 是 imageEdit 或 storyboardGen）
+    const isExportGenerating =
+      targetNode.type === 'exportImageNode' &&
+      (sourceNode.type === 'imageNode' || sourceNode.type === 'storyboardGenNode') &&
+      (targetNode.data as Record<string, unknown>)?.isGenerating === true;
+    // 场景2: storyboardNode 节点正在生成（source 是 storyboardGen）
+    const isStoryboardGenerating =
+      targetNode.type === 'storyboardNode' &&
+      sourceNode.type === 'storyboardGenNode' &&
+      (targetNode.data as Record<string, unknown>)?.isGenerating === true;
+    return isExportGenerating || isStoryboardGenerating;
+  }, [nodes, source, target]);
 
   const { edgePath, labelX, labelY } = useMemo(() => {
     const route = buildOrthogonalRoute({
@@ -59,10 +79,23 @@ const DisconnectableEdge = memo(function DisconnectableEdge(props: EdgeProps) {
         path={edgePath}
         markerEnd={markerEnd}
         style={{
-          strokeWidth: selected ? 2.4 : 1.9,
+          strokeWidth: isProcessingEdge ? (selected ? 2.7 : 2.2) : (selected ? 2.4 : 1.9),
+          stroke: isProcessingEdge ? `rgb(var(--accent-rgb) / 0.94)` : undefined,
           ...style,
         }}
       />
+      {isProcessingEdge && (
+        <path
+          d={edgePath}
+          fill="none"
+          stroke="rgb(var(--accent-rgb))"
+          strokeWidth={selected ? 2.5 : 2.1}
+          strokeLinecap="round"
+          strokeDasharray="8 10"
+          className="canvas-processing-edge__flow"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
       {selected && (
         <EdgeLabelRenderer>
           <button

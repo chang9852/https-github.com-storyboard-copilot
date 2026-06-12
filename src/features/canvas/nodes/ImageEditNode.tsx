@@ -3,10 +3,10 @@ import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import { useTranslation } from "react-i18next";
 import { createGenerationTask, pollTaskResult } from "@/services/ai";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { useCanvasStore } from "@/stores/canvasStore";
 import type { ImageEditNodeData } from "../domain/canvasNodes";
 import type { ProviderId } from "@/types/ai";
 import { NodeHeader } from "../ui/NodeHeader";
-import { CanvasNodeImage } from "../ui/CanvasNodeImage";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 import { ModelParamsControls } from "../ui/ModelParamsControls";
 
@@ -38,7 +38,9 @@ function generateId(): string {
 
 function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: ImageEditNodeData }) {
   const { t } = useTranslation();
-  const { updateNodeData, addNodes, addEdges } = useReactFlow();
+  const { updateNodeData, getNode } = useReactFlow();
+  const addNode = useCanvasStore((s) => s.addNode);
+  const addCanvasEdge = useCanvasStore((s) => s.addCanvasEdge);
   const { providerConfigs } = useSettingsStore();
 
   const [prompt, setPrompt] = useState(data.prompt || "");
@@ -106,31 +108,21 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       });
 
       if (pollResult.images && pollResult.images.length > 0) {
-        updateNodeData(id, {
+        updateNodeData(id, { isGenerating: false });
+
+        // 创建下游输出节点（图片显示在新节点中，不在原节点内联）
+        const currentNode = getNode(id);
+        const nodeWidth = 380;
+        const newNodePosition = {
+          x: (currentNode?.position?.x || 0) + nodeWidth + 50,
+          y: currentNode?.position?.y || 0,
+        };
+
+        const newNodeId = addNode("exportImageNode", newNodePosition, {
           imageUrl: pollResult.images[0].url,
-          isGenerating: false,
         });
 
-        const newNodeId = generateId();
-        addNodes({
-          id: newNodeId,
-          type: "exportImage",
-          position: { x: 380 + 50, y: 0 },
-          data: {
-            images: [pollResult.images[0].url],
-            selectedImageIndex: 0,
-          },
-          style: { width: 320, height: 240 },
-        });
-
-        addEdges({
-          id: generateId(),
-          source: id,
-          target: newNodeId,
-          type: "smoothstep",
-          animated: true,
-          style: { stroke: "#3b82f6", strokeWidth: 2 },
-        });
+        addCanvasEdge(id, newNodeId);
       }
     } catch (err: any) {
       console.error("Generation failed:", err);
@@ -143,73 +135,8 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
       setGenerationProgress("");
       setElapsedTime(0);
     }
-  }, [id, prompt, selectedProvider, selectedModel, aspectDims, selectedAspectRatio, data, providerConfigs, updateNodeData, addNodes, addEdges, t]);
+  }, [id, prompt, selectedProvider, selectedModel, aspectDims, selectedAspectRatio, data, providerConfigs, updateNodeData, getNode, addNode, addCanvasEdge, t]);
 
-
-  if (data.imageUrl && !isGenerating) {
-    return (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          borderRadius: "var(--node-radius)",
-          background: "var(--ui-surface-panel)",
-          border: `1px solid ${selected ? "var(--accent)" : "var(--ui-border-soft)"}`,
-          boxShadow: selected
-            ? "0 0 0 2px rgba(var(--accent-rgb), 0.2), 0 4px 12px rgba(0,0,0,0.1)"
-            : "0 2px 6px rgba(0,0,0,0.06)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <Handle type="target" position={Position.Left} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
-        <Handle type="source" position={Position.Right} style={{ width: 8, height: 8, background: "var(--accent)", border: "2px solid var(--surface)" }} />
-
-
-        <div style={{ padding: "8px 10px 4px" }}>
-          <NodeHeader
-            icon={
-              <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
-                <path d="M7 1L12 10H2L7 1Z" fill="var(--text)" />
-                <circle cx="7" cy="7" r="2" fill="var(--accent)" />
-              </svg>
-            }
-            titleText={prompt.slice(0, 25) || t('ai.imageGen')}
-            rightSlot={
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateNodeData(id, { imageUrl: undefined });
-                }}
-                style={{
-                  width: "16px", height: "16px", borderRadius: "4px", border: "none",
-                  background: "var(--ui-surface-field)", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
-                  <path d="M1 1l6 6M7 1l-6 6" strokeLinecap="round" />
-                </svg>
-              </button>
-            }
-          />
-        </div>
-
-        <div style={{ margin: "0 8px 8px", borderRadius: "var(--ui-radius-lg)", overflow: "hidden", flex: 1 }}>
-          <CanvasNodeImage
-            src={data.imageUrl}
-            alt=""
-            draggable={false}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            viewerImageList={[data.imageUrl]}
-          />
-        </div>
-
-        <NodeResizeHandle />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -217,11 +144,11 @@ function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: Imag
         width: "100%",
         height: "100%",
         borderRadius: "var(--node-radius)",
-        background: "var(--ui-surface-panel)",
+        background: "rgba(255, 255, 255, 0.75)",
         border: `1px solid ${selected ? "var(--accent)" : "var(--ui-border-soft)"}`,
         boxShadow: selected
-          ? "0 0 0 2px rgba(var(--accent-rgb), 0.2), 0 4px 12px rgba(0,0,0,0.1)"
-          : "0 2px 6px rgba(0,0,0,0.06)",
+          ? "0 0 0 2px rgba(99, 102, 241, 0.2), 0 0 25px rgba(99, 102, 241, 0.25), 0 4px 12px rgba(0,0,0,0.1)"
+          : "0 2px 8px rgba(31, 38, 135, 0.06)",
         display: "flex",
         overflow: "hidden",
       }}

@@ -3,6 +3,7 @@ import { Handle, Position, useReactFlow, useNodes, useEdges } from "@xyflow/reac
 import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useProjectStore } from "@/stores/projectStore";
+import { useCanvasStore } from "@/stores/canvasStore";
 import { createGenerationTask, pollTaskResult, getModelsByProvider } from "@/services/ai";
 import type { StoryboardCell, StoryboardGenFrame } from "@/types/project";
 import type { ProviderId } from "@/types/ai";
@@ -108,7 +109,9 @@ function generateGridImageDataUrl(
 
 export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNodeProps) => {
   const { t } = useTranslation();
-  const { addNodes, addEdges } = useReactFlow();
+  const { getNode } = useReactFlow();
+  const addNode = useCanvasStore((s) => s.addNode);
+  const addCanvasEdge = useCanvasStore((s) => s.addCanvasEdge);
   const { providerConfigs } = useSettingsStore();
   const { updateCell } = useProjectStore();
   const nodes = useNodes();
@@ -268,74 +271,36 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
         updateCell(id, { status: "completed" });
 
         // 创建切割节点
-        const newNodeId = generateId();
+        const currentNode = getNode(id);
         const newNodePosition = {
-          x: (data.position?.x || 0) + (data.size?.width || 380) + 50,
-          y: data.position?.y || 0,
+          x: (currentNode?.position?.x || 0) + 430,
+          y: currentNode?.position?.y || 0,
         };
 
-        addNodes({
-          id: newNodeId,
-          type: "storyboardNode",
-          position: newNodePosition,
-          data: {
-            id: newNodeId,
-            projectId: data.projectId,
-            cellType: "storyboard",
-            status: "completed",
-            imageUrl: result.images?.[0]?.url || "",
-            size: { width: 400, height: 300 },
-            position: newNodePosition,
-            prompt: `分镜切割 - ${gridRows}×${gridCols}`,
-          },
-          style: { width: 400, height: 300 },
+        const newNodeId = addNode("storyboardNode", newNodePosition, {
+          imageUrl: result.images?.[0]?.url || "",
+          prompt: `分镜切割 - ${gridRows}×${gridCols}`,
         });
 
-        addEdges({
-          id: generateId(),
-          source: id,
-          target: newNodeId,
-          type: "smoothstep",
-          animated: true,
-          style: { stroke: "#3b82f6", strokeWidth: 2 },
-        });
+        addCanvasEdge(id, newNodeId);
       } else if (result.task_id) {
         const pollResult = await pollTaskResult(selectedProvider, result.task_id);
         if (pollResult.images.length > 0) {
           updateCell(id, { status: "completed", imageUrl: pollResult.images[0].url });
 
           // 创建切割节点
-          const newNodeId = generateId();
+          const currentNode = getNode(id);
           const newNodePosition = {
-            x: (data.position?.x || 0) + (data.size?.width || 380) + 50,
-            y: data.position?.y || 0,
+            x: (currentNode?.position?.x || 0) + 430,
+            y: currentNode?.position?.y || 0,
           };
 
-          addNodes({
-            id: newNodeId,
-            type: "storyboardNode",
-            position: newNodePosition,
-            data: {
-              id: newNodeId,
-              projectId: data.projectId,
-              cellType: "storyboard",
-              status: "completed",
-              imageUrl: pollResult.images[0].url,
-              size: { width: 400, height: 300 },
-              position: newNodePosition,
-              prompt: `分镜切割 - ${gridRows}×${gridCols}`,
-            },
-            style: { width: 400, height: 300 },
+          const newNodeId = addNode("storyboardNode", newNodePosition, {
+            imageUrl: pollResult.images[0].url,
+            prompt: `分镜切割 - ${gridRows}×${gridCols}`,
           });
 
-          addEdges({
-            id: generateId(),
-            source: id,
-            target: newNodeId,
-            type: "smoothstep",
-            animated: true,
-            style: { stroke: "#3b82f6", strokeWidth: 2 },
-          });
+          addCanvasEdge(id, newNodeId);
         } else {
           updateCell(id, { status: "error" });
         }
@@ -347,7 +312,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
     } finally {
       setIsGenerating(false);
     }
-  }, [id, selectedProvider, selectedModel, gridRows, gridCols, frames, totalFrames, providerConfigs, data, updateCell, addNodes, addEdges, buildPrompt]);
+  }, [id, selectedProvider, selectedModel, gridRows, gridCols, frames, totalFrames, providerConfigs, data, updateCell, getNode, addNode, addCanvasEdge, buildPrompt]);
 
   return (
     <div
@@ -355,11 +320,11 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
         width: "100%",
         height: "100%",
         borderRadius: "var(--node-radius)",
-        background: "var(--ui-surface-panel)",
+        background: "rgba(255, 255, 255, 0.75)",
         border: `1px solid ${selected ? "var(--accent)" : "var(--ui-border-soft)"}`,
         boxShadow: selected
-          ? "0 0 0 2px rgba(var(--accent-rgb), 0.2), 0 4px 12px rgba(0,0,0,0.1)"
-          : "0 2px 6px rgba(0,0,0,0.06)",
+          ? "0 0 0 2px rgba(99, 102, 241, 0.2), 0 0 25px rgba(99, 102, 241, 0.25), 0 4px 12px rgba(0,0,0,0.1)"
+          : "0 2px 8px rgba(31, 38, 135, 0.06)",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
@@ -434,7 +399,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
               key={frame.id}
               style={{
                 aspectRatio: "1.4",
-                background: "var(--ui-surface-panel)",
+                background: "rgba(255, 255, 255, 0.75)",
                 borderRadius: "6px",
                 padding: "10px",
                 display: "flex",
@@ -480,7 +445,7 @@ export const StoryboardGenNode = memo(({ id, data, selected }: StoryboardGenNode
             bottom: "140px",
             left: "16px",
             width: "160px",
-            background: "var(--ui-surface-panel)",
+            background: "rgba(255, 255, 255, 0.75)",
             border: "1px solid var(--ui-border-soft)",
             borderRadius: "var(--ui-radius-lg)",
             boxShadow: "0 4px 16px rgba(0,0,0,0.15)",

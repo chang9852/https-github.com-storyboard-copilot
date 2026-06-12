@@ -230,7 +230,7 @@ export function Canvas() {
         width: "100%",
         height: "100%",
         position: "relative",
-        background: "#0d0d12",
+        background: "var(--bg)",
       }}
     >
       <ReactFlow
@@ -251,7 +251,7 @@ export function Canvas() {
           type: "smoothstep",
           animated: true,
         }}
-        style={{ background: "#0d0d12" }}
+        style={{ background: "var(--bg)" }}
         connectionLineStyle={{
           stroke: "rgba(99, 102, 241, 0.5)",
           strokeWidth: 2,
@@ -261,7 +261,7 @@ export function Canvas() {
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="rgba(255, 255, 255, 0.03)"
+          color="rgba(0, 0, 0, 0.06)"
         />
         <MiniMap
           nodeColor={(node) => {
@@ -274,21 +274,23 @@ export function Canvas() {
             return "#6366f1";
           }}
           style={{
-            background: "rgba(17, 17, 24, 0.9)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
+            background: "rgba(255, 255, 255, 0.45)",
+            border: "1px solid rgba(148, 163, 184, 0.15)",
             borderRadius: "12px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+            boxShadow: "0 20px 40px -15px rgba(31, 38, 135, 0.08)",
+            backdropFilter: "blur(20px) saturate(120%)",
           }}
-          maskColor="rgba(99, 102, 241, 0.05)"
+          maskColor="rgba(99, 102, 241, 0.08)"
           pannable
           zoomable
         />
         <Controls
           style={{
-            background: "rgba(17, 17, 24, 0.9)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
+            background: "rgba(255, 255, 255, 0.45)",
+            border: "1px solid rgba(148, 163, 184, 0.15)",
             borderRadius: "12px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+            boxShadow: "0 20px 40px -15px rgba(31, 38, 135, 0.08)",
+            backdropFilter: "blur(20px) saturate(120%)",
           }}
         />
         <SelectedNodeOverlay />
@@ -322,16 +324,16 @@ export function Canvas() {
           >
             <div
               style={{
-                background: "rgba(17, 17, 24, 0.95)",
-                backdropFilter: "blur(24px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
+                background: "rgba(255, 255, 255, 0.6)",
+                backdropFilter: "blur(20px) saturate(120%)",
+                border: "1px solid rgba(148, 163, 184, 0.15)",
                 borderRadius: "20px",
                 padding: "12px",
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
                 gap: "8px",
                 boxShadow:
-                  "0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03)",
+                  "0 20px 40px -15px rgba(31, 38, 135, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6)",
               }}
             >
               <CreateMenuButton
