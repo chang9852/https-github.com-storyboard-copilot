@@ -7,7 +7,6 @@ import { useCanvasStore } from "@/stores/canvasStore";
 import type { ImageEditNodeData } from "../domain/canvasNodes";
 import type { ProviderId } from "@/types/ai";
 import { NodeHeader } from "../ui/NodeHeader";
-import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 import { ModelParamsControls } from "../ui/ModelParamsControls";
 
 const ASPECT_RATIO_DIMENSIONS: Record<string, { width: number; height: number }> = {
@@ -30,10 +29,6 @@ const ASPECT_RATIO_DIMENSIONS: Record<string, { width: number; height: number }>
 
 function getAspectDimensions(ratio: string): { width: number; height: number } {
   return ASPECT_RATIO_DIMENSIONS[ratio] ?? ASPECT_RATIO_DIMENSIONS["1:1"];
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 function ImageEditNodeComponent({ id, data, selected }: NodeProps & { data: ImageEditNodeData }) {

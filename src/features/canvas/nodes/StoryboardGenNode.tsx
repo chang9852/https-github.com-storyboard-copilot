@@ -18,10 +18,6 @@ interface StoryboardGenNodeProps {
   selected?: boolean;
 }
 
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
 function generateFrameId(): string {
   return `frame-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
