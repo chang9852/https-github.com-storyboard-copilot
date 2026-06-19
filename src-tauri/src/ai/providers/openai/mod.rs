@@ -51,6 +51,35 @@ impl OpenAIProvider {
         }
     }
 
+    fn normalize_api_key(api_key: &str) -> String {
+        api_key
+            .trim()
+            .strip_prefix("Bearer ")
+            .or_else(|| api_key.trim().strip_prefix("bearer "))
+            .unwrap_or_else(|| api_key.trim())
+            .trim()
+            .to_string()
+    }
+
+    fn truncate_response(raw_response: &str) -> String {
+        const MAX_CHARS: usize = 500;
+        if raw_response.chars().count() <= MAX_CHARS {
+            return raw_response.to_string();
+        }
+        format!(
+            "{}...",
+            raw_response.chars().take(MAX_CHARS).collect::<String>()
+        )
+    }
+
+    fn is_html_response(raw_response: &str) -> bool {
+        let trimmed = raw_response.trim_start().to_ascii_lowercase();
+        trimmed.starts_with("<!doctype html")
+            || trimmed.starts_with("<html")
+            || trimmed.starts_with("<script")
+            || trimmed.contains("/_next/static/")
+    }
+
     fn extract_image_source(response: ImageGenerationResponse) -> Result<String, AIError> {
         let first =
             response.data.into_iter().next().ok_or_else(|| {
@@ -104,6 +133,10 @@ impl AIProvider for OpenAIProvider {
             .await
             .clone()
             .ok_or_else(|| AIError::InvalidRequest("API key not set".to_string()))?;
+        let api_key = Self::normalize_api_key(&api_key);
+        if api_key.is_empty() {
+            return Err(AIError::InvalidRequest("API key not set".to_string()));
+        }
 
         let model = Self::sanitize_model(&request.model);
         if model != MODEL_ID {
@@ -141,16 +174,32 @@ impl AIProvider for OpenAIProvider {
             .post(&endpoint)
             .header("Authorization", format!("Bearer {}", api_key))
             .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .header("User-Agent", "Storyboard-Copilot/1.3")
             .json(&body)
             .send()
             .await?;
 
         let status = response.status();
+        let content_type = response
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .unwrap_or("")
+            .to_string();
         let raw_response = response.text().await.unwrap_or_default();
         if !status.is_success() {
             return Err(AIError::Provider(format!(
                 "OpenAI image generation failed {}: {}",
-                status, raw_response
+                status,
+                Self::truncate_response(&raw_response)
+            )));
+        }
+
+        if content_type.contains("text/html") || Self::is_html_response(&raw_response) {
+            return Err(AIError::Provider(format!(
+                "OpenAI image generation returned an HTML page instead of JSON. Please check the Jianghu Yizhan API key, account access, and that the endpoint supports /v1/images/generations. Response preview: {}",
+                Self::truncate_response(&raw_response)
             )));
         }
 
@@ -158,7 +207,8 @@ impl AIProvider for OpenAIProvider {
             serde_json::from_str::<ImageGenerationResponse>(&raw_response).map_err(|err| {
                 AIError::Provider(format!(
                     "OpenAI image generation invalid JSON response: {}; raw={}",
-                    err, raw_response
+                    err,
+                    Self::truncate_response(&raw_response)
                 ))
             })?;
 
