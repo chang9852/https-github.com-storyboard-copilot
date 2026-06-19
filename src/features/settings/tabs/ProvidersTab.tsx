@@ -20,7 +20,7 @@ const PROVIDER_GET_KEY_URLS: Record<string, string> = {
   fal: 'https://fal.ai/dashboard/keys',
 };
 
-const PROVIDER_ORDER = ['kie', 'ppio', 'fal', 'grsai'];
+const PROVIDER_ORDER = ['kie', 'openai', 'ppio', 'fal', 'grsai'];
 
 interface ProvidersTabProps {
   draft: SettingsDraft;

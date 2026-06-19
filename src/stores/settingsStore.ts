@@ -177,6 +177,7 @@ export const useSettingsStore = create<SettingsState>()(
         fal: { apiKey: '', enabled: true },
         ppio: { apiKey: '', enabled: false },
         grsai: { apiKey: '', enabled: false },
+        openai: { apiKey: '', enabled: false },
       },
       grsaiNanoBananaProModel: DEFAULT_GRSAI_NANO_BANANA_PRO_MODEL,
       hideProviderGuidePopover: false,

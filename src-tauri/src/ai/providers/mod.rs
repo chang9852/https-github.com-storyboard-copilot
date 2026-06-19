@@ -8,11 +8,13 @@ use super::AIProvider;
 pub mod fal;
 pub mod grsai;
 pub mod kie;
+pub mod openai;
 pub mod ppio;
 
 pub use fal::FalProvider;
 pub use grsai::GrsaiProvider;
 pub use kie::KieProvider;
+pub use openai::OpenAIProvider;
 pub use ppio::PPIOProvider;
 
 /// Build a reqwest Client with proper TLS and timeout defaults for AI provider HTTP calls.
@@ -34,5 +36,6 @@ pub fn build_default_providers() -> Vec<Arc<dyn AIProvider>> {
         Arc::new(FalProvider::new()),
         Arc::new(PPIOProvider::new()),
         Arc::new(GrsaiProvider::new()),
+        Arc::new(OpenAIProvider::new()),
     ]
 }
