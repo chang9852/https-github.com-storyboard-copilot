@@ -85,9 +85,9 @@ export function CanvasCreateMenu({
       >
         <div
           style={{
-            background: 'rgba(255, 255, 255, 0.6)',
+            background: 'var(--ui-glass-bg)',
             backdropFilter: 'blur(20px) saturate(120%)',
-            border: '1px solid rgba(148, 163, 184, 0.15)',
+            border: '1px solid var(--ui-glass-border)',
             borderRadius: '20px',
             padding: '12px',
             display: 'grid',
@@ -129,7 +129,7 @@ function CreateMenuButton({
       style={{
         padding: '16px',
         borderRadius: '14px',
-        border: '1px solid rgba(255, 255, 255, 0.06)',
+        border: '1px solid var(--ui-border-soft)',
         background: accent.bg,
         cursor: 'pointer',
         display: 'flex',
@@ -146,7 +146,7 @@ function CreateMenuButton({
       }}
       onMouseLeave={(event) => {
         event.currentTarget.style.background = accent.bg;
-        event.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+        event.currentTarget.style.borderColor = 'var(--ui-border-soft)';
         event.currentTarget.style.transform = 'scale(1)';
       }}
     >
@@ -168,8 +168,9 @@ function CreateMenuButton({
       <span
         style={{
           fontSize: '11px',
-          color: 'rgba(255, 255, 255, 0.8)',
-          fontWeight: 500,
+          color: 'var(--text)',
+          fontWeight: 600,
+          textShadow: '0 1px 0 rgb(var(--bg-rgb) / 0.35)',
         }}
       >
         {label}

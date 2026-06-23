@@ -13,7 +13,14 @@ export const SelectedNodeOverlay = memo(() => {
   if (!selectedNode) return null;
 
   return (
-    <NodeActionToolbar node={{ id: selectedNode.id, data: selectedNode.data as Record<string, any> }} />
+    <NodeActionToolbar
+      node={{
+        id: selectedNode.id,
+        type: selectedNode.type,
+        position: selectedNode.position,
+        data: selectedNode.data as Record<string, any>,
+      }}
+    />
   );
 });
 

@@ -64,7 +64,11 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
 
   return (
     <div
-      className="h-10 flex items-center justify-between bg-surface-dark border-b border-border-dark select-none z-50 relative"
+      className="h-10 flex items-center justify-between select-none z-50 relative"
+      style={{
+        background: 'var(--bg)',
+        borderBottom: '1px solid rgb(var(--border-rgb) / 0.5)',
+      }}
       onMouseDown={handleDragStart}
     >
       {/* 左侧：标题 */}
@@ -78,7 +82,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
               e.stopPropagation();
               onBackClick();
             }}
-            className="mr-3 p-1 hover:bg-bg-dark rounded transition-colors"
+            className="mr-3 p-1 hover:bg-[rgb(var(--surface-rgb)/0.72)] rounded transition-colors"
             title={t('nav.canvas')}
           >
             <ArrowLeft className="w-4 h-4 text-text-muted hover:text-text-dark" />
@@ -98,7 +102,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
           onClick={handleLanguageClick}
           data-no-drag="true"
           onMouseDown={(e) => e.stopPropagation()}
-          className="h-full px-3 hover:bg-bg-dark transition-colors"
+          className="h-full px-3 hover:bg-[rgb(var(--surface-rgb)/0.72)] transition-colors"
           title={i18n.language.startsWith('zh') ? 'Switch to English' : t('titleBar.switchToChinese')}
         >
           <Languages className="w-4 h-4 text-text-muted" />
@@ -110,7 +114,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
           onClick={handleThemeClick}
           data-no-drag="true"
           onMouseDown={(e) => e.stopPropagation()}
-          className="h-full px-3 hover:bg-bg-dark transition-colors"
+          className="h-full px-3 hover:bg-[rgb(var(--surface-rgb)/0.72)] transition-colors"
           title={theme === 'dark' ? t('settings.theme_light') : t('settings.theme_dark')}
         >
           {theme === 'dark' ? (
@@ -129,7 +133,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
           }}
           data-no-drag="true"
           onMouseDown={(e) => e.stopPropagation()}
-          className="h-full px-3 hover:bg-bg-dark transition-colors"
+          className="h-full px-3 hover:bg-[rgb(var(--surface-rgb)/0.72)] transition-colors"
           title={t('settings.title')}
         >
           <Settings className="w-4 h-4 text-text-muted" />
@@ -138,7 +142,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
         {/* 窗口控制（非Mac） */}
         {!isMac && (
           <>
-            <div className="w-px h-4 bg-border-dark mx-1" />
+            <div className="w-px h-4 mx-1 bg-[rgb(var(--border-rgb)/0.72)]" />
 
             <button
               type="button"
@@ -148,7 +152,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
               }}
               data-no-drag="true"
               onMouseDown={(e) => e.stopPropagation()}
-              className="h-full px-3 hover:bg-bg-dark transition-colors"
+              className="h-full px-3 hover:bg-[rgb(var(--surface-rgb)/0.72)] transition-colors"
               title={t('common.close')}
             >
               <Minus className="w-4 h-4 text-text-muted hover:text-text-dark" />
@@ -161,7 +165,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
               }}
               data-no-drag="true"
               onMouseDown={(e) => e.stopPropagation()}
-              className="h-full px-3 hover:bg-bg-dark transition-colors"
+              className="h-full px-3 hover:bg-[rgb(var(--surface-rgb)/0.72)] transition-colors"
               title={t('common.close')}
             >
               <Maximize2 className="w-4 h-4 text-text-muted hover:text-text-dark" />

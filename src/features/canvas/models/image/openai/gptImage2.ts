@@ -8,7 +8,7 @@ export const imageModel: ImageModelDefinition = {
   displayName: 'GPT Image 2',
   displayNameZh: 'GPT Image 2',
   providerId: 'openai',
-  description: '江湖驿站 · OpenAI 兼容图像生成接口',
+  description: '第三方中转站 · OpenAI 兼容图像生成接口',
   eta: '1min',
   expectedDurationMs: 60000,
   defaultAspectRatio: '1:1',
@@ -24,6 +24,8 @@ export const imageModel: ImageModelDefinition = {
   ],
   resolutions: [
     { value: '1K', label: '1K' },
+    { value: '2K', label: '2K' },
+    { value: '4K', label: '4K' },
   ],
   resolveRequest: () => ({
     requestModel: OPENAI_GPT_IMAGE_2_MODEL_ID,

@@ -1,29 +1,75 @@
-import { memo, useMemo, useState } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import { useTranslation } from "react-i18next";
-import type { StoryboardCell } from "@/types/project";
+import { useCanvasStore } from "@/stores/canvasStore";
+import {
+  CANVAS_NODE_TYPES,
+  type StoryboardFrameItem,
+  type StoryboardSplitNodeData,
+} from "../domain/canvasNodes";
+import { CanvasNodeImage } from "../ui/CanvasNodeImage";
 import { NodeHeader } from "../ui/NodeHeader";
 import { NodeResizeHandle } from "../ui/NodeResizeHandle";
 
-interface StoryboardSplitNodeProps {
-  data: StoryboardCell;
-  selected?: boolean;
-}
-
-export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNodeProps) => {
+export const StoryboardSplitNode = memo(({ id, data, selected }: NodeProps & { data: StoryboardSplitNodeData }) => {
   const { t } = useTranslation();
+  const { getNode } = useReactFlow();
+  const addNode = useCanvasStore((state) => state.addNode);
+  const addCanvasEdge = useCanvasStore((state) => state.addCanvasEdge);
   const [exportPanelOpen, setExportPanelOpen] = useState(false);
 
-  // 解析网格信息
   const gridInfo = useMemo(() => {
-    const match = data.prompt?.match(/(\d+)×(\d+)/);
+    if (data.gridRows && data.gridCols) {
+      return { rows: data.gridRows, cols: data.gridCols };
+    }
+
+    const match = typeof data.prompt === "string" ? data.prompt.match(/(\d+)×(\d+)/) : null;
     if (match) {
       return { rows: parseInt(match[1]), cols: parseInt(match[2]) };
     }
     return { rows: 2, cols: 2 };
-  }, [data.prompt]);
+  }, [data.gridCols, data.gridRows, data.prompt]);
 
   const totalFrames = gridInfo.rows * gridInfo.cols;
+  const frames = useMemo<StoryboardFrameItem[]>(() => {
+    const existingFrames = Array.isArray(data.frames) ? data.frames : [];
+    if (existingFrames.length >= totalFrames) return existingFrames.slice(0, totalFrames);
+
+    return Array.from({ length: totalFrames }, (_item, index) => {
+      const frame = existingFrames[index];
+      return frame ?? {
+        id: `placeholder-${index}`,
+        imageUrl: null,
+        previewImageUrl: null,
+        aspectRatio: data.frameAspectRatio,
+        note: "",
+        order: index,
+      };
+    });
+  }, [data.frameAspectRatio, data.frames, totalFrames]);
+
+  const frameImages = useMemo(
+    () => frames.map((frame) => frame.imageUrl).filter((url): url is string => Boolean(url)),
+    [frames]
+  );
+
+  const handleOutputFrame = useCallback((frame: StoryboardFrameItem, index: number) => {
+    if (!frame.imageUrl) return;
+
+    const currentNode = getNode(id);
+    const outputNodeId = addNode(CANVAS_NODE_TYPES.exportImage, {
+      x: (currentNode?.position.x ?? 0) + 430,
+      y: (currentNode?.position.y ?? 0) + index * 40,
+    }, {
+      imageUrl: frame.imageUrl,
+      previewImageUrl: frame.previewImageUrl ?? frame.imageUrl,
+      aspectRatio: frame.aspectRatio ?? data.frameAspectRatio ?? data.aspectRatio ?? "1:1",
+      resultKind: "storyboardFrameEdit",
+      displayName: `${t('storyboard.frameTitle', { index: index + 1 })}`,
+    });
+
+    addCanvasEdge(id, outputNodeId);
+  }, [addCanvasEdge, addNode, data.aspectRatio, data.frameAspectRatio, getNode, id, t]);
 
   return (
     <div
@@ -62,7 +108,7 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
 
       {/* Image Grid */}
       <div style={{ flex: 1, padding: "0 10px", overflow: "auto" }}>
-        {data.imageUrl ? (
+        {frameImages.length > 0 ? (
           <div
             style={{
               display: "grid",
@@ -72,10 +118,9 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
               overflow: "hidden",
             }}
           >
-            {/* 显示切割后的网格 */}
-            {Array.from({ length: totalFrames }, (_, index) => (
+            {frames.map((frame, index) => (
               <div
-                key={index}
+                key={frame.id || index}
                 style={{
                   aspectRatio: "1",
                   background: "var(--ui-surface-field)",
@@ -83,17 +128,16 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
                   overflow: "hidden",
                 }}
               >
-                {/* 使用CSS背景图片切割显示 */}
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    backgroundImage: `url(${data.imageUrl})`,
-                    backgroundSize: `${gridInfo.cols * 100}% ${gridInfo.rows * 100}%`,
-                    backgroundPosition: `${(index % gridInfo.cols) * (100 / (gridInfo.cols - 1 || 1))}% ${Math.floor(index / gridInfo.cols) * (100 / (gridInfo.rows - 1 || 1))}%`,
-                  }}
-                />
-                {/* 序号标签 */}
+                {frame.imageUrl ? (
+                  <CanvasNodeImage
+                    src={frame.previewImageUrl ?? frame.imageUrl}
+                    viewerSourceUrl={frame.imageUrl}
+                    viewerImageList={frameImages}
+                    alt={`Frame ${index + 1}`}
+                    draggable={false}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                ) : null}
                 <span style={{
                   position: "absolute",
                   top: "2px",
@@ -106,6 +150,29 @@ export const StoryboardSplitNode = memo(({ data, selected }: StoryboardSplitNode
                 }}>
                   {String(index + 1).padStart(2, "0")}
                 </span>
+                {frame.imageUrl && (
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleOutputFrame(frame, index);
+                    }}
+                    style={{
+                      position: "absolute",
+                      right: "2px",
+                      bottom: "2px",
+                      padding: "2px 5px",
+                      fontSize: "8px",
+                      fontWeight: 500,
+                      color: "white",
+                      background: "var(--accent)",
+                      border: "none",
+                      borderRadius: "3px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t('splitEditor.outputFrame')}
+                  </button>
+                )}
               </div>
             ))}
           </div>

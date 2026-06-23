@@ -7,6 +7,7 @@ import { NodeToolDialog } from './NodeToolDialog';
 import type { NodeToolType } from '../domain/canvasNodes';
 import type { ToolExecuteParams } from '../tools/types';
 import { canvasToolProcessor } from '../application/canvasServices';
+import { CANVAS_NODE_TYPES, type CanvasNodeType } from '../domain/canvasNodes';
 import {
   NODE_TOOLBAR_POSITION,
   NODE_TOOLBAR_ALIGN,
@@ -15,12 +16,19 @@ import {
 } from './nodeToolbarConfig';
 
 interface NodeActionToolbarProps {
-  node: { id: string; data: Record<string, any> };
+  node: {
+    id: string;
+    type?: CanvasNodeType;
+    position?: { x: number; y: number };
+    data: Record<string, any>;
+  };
 }
 
 export const NodeActionToolbar = memo(({ node }: NodeActionToolbarProps) => {
   const { t } = useTranslation();
   const deleteNode = useCanvasStore((state) => state.deleteNode);
+  const addNode = useCanvasStore((state) => state.addNode);
+  const addCanvasEdge = useCanvasStore((state) => state.addCanvasEdge);
   const [toolDialogType, setToolDialogType] = useState<NodeToolType | null>(null);
 
   const imageSource = useMemo(() => {
@@ -50,13 +58,40 @@ export const NodeActionToolbar = memo(({ node }: NodeActionToolbarProps) => {
   }, [deleteNode, node.id]);
 
   const handleToolExecute = useCallback(async (params: ToolExecuteParams) => {
-    await canvasToolProcessor.process(
+    if (!toolDialogType) return;
+
+    const result = await canvasToolProcessor.process(
       toolDialogType!,
       params.imageUrl,
       params.fields
     );
+
+    const sourcePosition = node.position ?? { x: 0, y: 0 };
+    const outputPosition = {
+      x: sourcePosition.x + 430,
+      y: sourcePosition.y,
+    };
+
+    if (toolDialogType === 'split-storyboard' && result.storyboardFrames?.length) {
+      const splitNodeId = addNode(CANVAS_NODE_TYPES.storyboardSplit, outputPosition, {
+        gridRows: result.rows ?? Number(params.fields.rows ?? 3),
+        gridCols: result.cols ?? Number(params.fields.cols ?? 3),
+        frames: result.storyboardFrames,
+        aspectRatio: result.frameAspectRatio ?? '1:1',
+        frameAspectRatio: result.frameAspectRatio ?? '1:1',
+      });
+      addCanvasEdge(node.id, splitNodeId);
+    } else if (result.outputImageUrl) {
+      const outputNodeId = addNode(CANVAS_NODE_TYPES.exportImage, outputPosition, {
+        imageUrl: result.outputImageUrl,
+        previewImageUrl: result.outputImageUrl,
+        aspectRatio: String(node.data.aspectRatio ?? '1:1'),
+      });
+      addCanvasEdge(node.id, outputNodeId);
+    }
+
     setToolDialogType(null);
-  }, [toolDialogType]);
+  }, [addCanvasEdge, addNode, node.data.aspectRatio, node.id, node.position, toolDialogType]);
 
   return (
     <>

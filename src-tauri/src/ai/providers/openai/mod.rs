@@ -8,7 +8,7 @@ use tracing::info;
 use crate::ai::error::AIError;
 use crate::ai::{AIProvider, GenerateRequest};
 
-const BASE_URL: &str = "https://api.ranmeng.icu";
+const BASE_URL: &str = "https://goaistore.ccwu.cc";
 const IMAGE_GENERATIONS_PATH: &str = "/v1/images/generations";
 const MODEL_ID: &str = "gpt-image-2";
 
@@ -43,11 +43,23 @@ impl OpenAIProvider {
             .unwrap_or_else(|| model.to_string())
     }
 
-    fn resolve_size(aspect_ratio: &str) -> &'static str {
-        match aspect_ratio {
-            "16:9" | "4:3" | "3:2" => "1536x1024",
-            "9:16" | "3:4" | "2:3" => "1024x1536",
-            _ => "1024x1024",
+    fn resolve_size(aspect_ratio: &str, requested_size: &str) -> &'static str {
+        match requested_size {
+            "4K" => match aspect_ratio {
+                "16:9" | "4:3" | "3:2" => "6144x4096",
+                "9:16" | "3:4" | "2:3" => "4096x6144",
+                _ => "4096x4096",
+            },
+            "2K" => match aspect_ratio {
+                "16:9" | "4:3" | "3:2" => "3072x2048",
+                "9:16" | "3:4" | "2:3" => "2048x3072",
+                _ => "2048x2048",
+            },
+            _ => match aspect_ratio {
+                "16:9" | "4:3" | "3:2" => "1536x1024",
+                "9:16" | "3:4" | "2:3" => "1024x1536",
+                _ => "1024x1024",
+            },
         }
     }
 
@@ -156,7 +168,7 @@ impl AIProvider for OpenAIProvider {
         }
 
         let endpoint = format!("{}{}", BASE_URL, IMAGE_GENERATIONS_PATH);
-        let size = Self::resolve_size(request.aspect_ratio.as_str());
+        let size = Self::resolve_size(request.aspect_ratio.as_str(), request.size.as_str());
         let body = json!({
             "model": MODEL_ID,
             "prompt": request.prompt,
@@ -165,8 +177,8 @@ impl AIProvider for OpenAIProvider {
         });
 
         info!(
-            "[OpenAI Image Request] endpoint: {}, model: {}, size: {}, aspect_ratio: {}",
-            endpoint, MODEL_ID, size, request.aspect_ratio
+            "[OpenAI Image Request] endpoint: {}, model: {}, requested_size: {}, size: {}, aspect_ratio: {}",
+            endpoint, MODEL_ID, request.size, size, request.aspect_ratio
         );
 
         let response = self
@@ -198,7 +210,7 @@ impl AIProvider for OpenAIProvider {
 
         if content_type.contains("text/html") || Self::is_html_response(&raw_response) {
             return Err(AIError::Provider(format!(
-                "OpenAI image generation returned an HTML page instead of JSON. Please check the Jianghu Yizhan API key, account access, and that the endpoint supports /v1/images/generations. Response preview: {}",
+                "OpenAI image generation returned an HTML page instead of JSON. Please check the third-party relay API key, account access, and that the endpoint supports /v1/images/generations. Response preview: {}",
                 Self::truncate_response(&raw_response)
             )));
         }
