@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { CellType, ShotType } from "@/types/project";
 import type {
   CanvasNodeType,
   CanvasNodeData,
@@ -46,12 +47,18 @@ export interface CanvasNodeDefinition<TData extends CanvasNodeData = CanvasNodeD
   menuIcon: MenuIconKey;
   visibleInMenu: boolean;
   component: AnyComponent;
+  persistence: {
+    cellType: CellType;
+    shotType: ShotType | 'image_block' | 'text_block';
+    defaultSize: { width: number; height: number };
+  };
   capabilities: CanvasNodeCapabilities;
   connectivity: CanvasNodeConnectivity;
   createDefaultData: () => TData;
 }
 
 const DEFAULT_IMAGE_MODEL_ID = 'kie/nano-banana-pro';
+const DEFAULT_PERSISTED_NODE_SIZE = { width: 380, height: 320 } as const;
 
 const uploadNodeDefinition: CanvasNodeDefinition<UploadImageNodeData> = {
   type: CANVAS_NODE_TYPES.upload,
@@ -59,6 +66,11 @@ const uploadNodeDefinition: CanvasNodeDefinition<UploadImageNodeData> = {
   menuIcon: 'upload',
   visibleInMenu: true,
   component: UploadNode,
+  persistence: {
+    cellType: 'upload_image',
+    shotType: 'image_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: true,
     promptInput: false,
@@ -87,6 +99,11 @@ const imageEditNodeDefinition: CanvasNodeDefinition<ImageEditNodeData> = {
   menuIcon: 'sparkles',
   visibleInMenu: true,
   component: ImageEditNode,
+  persistence: {
+    cellType: 'ai_image',
+    shotType: 'image_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: true,
     promptInput: false,
@@ -123,6 +140,11 @@ const exportImageNodeDefinition: CanvasNodeDefinition<ExportImageNodeData> = {
   menuIcon: 'upload',
   visibleInMenu: false,
   component: ImageNode,
+  persistence: {
+    cellType: 'upload_image',
+    shotType: 'image_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: true,
     promptInput: false,
@@ -151,6 +173,11 @@ const groupNodeDefinition: CanvasNodeDefinition<GroupNodeData> = {
   menuIcon: 'layout',
   visibleInMenu: false,
   component: GroupNode,
+  persistence: {
+    cellType: 'text_block',
+    shotType: 'text_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: false,
     promptInput: false,
@@ -176,6 +203,11 @@ const textAnnotationNodeDefinition: CanvasNodeDefinition<TextAnnotationNodeData>
   menuIcon: 'text',
   visibleInMenu: true,
   component: TextAnnotationNode,
+  persistence: {
+    cellType: 'text_annotation',
+    shotType: 'text_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: true,
     promptInput: false,
@@ -203,6 +235,11 @@ const storyboardSplitDefinition: CanvasNodeDefinition<StoryboardSplitNodeData> =
   menuIcon: 'layout',
   visibleInMenu: false,
   component: StoryboardSplitNode,
+  persistence: {
+    cellType: 'storyboard',
+    shotType: 'image_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: false,
     promptInput: false,
@@ -243,6 +280,11 @@ const storyboardGenNodeDefinition: CanvasNodeDefinition<StoryboardGenNodeData> =
   menuIcon: 'sparkles',
   visibleInMenu: true,
   component: StoryboardGenNode,
+  persistence: {
+    cellType: 'storyboard_gen',
+    shotType: 'image_block',
+    defaultSize: DEFAULT_PERSISTED_NODE_SIZE,
+  },
   capabilities: {
     toolbar: true,
     promptInput: false,
@@ -290,6 +332,22 @@ export function getNodeDefinition(type: CanvasNodeType): CanvasNodeDefinition {
 
 export function getMenuNodeDefinitions(): CanvasNodeDefinition[] {
   return Object.values(canvasNodeDefinitions).filter((definition) => definition.visibleInMenu);
+}
+
+export function getNodeTypeForCellType(cellType: CellType | undefined): CanvasNodeType {
+  const definition = Object.values(canvasNodeDefinitions).find(
+    (item) => item.persistence.cellType === cellType && item.visibleInMenu
+  );
+
+  if (definition) {
+    return definition.type;
+  }
+
+  if (cellType === 'storyboard') {
+    return CANVAS_NODE_TYPES.storyboardSplit;
+  }
+
+  return CANVAS_NODE_TYPES.textAnnotation;
 }
 
 export function nodeHasSourceHandle(type: CanvasNodeType): boolean {

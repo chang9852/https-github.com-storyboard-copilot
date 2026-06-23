@@ -1,10 +1,11 @@
 use std::collections::HashSet;
 use std::path::PathBuf;
-use std::time::Duration;
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+
+use crate::db::{open_app_db, resolve_app_data_child};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,18 +29,6 @@ pub struct ProjectRecord {
     pub edges_json: String,
     pub viewport_json: String,
     pub history_json: String,
-}
-
-fn resolve_db_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to resolve app data dir: {}", e))?;
-
-    std::fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create app data dir: {}", e))?;
-
-    Ok(app_data_dir.join("projects.db"))
 }
 
 fn ensure_projects_table(conn: &Connection) -> Result<(), String> {
@@ -194,12 +183,7 @@ fn extract_project_image_paths(nodes_json: &str, history_json: &str) -> HashSet<
 }
 
 fn resolve_images_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to resolve app data dir: {}", e))?;
-
-    let images_dir = app_data_dir.join("images");
+    let images_dir = resolve_app_data_child(app, "images")?;
     std::fs::create_dir_all(&images_dir)
         .map_err(|e| format!("Failed to create images dir: {}", e))?;
     Ok(images_dir)
@@ -243,20 +227,7 @@ fn prune_unreferenced_images(app: &AppHandle) -> Result<(), String> {
 }
 
 fn open_db(app: &AppHandle) -> Result<Connection, String> {
-    let db_path = resolve_db_path(app)?;
-    let conn = Connection::open(db_path).map_err(|e| format!("Failed to open SQLite DB: {}", e))?;
-
-    conn.pragma_update(None, "journal_mode", "WAL")
-        .map_err(|e| format!("Failed to set journal_mode=WAL: {}", e))?;
-    conn.pragma_update(None, "synchronous", "NORMAL")
-        .map_err(|e| format!("Failed to set synchronous=NORMAL: {}", e))?;
-    conn.pragma_update(None, "temp_store", "MEMORY")
-        .map_err(|e| format!("Failed to set temp_store=MEMORY: {}", e))?;
-    conn.busy_timeout(Duration::from_millis(3000))
-        .map_err(|e| format!("Failed to set busy timeout: {}", e))?;
-
-    ensure_projects_table(&conn)?;
-    Ok(conn)
+    open_app_db(app, ensure_projects_table)
 }
 
 #[tauri::command]

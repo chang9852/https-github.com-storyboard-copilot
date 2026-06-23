@@ -3,16 +3,16 @@ import type { Project, StoryboardCell, Connection } from "@/types/project";
 import {
   listProjectSummaries,
   getProjectRecord,
-  upsertProjectRecord,
   renameProjectRecord,
-  deleteProjectRecord,
-  type ProjectSummaryRecord,
-  type ProjectRecord as TauriProjectRecord,
 } from "@/commands/projectState";
-
-const UPSERT_DEBOUNCE_MS = 260;
-const IDLE_PERSIST_TIMEOUT_MS = 1200;
-const FALLBACK_IDLE_DELAY_MS = 64;
+import {
+  fromProjectRecord,
+  toProjectSummary,
+} from "@/features/project/application/projectRecordMapper";
+import {
+  deletePersistedProject,
+  persistProject,
+} from "@/features/project/application/projectPersistenceQueue";
 
 interface ProjectStore {
   projects: Project[];
@@ -103,198 +103,6 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-// --- Debounced SQLite Persistence ---
-
-const queuedProjectUpserts = new Map<string, Project>();
-const projectUpsertTimers = new Map<string, ReturnType<typeof setTimeout>>();
-const projectUpsertsInFlight = new Set<string>();
-const deletingProjectIds = new Set<string>();
-
-interface FlushOptions {
-  bypassIdle?: boolean;
-}
-
-function scheduleIdlePersist(task: () => void): void {
-  const idleHost = globalThis as typeof globalThis & {
-    requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
-  };
-
-  if (typeof idleHost.requestIdleCallback === 'function') {
-    idleHost.requestIdleCallback(task, { timeout: IDLE_PERSIST_TIMEOUT_MS });
-    return;
-  }
-
-  setTimeout(task, FALLBACK_IDLE_DELAY_MS);
-}
-
-function flushProjectUpsert(projectId: string, options?: FlushOptions): void {
-  if (deletingProjectIds.has(projectId) || projectUpsertsInFlight.has(projectId)) {
-    return;
-  }
-
-  const project = queuedProjectUpserts.get(projectId);
-  if (!project) {
-    return;
-  }
-
-  queuedProjectUpserts.delete(projectId);
-  projectUpsertsInFlight.add(projectId);
-
-  const settle = () => {
-    projectUpsertsInFlight.delete(projectId);
-
-    if (deletingProjectIds.has(projectId)) {
-      return;
-    }
-
-    if (queuedProjectUpserts.has(projectId)) {
-      flushProjectUpsert(projectId);
-    }
-  };
-
-  const executePersist = () => {
-    if (deletingProjectIds.has(projectId)) {
-      settle();
-      return;
-    }
-
-    const record = toTauriRecord(project);
-    void upsertProjectRecord(record)
-      .catch((error) => {
-        console.error('Failed to persist project record', error);
-      })
-      .finally(settle);
-  };
-
-  if (options?.bypassIdle) {
-    executePersist();
-    return;
-  }
-
-  scheduleIdlePersist(executePersist);
-}
-
-function queueProjectUpsert(project: Project, immediate?: boolean): void {
-  const projectId = project.id;
-  deletingProjectIds.delete(projectId);
-  queuedProjectUpserts.set(projectId, project);
-
-  const existingTimer = projectUpsertTimers.get(projectId);
-  if (existingTimer) {
-    clearTimeout(existingTimer);
-    projectUpsertTimers.delete(projectId);
-  }
-
-  const debounceMs = immediate ? 0 : UPSERT_DEBOUNCE_MS;
-  if (debounceMs <= 0) {
-    flushProjectUpsert(projectId, { bypassIdle: true });
-    return;
-  }
-
-  const timer = setTimeout(() => {
-    projectUpsertTimers.delete(projectId);
-    flushProjectUpsert(projectId);
-  }, debounceMs);
-  projectUpsertTimers.set(projectId, timer);
-}
-
-function persistProject(project: Project, immediate?: boolean): void {
-  queueProjectUpsert(project, immediate);
-}
-
-function clearQueuedProjectUpsert(projectId: string): void {
-  const timer = projectUpsertTimers.get(projectId);
-  if (timer) {
-    clearTimeout(timer);
-    projectUpsertTimers.delete(projectId);
-  }
-  queuedProjectUpserts.delete(projectId);
-}
-
-function persistProjectDelete(projectId: string): void {
-  deletingProjectIds.add(projectId);
-  clearQueuedProjectUpsert(projectId);
-
-  const DELETE_RETRY_DELAY_MS = 80;
-  const MAX_DELETE_RETRIES = 10;
-
-  const attemptDelete = (retryCount: number): void => {
-    if (projectUpsertsInFlight.has(projectId)) {
-      if (retryCount >= MAX_DELETE_RETRIES) {
-        deletingProjectIds.delete(projectId);
-        return;
-      }
-
-      setTimeout(() => {
-        attemptDelete(retryCount + 1);
-      }, DELETE_RETRY_DELAY_MS);
-      return;
-    }
-
-    void deleteProjectRecord(projectId)
-      .catch((error) => {
-        console.error('Failed to delete project record', error);
-      })
-      .finally(() => {
-        deletingProjectIds.delete(projectId);
-      });
-  };
-
-  attemptDelete(0);
-}
-
-// --- Serialization Helpers ---
-
-function toTauriRecord(project: Project): TauriProjectRecord {
-  return {
-    id: project.id,
-    name: project.name,
-    createdAt: new Date(project.createdAt).getTime(),
-    updatedAt: new Date(project.updatedAt).getTime(),
-    nodeCount: project.cells?.length ?? 0,
-    nodesJson: JSON.stringify(project.cells ?? []),
-    edgesJson: JSON.stringify(project.connections ?? []),
-    viewportJson: JSON.stringify({ x: 0, y: 0, zoom: 1 }),
-    historyJson: JSON.stringify({ past: [], future: [] }),
-  };
-}
-
-function fromTauriRecord(record: TauriProjectRecord): Project {
-  let cells: StoryboardCell[] = [];
-  let connections: Connection[] = [];
-
-  try {
-    cells = JSON.parse(record.nodesJson);
-  } catch {
-    cells = [];
-  }
-  try {
-    connections = JSON.parse(record.edgesJson);
-  } catch {
-    connections = [];
-  }
-
-  return {
-    id: record.id,
-    name: record.name,
-    description: '',
-    createdAt: new Date(record.createdAt).toISOString(),
-    updatedAt: new Date(record.updatedAt).toISOString(),
-    cells,
-    connections,
-  };
-}
-
-function toProjectSummary(record: ProjectSummaryRecord): { id: string; name: string; createdAt: string; updatedAt: string; nodeCount: number } {
-  return {
-    id: record.id,
-    name: record.name,
-    createdAt: new Date(record.createdAt).toISOString(),
-    updatedAt: new Date(record.updatedAt).toISOString(),
-    nodeCount: record.nodeCount,
-  };
-}
-
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   projects: [],
   currentProject: null,
@@ -350,7 +158,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   deleteProject: (id) => {
     const projects = get().projects.filter((p) => p.id !== id);
-    persistProjectDelete(id);
+    deletePersistedProject(id);
     set((state) => ({
       projects,
       currentProject: state.currentProject?.id === id ? null : state.currentProject,
@@ -368,7 +176,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           return;
         }
 
-        const project = fromTauriRecord(record);
+        const project = fromProjectRecord(record);
         set((state) => ({
           currentProject: project,
           isOpeningProject: false,
@@ -448,7 +256,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       ...currentProject,
       cells: currentProject.cells.map((c) => {
         if (c.id !== id) return c;
-        return maybeApplyImageAutoResize(c, updates);
+        return maybeApplyImageAutoResize({ ...c, ...updates }, updates);
       }),
       updatedAt: new Date().toISOString(),
     };

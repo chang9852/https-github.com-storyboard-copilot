@@ -1,5 +1,6 @@
 pub mod ai;
 pub mod commands;
+pub mod db;
 
 use std::path::PathBuf;
 use std::time::Duration;

@@ -67,6 +67,7 @@ interface SettingsState {
   setEnableUpdateDialog: (enabled: boolean) => void;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  setHydrated: (isHydrated: boolean) => void;
 }
 
 const HEX_COLOR_PATTERN = /^#?[0-9a-fA-F]{6}$/;
@@ -200,6 +201,7 @@ export const useSettingsStore = create<SettingsState>()(
       canvasEdgeRoutingMode: 'spline',
       autoCheckAppUpdateOnLaunch: true,
       enableUpdateDialog: true,
+      setHydrated: (isHydrated) => set({ isHydrated }),
       setProviderApiKey: (providerId, key) =>
         set((state) => ({
           apiKeys: {
@@ -292,11 +294,11 @@ export const useSettingsStore = create<SettingsState>()(
       name: 'settings-storage',
       version: 11,
       onRehydrateStorage: () => {
-        return (_state, error) => {
+        return (state, error) => {
           if (error) {
             console.error('failed to hydrate settings storage', error);
           }
-          useSettingsStore.setState({ isHydrated: true });
+          state?.setHydrated(true);
         };
       },
       migrate: (persistedState: unknown) => {

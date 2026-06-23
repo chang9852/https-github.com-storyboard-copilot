@@ -1,12 +1,11 @@
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tokio::sync::RwLock;
 use tracing::info;
 use uuid::Uuid;
@@ -17,6 +16,7 @@ use crate::ai::{
     GenerateRequest, ProviderRegistry, ProviderTaskHandle, ProviderTaskPollResult,
     ProviderTaskSubmission,
 };
+use crate::db::open_app_db;
 
 static REGISTRY: std::sync::OnceLock<ProviderRegistry> = std::sync::OnceLock::new();
 static ACTIVE_NON_RESUMABLE_JOB_IDS: std::sync::OnceLock<Arc<RwLock<HashSet<String>>>> =
@@ -73,18 +73,6 @@ fn now_ms() -> i64 {
         .as_millis() as i64
 }
 
-fn resolve_db_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let app_data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to resolve app data dir: {}", e))?;
-
-    std::fs::create_dir_all(&app_data_dir)
-        .map_err(|e| format!("Failed to create app data dir: {}", e))?;
-
-    Ok(app_data_dir.join("projects.db"))
-}
-
 fn ensure_generation_jobs_table(conn: &Connection) -> Result<(), String> {
     conn.execute_batch(
         r#"
@@ -110,20 +98,7 @@ fn ensure_generation_jobs_table(conn: &Connection) -> Result<(), String> {
 }
 
 fn open_db(app: &AppHandle) -> Result<Connection, String> {
-    let db_path = resolve_db_path(app)?;
-    let conn = Connection::open(db_path).map_err(|e| format!("Failed to open SQLite DB: {}", e))?;
-
-    conn.pragma_update(None, "journal_mode", "WAL")
-        .map_err(|e| format!("Failed to set journal_mode=WAL: {}", e))?;
-    conn.pragma_update(None, "synchronous", "NORMAL")
-        .map_err(|e| format!("Failed to set synchronous=NORMAL: {}", e))?;
-    conn.pragma_update(None, "temp_store", "MEMORY")
-        .map_err(|e| format!("Failed to set temp_store=MEMORY: {}", e))?;
-    conn.busy_timeout(Duration::from_millis(3000))
-        .map_err(|e| format!("Failed to set busy timeout: {}", e))?;
-
-    ensure_generation_jobs_table(&conn)?;
-    Ok(conn)
+    open_app_db(app, ensure_generation_jobs_table)
 }
 
 fn insert_generation_job(

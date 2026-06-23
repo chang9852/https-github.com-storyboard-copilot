@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { isTauri } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, X, Maximize2, Settings, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +19,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
   const toggleTheme = useSettingsStore((state) => state.toggleTheme);
   const currentProjectName = useProjectStore((state) => state.currentProject?.name);
 
-  const appWindow = getCurrentWindow();
+  const appWindow = isTauri() ? getCurrentWindow() : null;
   const isMac =
     typeof navigator !== 'undefined' &&
     /(Mac|iPhone|iPad|iPod)/i.test(`${navigator.platform} ${navigator.userAgent}`);
@@ -26,10 +27,11 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
   const titleText = currentProjectName ? `${currentProjectName} - ${appTitle}` : appTitle;
 
   const handleMinimize = useCallback(async () => {
-    await appWindow.minimize();
+    await appWindow?.minimize();
   }, [appWindow]);
 
   const handleMaximize = useCallback(async () => {
+    if (!appWindow) return;
     const isMaximized = await appWindow.isMaximized();
     if (isMaximized) {
       await appWindow.unmaximize();
@@ -39,7 +41,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
   }, [appWindow]);
 
   const handleClose = useCallback(async () => {
-    await appWindow.close();
+    await appWindow?.close();
   }, [appWindow]);
 
   const handleDragStart = useCallback(async (e: React.MouseEvent) => {
@@ -48,7 +50,7 @@ export function TitleBar({ onSettingsClick, showBackButton, onBackClick }: Title
     if (target?.closest('button') || target?.closest('[data-no-drag="true"]')) {
       return;
     }
-    await appWindow.startDragging();
+    await appWindow?.startDragging();
   }, [appWindow]);
 
   const handleLanguageClick = useCallback(() => {

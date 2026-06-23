@@ -9,6 +9,7 @@ import {
   applyNodeChanges,
 } from "@xyflow/react";
 import type { CanvasNode, CanvasEdge, CanvasNodeType, CanvasNodeData } from "@/features/canvas/domain/canvasNodes";
+import { getNodeDefinition } from "@/features/canvas/domain/nodeRegistry";
 
 // --- Types ---
 
@@ -239,11 +240,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   addNode: (type, position, data) => {
     const id = generateId();
+    const defaultData = getNodeDefinition(type).createDefaultData();
     const newNode: CanvasNode = {
       id,
       type,
       position,
-      data: (data ?? {}) as CanvasNodeData,
+      data: { ...defaultData, ...data } as CanvasNodeData,
     };
 
     get().pushHistory();
