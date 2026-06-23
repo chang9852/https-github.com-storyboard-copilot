@@ -82,6 +82,10 @@ interface CanvasStore {
 
   // Node actions
   addNode: (type: CanvasNodeType, position: { x: number; y: number }, data?: Partial<CanvasNodeData>) => string;
+  addNodesWithEdges: (
+    nodesToAdd: Array<{ type: CanvasNodeType; position: { x: number; y: number }; data?: Partial<CanvasNodeData> }>,
+    edgesToAdd?: Array<{ source: string; targetIndex: number }>
+  ) => string[];
   updateNodeData: (nodeId: string, data: Partial<CanvasNodeData>) => void;
   updateNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
   deleteNode: (nodeId: string) => void;
@@ -253,6 +257,49 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       nodes: [...state.nodes, newNode],
     }));
     return id;
+  },
+
+  addNodesWithEdges: (nodesToAdd, edgesToAdd = []) => {
+    if (nodesToAdd.length === 0) return [];
+
+    const newNodes = nodesToAdd.map(({ type, position, data }) => {
+      const id = generateId();
+      const defaultData = getNodeDefinition(type).createDefaultData();
+      return {
+        id,
+        type,
+        position,
+        data: { ...defaultData, ...data } as CanvasNodeData,
+      } as CanvasNode;
+    });
+
+    get().pushHistory();
+    set((state) => {
+      const nextNodes = [...state.nodes, ...newNodes];
+      const nextEdges = [...state.edges];
+
+      for (const edge of edgesToAdd) {
+        const targetNode = newNodes[edge.targetIndex];
+        const sourceExists = nextNodes.some((node) => node.id === edge.source);
+        if (!targetNode || !sourceExists) continue;
+
+        const exists = nextEdges.some((item) => item.source === edge.source && item.target === targetNode.id);
+        if (exists) continue;
+
+        nextEdges.push({
+          id: generateId(),
+          source: edge.source,
+          target: targetNode.id,
+          type: "disconnectableEdge",
+          animated: true,
+          style: { stroke: "rgba(99, 102, 241, 0.5)", strokeWidth: 2 },
+        } as CanvasEdge);
+      }
+
+      return { nodes: nextNodes, edges: nextEdges };
+    });
+
+    return newNodes.map((node) => node.id);
   },
 
   updateNodeData: (nodeId, data) => {
