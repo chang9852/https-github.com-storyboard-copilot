@@ -10,9 +10,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseStyles = "inline-flex items-center justify-center rounded font-medium transition-colors duration-150";
 
     const variants = {
-      default: "bg-surface-tertiary text-text-primary border border-border hover:bg-surface-elevated",
+      default: "border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] text-text-dark hover:bg-[var(--ui-glass-bg-hover)]",
       primary: "bg-accent text-white border border-accent hover:bg-accent-hover",
-      ghost: "bg-transparent text-text-primary border border-transparent hover:bg-surface-tertiary",
+      ghost: "border border-transparent bg-transparent text-text-dark hover:bg-[var(--ui-surface-field)]",
       danger: "bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20",
     };
 

@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getVersion } from '@tauri-apps/api/app';
 import { SettingsCheckboxCard } from '../SettingsCheckboxCard';
+import {
+  SETTINGS_CARD_CLASS,
+  SETTINGS_FOOTER_CLASS,
+  SETTINGS_HEADER_CLASS,
+  SETTINGS_SUBTLE_BUTTON_CLASS,
+} from '@/features/settings/settingsStyles';
 import type { SettingsDraft } from '../useSettingsDraft';
 
 interface AboutTabProps {
@@ -40,18 +46,18 @@ export function AboutTab({ draft, onDraftChange, onSave, onClose, onCheckUpdate 
 
   return (
     <>
-      <div className="px-6 py-5 border-b border-border-dark">
-        <h2 className="text-lg font-semibold text-text-dark">{t('settings.about')}</h2>
+      <div className={SETTINGS_HEADER_CLASS}>
+        <h2 className="text-lg font-semibold text-text-dark">{t('settings.sections.about')}</h2>
         <p className="text-sm text-text-muted mt-1">{t('settings.aboutDesc')}</p>
       </div>
 
       <div className="ui-scrollbar flex-1 space-y-4 overflow-y-auto p-6">
-        <div className="rounded-lg border border-border-dark bg-bg-dark p-4">
+        <div className={SETTINGS_CARD_CLASS}>
           <div className="flex items-start gap-4">
             <img
               src="/app-icon.png"
               alt={t('settings.aboutAppName')}
-              className="h-14 w-14 rounded-lg border border-border-dark object-cover"
+              className="h-14 w-14 rounded-lg border border-[var(--ui-border-soft)] object-cover"
             />
             <div className="min-w-0 flex-1">
               <a
@@ -67,7 +73,7 @@ export function AboutTab({ draft, onDraftChange, onSave, onClose, onCheckUpdate 
           </div>
         </div>
 
-        <div className="rounded-lg border border-border-dark bg-bg-dark p-4 space-y-2 text-sm">
+        <div className={`${SETTINGS_CARD_CLASS} space-y-2 text-sm`}>
           <p className="text-text-dark">
             {t('settings.aboutVersionLabel')}: <span className="text-text-muted">{appVersion || t('settings.aboutVersionUnknown')}</span>
           </p>
@@ -112,7 +118,7 @@ export function AboutTab({ draft, onDraftChange, onSave, onClose, onCheckUpdate 
             <button
               type="button"
               onClick={() => { void handleCheckUpdate(); }}
-              className="rounded border border-border-dark bg-surface-dark px-3 py-2 text-sm text-text-dark transition-colors hover:bg-bg-dark disabled:cursor-not-allowed disabled:opacity-50"
+              className={`px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50 ${SETTINGS_SUBTLE_BUTTON_CLASS}`}
               disabled={checkUpdateStatus === 'checking'}
             >
               {checkUpdateStatus === 'checking'
@@ -131,11 +137,11 @@ export function AboutTab({ draft, onDraftChange, onSave, onClose, onCheckUpdate 
         </div>
       </div>
 
-      <div className="flex justify-end border-t border-border-dark px-6 py-4">
+      <div className={SETTINGS_FOOTER_CLASS}>
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="rounded border border-border-dark px-4 py-2 text-sm font-medium text-text-dark transition-colors hover:bg-bg-dark"
+            className={`px-4 py-2 text-sm font-medium ${SETTINGS_SUBTLE_BUTTON_CLASS}`}
           >
             {t('common.close')}
           </button>

@@ -4,6 +4,12 @@ import { Eye, EyeOff } from 'lucide-react';
 import { UiSelect } from '@/components/ui';
 import { listModelProviders } from '@/features/canvas/models';
 import { GRSAI_NANO_BANANA_PRO_MODEL_OPTIONS } from '@/features/canvas/models/providers/grsai';
+import {
+  SETTINGS_CARD_CLASS,
+  SETTINGS_FIELD_CLASS,
+  SETTINGS_FOOTER_CLASS,
+  SETTINGS_HEADER_CLASS,
+} from '@/features/settings/settingsStyles';
 import type { SettingsDraft } from '../useSettingsDraft';
 
 const PROVIDER_REGISTER_URLS: Record<string, string> = {
@@ -41,7 +47,7 @@ export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps
 
   return (
     <>
-      <div className="px-6 py-5 border-b border-border-dark">
+      <div className={SETTINGS_HEADER_CLASS}>
         <h2 className="text-lg font-semibold text-text-dark">{t('settings.providers')}</h2>
         <p className="text-sm text-text-muted mt-1">{t('settings.providersDesc')}</p>
       </div>
@@ -52,7 +58,7 @@ export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps
           const isRevealed = Boolean(revealedApiKeys[provider.id]);
 
           return (
-            <div key={provider.id} className="rounded-lg border border-border-dark bg-bg-dark p-4">
+            <div key={provider.id} className={SETTINGS_CARD_CLASS}>
               <div className="mb-3">
                 <h3 className="text-sm font-medium text-text-dark">{displayName}</h3>
                 {PROVIDER_REGISTER_URLS[provider.id] && PROVIDER_GET_KEY_URLS[provider.id] ? (
@@ -90,7 +96,7 @@ export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps
                     onDraftChange('apiKeys', { ...draft.apiKeys, [provider.id]: nextValue });
                   }}
                   placeholder={t('settings.enterApiKey')}
-                  className="w-full rounded border border-border-dark bg-surface-dark px-3 py-2 pr-10 text-sm text-text-dark placeholder:text-text-muted"
+                  className={`w-full px-3 py-2 pr-10 text-sm ${SETTINGS_FIELD_CLASS}`}
                 />
                 <button
                   type="button"
@@ -100,7 +106,7 @@ export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps
                       [provider.id]: !isRevealed,
                     }))
                   }
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-bg-dark"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 transition-colors hover:bg-[var(--ui-glass-bg-hover)]"
                 >
                   {isRevealed ? (
                     <EyeOff className="h-4 w-4 text-text-muted" />
@@ -136,7 +142,7 @@ export function ProvidersTab({ draft, onDraftChange, onSave }: ProvidersTabProps
         })}
       </div>
 
-      <div className="px-6 py-4 border-t border-border-dark flex justify-end">
+      <div className={SETTINGS_FOOTER_CLASS}>
         <button
           onClick={onSave}
           className="px-4 py-2 text-sm font-medium bg-accent text-white rounded hover:bg-accent/80 transition-colors"

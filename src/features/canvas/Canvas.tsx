@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Background,
@@ -20,6 +20,7 @@ import { useCanvasProjectSync } from './hooks/useCanvasProjectSync';
 import { CanvasCreateMenu, type CanvasCreateMenuPosition } from './ui/CanvasCreateMenu';
 import { ImageViewerModal } from './ui/ImageViewerModal';
 import { SelectedNodeOverlay } from './ui/SelectedNodeOverlay';
+import { edgeTypes } from './edges';
 
 export function Canvas() {
   const { t } = useTranslation();
@@ -27,6 +28,10 @@ export function Canvas() {
 
   const nodes = useCanvasStore((state) => state.nodes);
   const edges = useCanvasStore((state) => state.edges);
+  const renderedEdges = useMemo(
+    () => edges.map((edge) => ({ ...edge, type: 'disconnectableEdge' })),
+    [edges]
+  );
   const selectedNodeId = useCanvasStore((state) => state.selectedNodeId);
   const onNodesChange = useCanvasStore((state) => state.onNodesChange);
   const onEdgesChange = useCanvasStore((state) => state.onEdgesChange);
@@ -101,7 +106,7 @@ export function Canvas() {
     >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={renderedEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
@@ -111,16 +116,18 @@ export function Canvas() {
         }}
         onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         snapToGrid
         snapGrid={[16, 16]}
         defaultEdgeOptions={{
-          type: 'smoothstep',
+          type: 'disconnectableEdge',
           animated: true,
         }}
         style={{ background: 'var(--bg)' }}
         connectionLineStyle={{
-          stroke: 'rgba(99, 102, 241, 0.5)',
+          stroke: 'rgb(var(--accent-rgb) / 0.55)',
           strokeWidth: 2,
+          strokeDasharray: '8 10',
         }}
       >
         <Background

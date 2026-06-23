@@ -16,11 +16,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="flex flex-col gap-1">
         {label && (
-          <label className="text-xs font-medium text-text-secondary">{label}</label>
+          <label className="text-xs font-medium text-text-muted">{label}</label>
         )}
         <select
           ref={ref}
-          className={`px-3 py-2 rounded text-sm bg-surface-secondary text-text-primary border border-border outline-none focus:border-accent appearance-none cursor-pointer ${className}`}
+          className={`cursor-pointer appearance-none rounded border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] px-3 py-2 text-sm text-text-dark outline-none focus:border-accent ${className}`}
           {...props}
         >
           {placeholder && (

@@ -39,12 +39,12 @@ export function Dialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-surface-secondary border border-border rounded-lg w-full max-w-md mx-4">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+      <div className="relative mx-4 w-full max-w-md rounded-lg border border-[var(--ui-border-soft)] bg-[var(--ui-surface-panel)] shadow-[var(--ui-shadow-panel)]">
+        <div className="flex items-center justify-between border-b border-[var(--ui-border-soft)] px-4 py-3">
+          <h3 className="text-sm font-semibold text-text-dark">{title}</h3>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary transition-colors"
+            className="text-text-muted transition-colors hover:text-text-dark"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -53,7 +53,7 @@ export function Dialog({
         </div>
         <div className="px-4 py-4">{children}</div>
         {showFooter && (
-          <div className="flex justify-end gap-2 px-4 py-3 border-t border-border">
+          <div className="flex justify-end gap-2 border-t border-[var(--ui-border-soft)] px-4 py-3">
             <Button variant="ghost" onClick={onClose}>
               {t(cancelText)}
             </Button>

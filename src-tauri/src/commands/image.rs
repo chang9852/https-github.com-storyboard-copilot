@@ -21,7 +21,13 @@ pub struct GridSplitResult {
 
 fn sanitize_file_stem(name: &str) -> String {
     name.chars()
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect()
 }
 
@@ -39,8 +45,16 @@ fn ensure_unique_path(path: PathBuf) -> PathBuf {
     if !path.exists() {
         return path;
     }
-    let stem = path.file_stem().unwrap_or_default().to_string_lossy().to_string();
-    let ext = path.extension().unwrap_or_default().to_string_lossy().to_string();
+    let stem = path
+        .file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
+    let ext = path
+        .extension()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
     let parent = path.parent().unwrap_or_else(|| std::path::Path::new("."));
     let mut counter = 1u32;
     loop {
@@ -90,7 +104,10 @@ pub async fn split_grid_image(
 
             let mut buffer: Vec<u8> = Vec::new();
             cell_img
-                .write_to(&mut std::io::Cursor::new(&mut buffer), image::ImageFormat::Png)
+                .write_to(
+                    &mut std::io::Cursor::new(&mut buffer),
+                    image::ImageFormat::Png,
+                )
                 .map_err(|e| e.to_string())?;
 
             cells.push(GridCell {
@@ -252,8 +269,7 @@ async fn resolve_image_source_to_bytes(source: &str) -> Result<(Vec<u8>, String)
             .and_then(|e| e.to_str())
             .unwrap_or("png")
             .to_string();
-        let bytes = std::fs::read(&path)
-            .map_err(|e| format!("Failed to read file: {}", e))?;
+        let bytes = std::fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))?;
         Ok((bytes, ext))
     }
 }
@@ -289,7 +305,10 @@ pub async fn split_image_source(
             let cell_img = img.crop_imm(x, y, cell_width, cell_height).to_rgb8();
             let mut buffer: Vec<u8> = Vec::new();
             cell_img
-                .write_to(&mut std::io::Cursor::new(&mut buffer), image::ImageFormat::Png)
+                .write_to(
+                    &mut std::io::Cursor::new(&mut buffer),
+                    image::ImageFormat::Png,
+                )
                 .map_err(|e| e.to_string())?;
             cells.push(GridCell {
                 index: row * columns + col,
@@ -305,9 +324,7 @@ pub async fn split_image_source(
 }
 
 #[tauri::command]
-pub async fn prepare_node_image_source(
-    source: String,
-) -> Result<String, String> {
+pub async fn prepare_node_image_source(source: String) -> Result<String, String> {
     let (bytes, ext) = resolve_image_source_to_bytes(&source).await?;
     let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
     Ok(format!("data:image/{};base64,{}", ext, encoded))
@@ -326,7 +343,10 @@ pub async fn crop_image_source(
     let cropped = img.crop_imm(x, y, width, height);
     let mut buffer: Vec<u8> = Vec::new();
     cropped
-        .write_to(&mut std::io::Cursor::new(&mut buffer), image::ImageFormat::Png)
+        .write_to(
+            &mut std::io::Cursor::new(&mut buffer),
+            image::ImageFormat::Png,
+        )
         .map_err(|e| e.to_string())?;
     let encoded = base64::engine::general_purpose::STANDARD.encode(&buffer);
     Ok(format!("data:image/png;base64,{}", encoded))
@@ -369,7 +389,10 @@ pub async fn merge_storyboard_images(
 
     let mut buffer: Vec<u8> = Vec::new();
     merged
-        .write_to(&mut std::io::Cursor::new(&mut buffer), image::ImageFormat::Png)
+        .write_to(
+            &mut std::io::Cursor::new(&mut buffer),
+            image::ImageFormat::Png,
+        )
         .map_err(|e| e.to_string())?;
     let encoded = base64::engine::general_purpose::STANDARD.encode(&buffer);
     Ok(format!("data:image/png;base64,{}", encoded))
@@ -392,8 +415,7 @@ pub async fn persist_image_source(
 
     let file_name = format!("{}.{}", sanitize_file_stem(&node_id), ext);
     let file_path = images_dir.join(file_name);
-    std::fs::write(&file_path, &bytes)
-        .map_err(|e| format!("Failed to write image: {}", e))?;
+    std::fs::write(&file_path, &bytes).map_err(|e| format!("Failed to write image: {}", e))?;
 
     Ok(file_path.to_string_lossy().to_string())
 }
@@ -417,13 +439,9 @@ pub async fn save_image_source_to_downloads(
 }
 
 #[tauri::command]
-pub async fn save_image_source_to_path(
-    source: String,
-    path: String,
-) -> Result<(), String> {
+pub async fn save_image_source_to_path(source: String, path: String) -> Result<(), String> {
     let (bytes, _) = resolve_image_source_to_bytes(&source).await?;
-    std::fs::write(&path, &bytes)
-        .map_err(|e| format!("Failed to save image: {}", e))?;
+    std::fs::write(&path, &bytes).map_err(|e| format!("Failed to save image: {}", e))?;
     Ok(())
 }
 
@@ -435,25 +453,21 @@ pub async fn save_image_source_to_directory(
 ) -> Result<String, String> {
     let (bytes, ext) = resolve_image_source_to_bytes(&source).await?;
     let dir = PathBuf::from(&directory);
-    std::fs::create_dir_all(&dir)
-        .map_err(|e| format!("Failed to create directory: {}", e))?;
+    std::fs::create_dir_all(&dir).map_err(|e| format!("Failed to create directory: {}", e))?;
 
     let stem = sanitize_file_stem(&file_name);
     let file_path = ensure_unique_path(dir.join(format!("{}.{}", stem, ext)));
-    std::fs::write(&file_path, &bytes)
-        .map_err(|e| format!("Failed to save image: {}", e))?;
+    std::fs::write(&file_path, &bytes).map_err(|e| format!("Failed to save image: {}", e))?;
 
     Ok(file_path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub async fn copy_image_source_to_clipboard(
-    source: String,
-) -> Result<(), String> {
+pub async fn copy_image_source_to_clipboard(source: String) -> Result<(), String> {
     let (bytes, _) = resolve_image_source_to_bytes(&source).await?;
 
-    let mut clipboard = arboard::Clipboard::new()
-        .map_err(|e| format!("Failed to access clipboard: {}", e))?;
+    let mut clipboard =
+        arboard::Clipboard::new().map_err(|e| format!("Failed to access clipboard: {}", e))?;
 
     let img_data = arboard::ImageData {
         width: 1,

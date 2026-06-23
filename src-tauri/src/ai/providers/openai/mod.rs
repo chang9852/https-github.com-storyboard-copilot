@@ -8,7 +8,7 @@ use tracing::info;
 use crate::ai::error::AIError;
 use crate::ai::{AIProvider, GenerateRequest};
 
-const BASE_URL: &str = "https://goaistore.ccwu.cc";
+const BASE_URL: &str = "https://bmapi.020212.xyz";
 const IMAGE_GENERATIONS_PATH: &str = "/v1/images/generations";
 const MODEL_ID: &str = "gpt-image-2";
 
@@ -90,6 +90,35 @@ impl OpenAIProvider {
             || trimmed.starts_with("<html")
             || trimmed.starts_with("<script")
             || trimmed.contains("/_next/static/")
+    }
+
+    fn format_provider_error(status: reqwest::StatusCode, raw_response: &str) -> String {
+        let preview = Self::truncate_response(raw_response);
+        let parsed_message = serde_json::from_str::<serde_json::Value>(raw_response)
+            .ok()
+            .and_then(|value| {
+                value
+                    .get("message")
+                    .and_then(|item| item.as_str())
+                    .or_else(|| value.get("error").and_then(|item| item.as_str()))
+                    .map(str::to_string)
+            });
+
+        let is_invalid_api_key = status == reqwest::StatusCode::UNAUTHORIZED
+            || raw_response.contains("INVALID_API_KEY")
+            || parsed_message
+                .as_deref()
+                .map(|message| message.to_ascii_lowercase().contains("invalid api key"))
+                .unwrap_or(false);
+
+        if is_invalid_api_key {
+            return format!(
+                "第三方中转站 API Key 无效或已过期，请在 设置 > 密钥 中重新填写该服务的 API Key。接口返回: {}",
+                parsed_message.unwrap_or(preview)
+            );
+        }
+
+        format!("OpenAI image generation failed {}: {}", status, preview)
     }
 
     fn extract_image_source(response: ImageGenerationResponse) -> Result<String, AIError> {
@@ -201,10 +230,9 @@ impl AIProvider for OpenAIProvider {
             .to_string();
         let raw_response = response.text().await.unwrap_or_default();
         if !status.is_success() {
-            return Err(AIError::Provider(format!(
-                "OpenAI image generation failed {}: {}",
+            return Err(AIError::Provider(Self::format_provider_error(
                 status,
-                Self::truncate_response(&raw_response)
+                &raw_response,
             )));
         }
 

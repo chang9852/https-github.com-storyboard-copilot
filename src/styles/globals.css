@@ -296,12 +296,20 @@ html[data-platform='macos'] #root {
   to { stroke-dashoffset: -36; }
 }
 
-.canvas-processing-edge__flow {
-  animation: canvas-edge-flow 0.9s linear infinite;
+.canvas-edge-flow {
+  animation: canvas-edge-flow 1.25s linear infinite;
+  opacity: 0.42;
+  filter: drop-shadow(0 0 3px rgb(var(--accent-rgb) / 0.22));
+}
+
+.canvas-edge-flow--processing {
+  animation-duration: 0.75s;
+  opacity: 0.88;
+  filter: drop-shadow(0 0 6px rgb(var(--accent-rgb) / 0.44));
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .canvas-processing-edge__flow {
+  .canvas-edge-flow {
     animation: none;
   }
 }

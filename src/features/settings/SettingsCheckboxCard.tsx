@@ -1,4 +1,5 @@
 import { UiCheckbox } from '@/components/ui';
+import { SETTINGS_CARD_CLASS } from '@/features/settings/settingsStyles';
 
 interface SettingsCheckboxCardProps {
   title: string;
@@ -24,7 +25,7 @@ export function SettingsCheckboxCard({
           onCheckedChange(!checked);
         }
       }}
-      className="w-full rounded-lg border border-border-dark bg-bg-dark p-4 text-left transition-colors hover:border-[rgba(255,255,255,0.2)]"
+      className={`w-full text-left transition-colors hover:border-[var(--ui-border-strong)] ${SETTINGS_CARD_CLASS}`}
     >
       <div className="flex items-start gap-3">
         <UiCheckbox

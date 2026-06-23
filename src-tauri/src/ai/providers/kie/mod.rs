@@ -238,7 +238,10 @@ impl KieProvider {
         }
 
         let uploaded_url = Self::extract_uploaded_file_url(&body).ok_or_else(|| {
-            AIError::Provider(format!("KIE file upload missing fileUrl, raw response: {}", body))
+            AIError::Provider(format!(
+                "KIE file upload missing fileUrl, raw response: {}",
+                body
+            ))
         })?;
 
         if !Self::is_http_url(&uploaded_url) {
@@ -383,7 +386,10 @@ impl KieProvider {
                 .message
                 .or(body.msg)
                 .unwrap_or_else(|| "unknown query error".to_string());
-            return Err(AIError::Provider(format!("KIE task query rejected: {}", message)));
+            return Err(AIError::Provider(format!(
+                "KIE task query rejected: {}",
+                message
+            )));
         }
 
         let data = body
@@ -402,21 +408,33 @@ impl KieProvider {
                 ))
             }
             Some("fail") => Ok(ProviderTaskPollResult::Failed(
-                data.fail_msg.unwrap_or_else(|| "KIE task failed".to_string()),
+                data.fail_msg
+                    .unwrap_or_else(|| "KIE task failed".to_string()),
             )),
             Some("waiting") | Some("queuing") | Some("generating") | None => {
                 Ok(ProviderTaskPollResult::Running)
             }
-            Some(other) => Err(AIError::Provider(format!("KIE unexpected task state: {}", other))),
+            Some(other) => Err(AIError::Provider(format!(
+                "KIE unexpected task state: {}",
+                other
+            ))),
         }
     }
 
-    async fn poll_task_until_complete(&self, api_key: &str, task_id: &str) -> Result<String, AIError> {
+    async fn poll_task_until_complete(
+        &self,
+        api_key: &str,
+        task_id: &str,
+    ) -> Result<String, AIError> {
         loop {
             match self.poll_task_once(api_key, task_id).await? {
-                ProviderTaskPollResult::Running => sleep(Duration::from_millis(POLL_INTERVAL_MS)).await,
+                ProviderTaskPollResult::Running => {
+                    sleep(Duration::from_millis(POLL_INTERVAL_MS)).await
+                }
                 ProviderTaskPollResult::Succeeded(url) => return Ok(url),
-                ProviderTaskPollResult::Failed(message) => return Err(AIError::TaskFailed(message)),
+                ProviderTaskPollResult::Failed(message) => {
+                    return Err(AIError::TaskFailed(message))
+                }
             }
         }
     }
@@ -458,7 +476,10 @@ impl AIProvider for KieProvider {
         true
     }
 
-    async fn submit_task(&self, request: GenerateRequest) -> Result<ProviderTaskSubmission, AIError> {
+    async fn submit_task(
+        &self,
+        request: GenerateRequest,
+    ) -> Result<ProviderTaskSubmission, AIError> {
         let api_key = self
             .api_key
             .read()
@@ -482,7 +503,10 @@ impl AIProvider for KieProvider {
         }))
     }
 
-    async fn poll_task(&self, handle: ProviderTaskHandle) -> Result<ProviderTaskPollResult, AIError> {
+    async fn poll_task(
+        &self,
+        handle: ProviderTaskHandle,
+    ) -> Result<ProviderTaskPollResult, AIError> {
         let api_key = self
             .api_key
             .read()
@@ -505,7 +529,11 @@ impl AIProvider for KieProvider {
             model,
             request.size,
             request.aspect_ratio,
-            request.reference_images.as_ref().map(|refs| refs.len()).unwrap_or(0)
+            request
+                .reference_images
+                .as_ref()
+                .map(|refs| refs.len())
+                .unwrap_or(0)
         );
 
         let uploaded_images = self

@@ -3,6 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { FolderOpen, Plus, Trash2 } from 'lucide-react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { SettingsCheckboxCard } from '../SettingsCheckboxCard';
+import {
+  SETTINGS_CARD_CLASS,
+  SETTINGS_FIELD_CLASS,
+  SETTINGS_FOOTER_CLASS,
+  SETTINGS_HEADER_CLASS,
+  SETTINGS_SUBTLE_BUTTON_CLASS,
+} from '@/features/settings/settingsStyles';
 import type { SettingsDraft } from '../useSettingsDraft';
 
 interface GenerationTabProps {
@@ -45,7 +52,7 @@ export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabPro
 
   return (
     <>
-      <div className="px-6 py-5 border-b border-border-dark">
+      <div className={SETTINGS_HEADER_CLASS}>
         <h2 className="text-lg font-semibold text-text-dark">{t('settings.generation')}</h2>
         <p className="text-sm text-text-muted mt-1">{t('settings.generationDesc')}</p>
       </div>
@@ -100,7 +107,7 @@ export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabPro
           description={t('settings.showStoryboardGenAdvancedRatioControlsDesc')}
         />
 
-        <div className="rounded-lg border border-border-dark bg-bg-dark p-4">
+        <div className={SETTINGS_CARD_CLASS}>
           <div className="mb-3">
             <h3 className="text-sm font-medium text-text-dark">{t('settings.downloadPresetPaths')}</h3>
             <p className="mt-1 text-xs text-text-muted">{t('settings.downloadPresetPathsDesc')}</p>
@@ -111,11 +118,11 @@ export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabPro
               value={localDownloadPathInput}
               onChange={(e) => setLocalDownloadPathInput(e.target.value)}
               placeholder={t('settings.downloadPathPlaceholder')}
-              className="h-9 flex-1 rounded border border-border-dark bg-surface-dark px-3 text-sm text-text-dark outline-none placeholder:text-text-muted"
+              className={`h-9 flex-1 px-3 text-sm ${SETTINGS_FIELD_CLASS}`}
             />
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded border border-border-dark bg-surface-dark px-3 text-xs text-text-dark transition-colors hover:bg-bg-dark"
+              className={`inline-flex h-9 items-center justify-center px-3 text-xs ${SETTINGS_SUBTLE_BUTTON_CLASS}`}
               onClick={handleAddDownloadPathFromInput}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
@@ -123,7 +130,7 @@ export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabPro
             </button>
             <button
               type="button"
-              className="inline-flex h-9 items-center justify-center rounded border border-border-dark bg-surface-dark px-3 text-xs text-text-dark transition-colors hover:bg-bg-dark"
+              className={`inline-flex h-9 items-center justify-center px-3 text-xs ${SETTINGS_SUBTLE_BUTTON_CLASS}`}
               onClick={handlePickDownloadPath}
             >
               <FolderOpen className="mr-1 h-3.5 w-3.5" />
@@ -136,12 +143,12 @@ export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabPro
               draft.downloadPresetPaths.map((path) => (
                 <div
                   key={path}
-                  className="flex items-center gap-2 rounded border border-border-dark bg-surface-dark px-2 py-1.5"
+                  className="flex items-center gap-2 rounded border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] px-2 py-1.5"
                 >
                   <span className="truncate text-xs text-text-dark">{path}</span>
                   <button
                     type="button"
-                    className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded text-text-muted transition-colors hover:bg-bg-dark hover:text-text-dark"
+                    className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded text-text-muted transition-colors hover:bg-[var(--ui-glass-bg-hover)] hover:text-text-dark"
                     onClick={() => handleRemoveDownloadPath(path)}
                     title={t('common.delete')}
                   >
@@ -156,7 +163,7 @@ export function GenerationTab({ draft, onDraftChange, onSave }: GenerationTabPro
         </div>
       </div>
 
-      <div className="flex justify-end border-t border-border-dark px-6 py-4">
+      <div className={SETTINGS_FOOTER_CLASS}>
         <button
           onClick={onSave}
           className="rounded bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/80"

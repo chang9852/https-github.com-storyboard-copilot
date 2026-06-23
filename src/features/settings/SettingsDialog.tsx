@@ -11,6 +11,7 @@ import { ProvidersTab } from '@/features/settings/tabs/ProvidersTab';
 import { AppearanceTab } from '@/features/settings/tabs/AppearanceTab';
 import { PricingTab } from '@/features/settings/tabs/PricingTab';
 import { AboutTab } from '@/features/settings/tabs/AboutTab';
+import { SETTINGS_PANEL_CLASS } from '@/features/settings/settingsStyles';
 import type { SettingsCategory } from '@/features/settings/settingsEvents';
 
 interface SettingsDialogProps {
@@ -61,16 +62,16 @@ export function SettingsDialog({
       />
       <div className="relative w-[min(96vw,1120px)]">
         <div
-          className={`relative mx-auto h-[500px] w-[700px] overflow-hidden rounded-lg border border-border-dark bg-surface-dark shadow-xl transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'} flex`}
+          className={`relative mx-auto flex h-[500px] w-[700px] overflow-hidden rounded-lg border transition-opacity duration-200 ${SETTINGS_PANEL_CLASS} ${isVisible ? 'opacity-100' : 'opacity-0'}`}
         >
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1 hover:bg-bg-dark rounded transition-colors z-10"
+            className="absolute right-3 top-3 z-10 rounded p-1 transition-colors hover:bg-[var(--ui-surface-field)]"
           >
             <X className="w-5 h-5 text-text-muted" />
           </button>
 
-          <div className="w-[180px] bg-bg-dark border-r border-border-dark flex flex-col">
+          <div className="flex w-[180px] flex-col border-r border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)]">
             <div className="px-4 py-4">
               <span className="text-xs font-medium text-text-muted uppercase tracking-wider">
                 {t('settings.title')}
@@ -84,8 +85,8 @@ export function SettingsDialog({
                   className={`
                     w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors
                     ${activeCategory === key
-                      ? 'bg-accent/10 text-text-dark border-l-2 border-accent'
-                      : 'text-text-muted hover:bg-bg-dark hover:text-text-dark'
+                      ? 'border-l-2 border-accent bg-accent/10 text-text-dark'
+                      : 'text-text-muted hover:bg-[var(--ui-glass-bg-hover)] hover:text-text-dark'
                     }
                   `}
                 >

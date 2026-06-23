@@ -36,9 +36,9 @@ export function UiModal({ isOpen, onClose, title, widthClassName = 'w-[480px]', 
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div
         ref={dialogRef}
-        className={`relative ${widthClassName} rounded-lg border border-border-dark bg-surface-dark shadow-xl`}
+        className={`relative ${widthClassName} rounded-lg border border-[var(--ui-border-soft)] bg-[var(--ui-surface-panel)] shadow-[var(--ui-shadow-panel)]`}
       >
-        <div className="flex items-center justify-between border-b border-border-dark px-4 py-3">
+        <div className="flex items-center justify-between border-b border-[var(--ui-border-soft)] px-4 py-3">
           <h2 className="text-sm font-semibold text-text-dark">{title}</h2>
           <button
             onClick={onClose}
@@ -49,7 +49,7 @@ export function UiModal({ isOpen, onClose, title, widthClassName = 'w-[480px]', 
         </div>
         <div className="p-4">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-2 border-t border-border-dark px-4 py-3">
+          <div className="flex justify-end gap-2 border-t border-[var(--ui-border-soft)] px-4 py-3">
             {footer}
           </div>
         )}
@@ -76,7 +76,7 @@ export function UiCheckbox({ checked, onCheckedChange, onClick, className = '' }
         onClick?.(e);
         onCheckedChange(!checked);
       }}
-      className={`h-4 w-4 rounded border border-border-dark bg-surface-dark ${checked ? 'bg-accent border-accent' : ''} ${className}`}
+      className={`h-4 w-4 rounded border border-[var(--ui-border-soft)] bg-[var(--ui-surface-field)] ${checked ? 'border-accent bg-accent' : ''} ${className}`}
     >
       {checked && <span className="text-white text-xs">✓</span>}
     </button>

@@ -104,7 +104,8 @@ impl GrsaiProvider {
             } else {
                 &decoded
             };
-            return std::fs::read(normalized).map_err(|err| format!("failed to read path: {}", err));
+            return std::fs::read(normalized)
+                .map_err(|err| format!("failed to read path: {}", err));
         }
 
         std::fs::read(trimmed).map_err(|err| format!("failed to read path: {}", err))
@@ -135,8 +136,7 @@ impl AIProvider for GrsaiProvider {
 
     fn supports_model(&self, model: &str) -> bool {
         let sanitized = Self::sanitize_model(model);
-        sanitized == "nano-banana-2"
-            || sanitized == "nano-banana-pro"
+        sanitized == "nano-banana-2" || sanitized == "nano-banana-pro"
     }
 
     fn list_models(&self) -> Vec<String> {
@@ -156,7 +156,10 @@ impl AIProvider for GrsaiProvider {
         true
     }
 
-    async fn submit_task(&self, request: GenerateRequest) -> Result<ProviderTaskSubmission, AIError> {
+    async fn submit_task(
+        &self,
+        request: GenerateRequest,
+    ) -> Result<ProviderTaskSubmission, AIError> {
         let api_key = self
             .api_key
             .read()
@@ -229,7 +232,10 @@ impl AIProvider for GrsaiProvider {
         }))
     }
 
-    async fn poll_task(&self, handle: ProviderTaskHandle) -> Result<ProviderTaskPollResult, AIError> {
+    async fn poll_task(
+        &self,
+        handle: ProviderTaskHandle,
+    ) -> Result<ProviderTaskPollResult, AIError> {
         let api_key = self
             .api_key
             .read()
@@ -279,11 +285,14 @@ impl AIProvider for GrsaiProvider {
                     .images
                     .and_then(|images| images.into_iter().next())
                     .or(data.image_url)
-                    .ok_or_else(|| AIError::Provider("Grsai success but no image URL".to_string()))?;
+                    .ok_or_else(|| {
+                        AIError::Provider("Grsai success but no image URL".to_string())
+                    })?;
                 Ok(ProviderTaskPollResult::Succeeded(url))
             }
             Some("failed") | Some("error") => Ok(ProviderTaskPollResult::Failed(
-                data.error.unwrap_or_else(|| "Grsai task failed".to_string()),
+                data.error
+                    .unwrap_or_else(|| "Grsai task failed".to_string()),
             )),
             _ => Ok(ProviderTaskPollResult::Running),
         }
@@ -301,7 +310,9 @@ impl AIProvider for GrsaiProvider {
                     sleep(Duration::from_millis(POLL_INTERVAL_MS)).await;
                 }
                 ProviderTaskPollResult::Succeeded(url) => return Ok(url),
-                ProviderTaskPollResult::Failed(message) => return Err(AIError::TaskFailed(message)),
+                ProviderTaskPollResult::Failed(message) => {
+                    return Err(AIError::TaskFailed(message))
+                }
             }
         }
     }

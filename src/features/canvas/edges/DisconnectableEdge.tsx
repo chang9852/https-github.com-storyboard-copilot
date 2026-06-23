@@ -84,18 +84,16 @@ const DisconnectableEdge = memo(function DisconnectableEdge(props: EdgeProps) {
           ...style,
         }}
       />
-      {isProcessingEdge && (
-        <path
-          d={edgePath}
-          fill="none"
-          stroke="rgb(var(--accent-rgb))"
-          strokeWidth={selected ? 2.5 : 2.1}
-          strokeLinecap="round"
-          strokeDasharray="8 10"
-          className="canvas-processing-edge__flow"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="rgb(var(--accent-rgb))"
+        strokeWidth={isProcessingEdge ? (selected ? 2.7 : 2.3) : (selected ? 2.2 : 1.7)}
+        strokeLinecap="round"
+        strokeDasharray={isProcessingEdge ? '10 8' : '7 12'}
+        className={isProcessingEdge ? 'canvas-edge-flow canvas-edge-flow--processing' : 'canvas-edge-flow'}
+        style={{ pointerEvents: 'none' }}
+      />
       {selected && (
         <EdgeLabelRenderer>
           <button

@@ -2,6 +2,12 @@ import { useTranslation } from 'react-i18next';
 import { UiSelect } from '@/components/ui';
 import { GRSAI_CREDIT_TIERS } from '@/features/canvas/pricing/types';
 import { SettingsCheckboxCard } from '../SettingsCheckboxCard';
+import {
+  SETTINGS_CARD_CLASS,
+  SETTINGS_FIELD_CLASS,
+  SETTINGS_FOOTER_CLASS,
+  SETTINGS_HEADER_CLASS,
+} from '@/features/settings/settingsStyles';
 import type { SettingsDraft } from '../useSettingsDraft';
 
 interface PricingTabProps {
@@ -15,8 +21,8 @@ export function PricingTab({ draft, onDraftChange, onSave }: PricingTabProps) {
 
   return (
     <>
-      <div className="px-6 py-5 border-b border-border-dark">
-        <h2 className="text-lg font-semibold text-text-dark">{t('settings.pricing')}</h2>
+      <div className={SETTINGS_HEADER_CLASS}>
+        <h2 className="text-lg font-semibold text-text-dark">{t('settings.sections.pricing')}</h2>
         <p className="text-sm text-text-muted mt-1">{t('settings.pricingDesc')}</p>
       </div>
 
@@ -28,7 +34,7 @@ export function PricingTab({ draft, onDraftChange, onSave }: PricingTabProps) {
           description={t('settings.showNodePriceDesc')}
         />
 
-        <div className="rounded-lg border border-border-dark bg-bg-dark p-4">
+        <div className={SETTINGS_CARD_CLASS}>
           <h3 className="text-sm font-medium text-text-dark">{t('settings.priceDisplayCurrencyMode')}</h3>
           <p className="mt-1 text-xs text-text-muted">{t('settings.priceDisplayCurrencyModeDesc')}</p>
           <div className="mt-3">
@@ -44,7 +50,7 @@ export function PricingTab({ draft, onDraftChange, onSave }: PricingTabProps) {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border-dark bg-bg-dark p-4">
+        <div className={SETTINGS_CARD_CLASS}>
           <h3 className="text-sm font-medium text-text-dark">{t('settings.usdToCnyRate')}</h3>
           <p className="mt-1 text-xs text-text-muted">{t('settings.usdToCnyRateDesc')}</p>
           <div className="mt-3">
@@ -54,7 +60,7 @@ export function PricingTab({ draft, onDraftChange, onSave }: PricingTabProps) {
               step="0.01"
               value={draft.usdToCnyRate}
               onChange={(event) => onDraftChange('usdToCnyRate', event.target.value)}
-              className="h-9 w-full rounded border border-border-dark bg-surface-dark px-3 text-sm text-text-dark outline-none placeholder:text-text-muted"
+              className={`h-9 w-full px-3 text-sm ${SETTINGS_FIELD_CLASS}`}
             />
           </div>
         </div>
@@ -66,7 +72,7 @@ export function PricingTab({ draft, onDraftChange, onSave }: PricingTabProps) {
           description={t('settings.preferDiscountedPriceDesc')}
         />
 
-        <div className="rounded-lg border border-border-dark bg-bg-dark p-4">
+        <div className={SETTINGS_CARD_CLASS}>
           <h3 className="text-sm font-medium text-text-dark">{t('settings.grsaiCreditTier')}</h3>
           <p className="mt-1 text-xs text-text-muted">{t('settings.grsaiCreditTierDesc')}</p>
           <div className="mt-3">
@@ -88,7 +94,7 @@ export function PricingTab({ draft, onDraftChange, onSave }: PricingTabProps) {
         </div>
       </div>
 
-      <div className="flex justify-end border-t border-border-dark px-6 py-4">
+      <div className={SETTINGS_FOOTER_CLASS}>
         <button
           onClick={onSave}
           className="rounded bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent/80"
